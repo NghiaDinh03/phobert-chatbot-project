@@ -1,0 +1,115 @@
+﻿/* Tailwind overrides for light / dark mode */
+
+:root {
+    --tw-bg-primary: #f8fafc;
+    --tw-bg-card: #ffffff;
+    --tw-text-primary: #0f172a;
+    --tw-text-secondary: #64748b;
+    --tw-accent: #6366f1;
+    --tw-border: #e2e8f0;
+}
+
+/* Dark theme variables */
+[data-theme="dark"] {
+    --tw-bg-primary: #0f172a;
+    --tw-bg-card: #1e293b;
+    --tw-text-primary: #f1f5f9;
+    --tw-text-secondary: #94a3b8;
+    --tw-accent: #818cf8;
+    --tw-border: #334155;
+}
+
+/* ===== Streamlit global background ===== */
+[data-testid="stAppViewContainer"] {
+    background: var(--tw-bg-primary) !important;
+}
+
+/* ===== SIDEBAR FIX – CHỈ SỬA PHẦN NÀY ===== */
+[data-testid="stSidebar"] {
+    background: linear-gradient(135deg, #1e293b 0%, #020617 100%) !important;
+    border-right: 1px solid var(--tw-border) !important;
+}
+
+    /* Sidebar text & icon – LÀM SÁNG LÊN */
+    [data-testid="stSidebar"] * {
+        color: #e5f0ff !important;
+    }
+
+    [data-testid="stSidebar"] [data-testid="stMarkdownContainer"],
+    [data-testid="stSidebar"] label,
+    [data-testid="stSidebar"] span,
+    [data-testid="stSidebar"] p {
+        color: #e5f0ff !important;
+        font-weight: 500;
+    }
+
+    /* Sidebar menu items (app / analytics / chatbot / Form_iso27001) */
+    [data-testid="stSidebar"] [data-baseweb="side-nav"] li {
+        border-radius: 999px;
+        padding-inline: 6px;
+        margin-block: 2px;
+    }
+
+    [data-testid="stSidebar"] [data-baseweb="side-nav"] a {
+        color: #e5f0ff !important;
+        font-weight: 500;
+        font-size: 0.9rem;
+    }
+
+        /* Active item */
+        [data-testid="stSidebar"] [data-baseweb="side-nav"] li[aria-current="page"],
+        [data-testid="stSidebar"] [data-baseweb="side-nav"] a[aria-current="page"] {
+            background: rgba(99, 102, 241, 0.35) !important;
+            color: #ffffff !important;
+        }
+
+    /* Hover */
+    [data-testid="stSidebar"] [data-baseweb="side-nav"] li:hover {
+        background: rgba(148, 163, 253, 0.35) !important;
+        cursor: pointer;
+    }
+
+    /* Sidebar buttons (Về trang chủ, Xóa lịch sử, ...) */
+    [data-testid="stSidebar"] button {
+        color: #e5f0ff !important;
+        background: rgba(56, 189, 248, 0.08) !important;
+        border-radius: 999px !important;
+        border: 1px solid rgba(148, 163, 253, 0.8) !important;
+        font-weight: 500;
+    }
+
+        [data-testid="stSidebar"] button:hover {
+            background: rgba(129, 140, 248, 0.35) !important;
+        }
+
+    /* Small helper text */
+    [data-testid="stSidebar"] .css-zt5igj,
+    [data-testid="stSidebar"] .css-q8sbsg {
+        color: #cbd5f5 !important;
+        font-size: 0.8rem;
+    }
+
+/* ===== Theme toggle button (giữ nguyên) ===== */
+#theme-toggle-btn {
+    position: fixed;
+    top: 1rem;
+    right: 1rem;
+    z-index: 9999;
+    width: 3.5rem;
+    height: 3.5rem;
+    border-radius: 9999px;
+    background: var(--tw-bg-card);
+    border: 2px solid var(--tw-border);
+    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.1);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    font-size: 1.5rem;
+    transition: all 0.3s ease;
+}
+
+    #theme-toggle-btn:hover {
+        transform: scale(1.1) rotate(15deg);
+        box-shadow: 0 8px 24px rgba(99, 102, 241, 0.3);
+    }

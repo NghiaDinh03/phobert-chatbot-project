@@ -1,0 +1,16 @@
+{
+  "ExpandedNodes": [
+    "",
+    "\\backend",
+    "\\backend\\core",
+    "\\backend\\repositories",
+    "\\backend\\services",
+    "\\backend\\utils",
+    "\\frontend",
+    "\\frontend\\pages",
+    "\\frontend\\services",
+    "\\frontend\\utils"
+  ],
+  "SelectedNode": "\\backend\\services\\chat_service.py",
+  "PreviewInSolutionExplorer": false
+}

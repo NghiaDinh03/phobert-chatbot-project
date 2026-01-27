@@ -1,0 +1,64 @@
+﻿services:
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: phobert-backend
+    ports:
+      - "8000:8000"
+    environment:
+      - LOCALAI_URL=http://localai:8080
+      - MODEL_NAME=phi-2
+      - LOG_LEVEL=INFO
+    networks:
+      - phobert-network
+    volumes:
+      - ./backend:/app
+      - ./data:/data
+    depends_on:
+      localai:
+        condition: service_started
+    restart: unless-stopped
+
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    container_name: phobert-frontend
+    ports:
+      - "8501:8501"
+    environment:
+      - BACKEND_URL=http://backend:8000
+    networks:
+      - phobert-network
+    volumes:
+      - ./frontend:/app
+    depends_on:
+      backend:
+        condition: service_started
+    restart: unless-stopped
+
+  localai:
+    image: localai/localai:v2.24.2
+    container_name: phobert-localai
+    ports:
+      - "8080:8080"
+    environment:
+      - DEBUG=true
+      - THREADS=8
+      - CONTEXT_SIZE=2048
+    volumes:
+      - ./models:/models
+    networks:
+      - phobert-network
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8080/readyz"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 60s
+
+networks:
+  phobert-network:
+    driver: bridge

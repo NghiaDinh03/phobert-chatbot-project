@@ -1,0 +1,26 @@
+name: phi-2
+backend: llama-cpp
+parameters:
+  model: phi-2.Q4_K_M.gguf
+  temperature: 0.7
+  top_k: 40
+  top_p: 0.95
+  max_tokens: 512
+  context_size: 2048
+  threads: 8
+  n_gpu_layers: 0
+  f16: false
+  mmap: true
+  mlock: false
+  batch_size: 512
+
+template:
+  chat: |
+    Instruct: {{.Input}}
+    Output:
+  completion: |
+    {{.Input}}
+
+stopwords:
+  - "Instruct:"
+  - "Output:"
