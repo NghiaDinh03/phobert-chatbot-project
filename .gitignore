@@ -16,9 +16,8 @@ data/uploads/*
 !data/uploads/.gitkeep
 data/vector_store/*.faiss
 
-# Models (large files)
-models/llm/*.gguf
-models/phobert/model.safetensors
+# Models (large files) - Ignore toàn bộ thư mục models
+models/
 
 # IDE
 .vscode/

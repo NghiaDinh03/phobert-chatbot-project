@@ -200,14 +200,6 @@ st.markdown("""
         padding: 1.25rem !important;
         margin-top: -1px !important;
     }
-    
-    /* Push chat area to bottom */
-    .main > div:first-child {
-        min-height: calc(100vh - 200px);
-        display: flex;
-        flex-direction: column;
-        justify-content: flex-end;
-    }
 </style>
 """, unsafe_allow_html=True)
 
