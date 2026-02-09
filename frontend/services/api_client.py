@@ -19,7 +19,7 @@ class APIClient:
             response = requests.post(
                 f"{APIClient.BASE_URL}/api/chat",
                 json={"message": message, "session_id": session_id},
-                timeout=120
+                timeout=300
             )
             
             if response.status_code == 200:

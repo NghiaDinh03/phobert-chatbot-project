@@ -4,7 +4,7 @@ from typing import Dict, Any
 
 class ChatService:
     LOCALAI_URL = os.getenv("LOCALAI_URL", "http://localai:8080")
-    MODEL_NAME = os.getenv("MODEL_NAME", "phi-2")
+    MODEL_NAME = os.getenv("MODEL_NAME", "Meta-Llama-3.1-8B-Instruct-Q4_K_M.gguf")
     
     @staticmethod
     def generate_response(message: str, session_id: str = "default") -> Dict[str, Any]:
@@ -13,23 +13,19 @@ class ChatService:
                 "model": ChatService.MODEL_NAME,
                 "messages": [
                     {
-                        "role": "system",
-                        "content": "You are a helpful AI assistant specializing in ISO 27001, TCVN 14423, and information security. Answer in Vietnamese when appropriate."
-                    },
-                    {
                         "role": "user",
                         "content": message
                     }
                 ],
                 "temperature": 0.7,
-                "max_tokens": 256,
+                "max_tokens": 2048,
                 "stream": False
             }
             
             response = requests.post(
                 f"{ChatService.LOCALAI_URL}/v1/chat/completions",
                 json=payload,
-                timeout=80
+                timeout=300
             )
             
             if response.status_code == 200:

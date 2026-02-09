@@ -3,8 +3,31 @@
   "WorkspaceRootPath": "E:\\VSC\\phobert-chatbot-project\\",
   "Documents": [
     {
+      "AbsoluteMoniker": "D:0:0:{A2FE74E1-B743-11D0-AE1A-00A0C90FFFC3}|\u003CMiscFiles\u003E|E:\\VSC\\phobert-chatbot-project\\docker-compose.yml||{8B382828-6202-11D1-8870-0000F87579D2}",
+      "RelativeMoniker": "D:0:0:{A2FE74E1-B743-11D0-AE1A-00A0C90FFFC3}|\u003CMiscFiles\u003E|solutionrelative:docker-compose.yml||{8B382828-6202-11D1-8870-0000F87579D2}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{A2FE74E1-B743-11D0-AE1A-00A0C90FFFC3}|\u003CMiscFiles\u003E|E:\\VSC\\phobert-chatbot-project\\models\\phi-2.yaml||{8B382828-6202-11D1-8870-0000F87579D2}",
+      "RelativeMoniker": "D:0:0:{A2FE74E1-B743-11D0-AE1A-00A0C90FFFC3}|\u003CMiscFiles\u003E|solutionrelative:models\\phi-2.yaml||{8B382828-6202-11D1-8870-0000F87579D2}"
+    },
+    {
       "AbsoluteMoniker": "D:0:0:{A2FE74E1-B743-11D0-AE1A-00A0C90FFFC3}|\u003CMiscFiles\u003E|E:\\VSC\\phobert-chatbot-project\\backend\\services\\chat_service.py||{8B382828-6202-11D1-8870-0000F87579D2}",
       "RelativeMoniker": "D:0:0:{A2FE74E1-B743-11D0-AE1A-00A0C90FFFC3}|\u003CMiscFiles\u003E|solutionrelative:backend\\services\\chat_service.py||{8B382828-6202-11D1-8870-0000F87579D2}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{A2FE74E1-B743-11D0-AE1A-00A0C90FFFC3}|\u003CMiscFiles\u003E|E:\\VSC\\phobert-chatbot-project\\frontend\\services\\api_client.py||{8B382828-6202-11D1-8870-0000F87579D2}",
+      "RelativeMoniker": "D:0:0:{A2FE74E1-B743-11D0-AE1A-00A0C90FFFC3}|\u003CMiscFiles\u003E|solutionrelative:frontend\\services\\api_client.py||{8B382828-6202-11D1-8870-0000F87579D2}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{A2FE74E1-B743-11D0-AE1A-00A0C90FFFC3}|\u003CMiscFiles\u003E|E:\\VSC\\install_rocm.ps1||{3B902123-F8A7-4915-9F01-361F908088D0}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{A2FE74E1-B743-11D0-AE1A-00A0C90FFFC3}|\u003CMiscFiles\u003E|E:\\VSC\\phobert-chatbot-project\\.env||{8B382828-6202-11D1-8870-0000F87579D2}",
+      "RelativeMoniker": "D:0:0:{A2FE74E1-B743-11D0-AE1A-00A0C90FFFC3}|\u003CMiscFiles\u003E|solutionrelative:.env||{8B382828-6202-11D1-8870-0000F87579D2}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{A2FE74E1-B743-11D0-AE1A-00A0C90FFFC3}|\u003CMiscFiles\u003E|E:\\VSC\\phobert-chatbot-project\\frontend\\pages\\analytics.py||{8B382828-6202-11D1-8870-0000F87579D2}",
+      "RelativeMoniker": "D:0:0:{A2FE74E1-B743-11D0-AE1A-00A0C90FFFC3}|\u003CMiscFiles\u003E|solutionrelative:frontend\\pages\\analytics.py||{8B382828-6202-11D1-8870-0000F87579D2}"
     },
     {
       "AbsoluteMoniker": "D:0:0:{A2FE74E1-B743-11D0-AE1A-00A0C90FFFC3}|\u003CMiscFiles\u003E|E:\\VSC\\phobert-chatbot-project\\frontend\\pages\\chatbot.py||{8B382828-6202-11D1-8870-0000F87579D2}",
@@ -15,28 +38,8 @@
       "RelativeMoniker": "D:0:0:{A2FE74E1-B743-11D0-AE1A-00A0C90FFFC3}|\u003CMiscFiles\u003E|solutionrelative:backend\\api\\routes\\chat.py||{8B382828-6202-11D1-8870-0000F87579D2}"
     },
     {
-      "AbsoluteMoniker": "D:0:0:{A2FE74E1-B743-11D0-AE1A-00A0C90FFFC3}|\u003CMiscFiles\u003E|E:\\VSC\\phobert-chatbot-project\\frontend\\services\\api_client.py||{8B382828-6202-11D1-8870-0000F87579D2}",
-      "RelativeMoniker": "D:0:0:{A2FE74E1-B743-11D0-AE1A-00A0C90FFFC3}|\u003CMiscFiles\u003E|solutionrelative:frontend\\services\\api_client.py||{8B382828-6202-11D1-8870-0000F87579D2}"
-    },
-    {
       "AbsoluteMoniker": "D:0:0:{A2FE74E1-B743-11D0-AE1A-00A0C90FFFC3}|\u003CMiscFiles\u003E|E:\\VSC\\phobert-chatbot-project\\backend\\main.py||{8B382828-6202-11D1-8870-0000F87579D2}",
       "RelativeMoniker": "D:0:0:{A2FE74E1-B743-11D0-AE1A-00A0C90FFFC3}|\u003CMiscFiles\u003E|solutionrelative:backend\\main.py||{8B382828-6202-11D1-8870-0000F87579D2}"
-    },
-    {
-      "AbsoluteMoniker": "D:0:0:{A2FE74E1-B743-11D0-AE1A-00A0C90FFFC3}|\u003CMiscFiles\u003E|E:\\VSC\\phobert-chatbot-project\\docker-compose.yml||{8B382828-6202-11D1-8870-0000F87579D2}",
-      "RelativeMoniker": "D:0:0:{A2FE74E1-B743-11D0-AE1A-00A0C90FFFC3}|\u003CMiscFiles\u003E|solutionrelative:docker-compose.yml||{8B382828-6202-11D1-8870-0000F87579D2}"
-    },
-    {
-      "AbsoluteMoniker": "D:0:0:{A2FE74E1-B743-11D0-AE1A-00A0C90FFFC3}|\u003CMiscFiles\u003E|E:\\VSC\\phobert-chatbot-project\\models\\phi-2.yaml||{8B382828-6202-11D1-8870-0000F87579D2}",
-      "RelativeMoniker": "D:0:0:{A2FE74E1-B743-11D0-AE1A-00A0C90FFFC3}|\u003CMiscFiles\u003E|solutionrelative:models\\phi-2.yaml||{8B382828-6202-11D1-8870-0000F87579D2}"
-    },
-    {
-      "AbsoluteMoniker": "D:0:0:{A2FE74E1-B743-11D0-AE1A-00A0C90FFFC3}|\u003CMiscFiles\u003E|E:\\VSC\\phobert-chatbot-project\\frontend\\pages\\analytics.py||{8B382828-6202-11D1-8870-0000F87579D2}",
-      "RelativeMoniker": "D:0:0:{A2FE74E1-B743-11D0-AE1A-00A0C90FFFC3}|\u003CMiscFiles\u003E|solutionrelative:frontend\\pages\\analytics.py||{8B382828-6202-11D1-8870-0000F87579D2}"
-    },
-    {
-      "AbsoluteMoniker": "D:0:0:{A2FE74E1-B743-11D0-AE1A-00A0C90FFFC3}|\u003CMiscFiles\u003E|E:\\VSC\\phobert-chatbot-project\\frontend\\app.py||{8B382828-6202-11D1-8870-0000F87579D2}",
-      "RelativeMoniker": "D:0:0:{A2FE74E1-B743-11D0-AE1A-00A0C90FFFC3}|\u003CMiscFiles\u003E|solutionrelative:frontend\\app.py||{8B382828-6202-11D1-8870-0000F87579D2}"
     },
     {
       "AbsoluteMoniker": "D:0:0:{A2FE74E1-B743-11D0-AE1A-00A0C90FFFC3}|\u003CMiscFiles\u003E|E:\\VSC\\phobert-chatbot-project\\frontend\\pages\\Form_iso27001.py||{8B382828-6202-11D1-8870-0000F87579D2}",
@@ -85,10 +88,6 @@
     {
       "AbsoluteMoniker": "D:0:0:{A2FE74E1-B743-11D0-AE1A-00A0C90FFFC3}|\u003CMiscFiles\u003E|E:\\VSC\\phobert-chatbot-project\\frontend\\Dockerfile||{8B382828-6202-11D1-8870-0000F87579D2}",
       "RelativeMoniker": "D:0:0:{A2FE74E1-B743-11D0-AE1A-00A0C90FFFC3}|\u003CMiscFiles\u003E|solutionrelative:frontend\\Dockerfile||{8B382828-6202-11D1-8870-0000F87579D2}"
-    },
-    {
-      "AbsoluteMoniker": "D:0:0:{A2FE74E1-B743-11D0-AE1A-00A0C90FFFC3}|\u003CMiscFiles\u003E|E:\\VSC\\phobert-chatbot-project\\.env||{8B382828-6202-11D1-8870-0000F87579D2}",
-      "RelativeMoniker": "D:0:0:{A2FE74E1-B743-11D0-AE1A-00A0C90FFFC3}|\u003CMiscFiles\u003E|solutionrelative:.env||{8B382828-6202-11D1-8870-0000F87579D2}"
     },
     {
       "AbsoluteMoniker": "D:0:0:{A2FE74E1-B743-11D0-AE1A-00A0C90FFFC3}|\u003CMiscFiles\u003E|E:\\VSC\\phobert-chatbot-project\\backend\\Dockerfile||{8B382828-6202-11D1-8870-0000F87579D2}",
@@ -190,37 +189,50 @@
       "DocumentGroups": [
         {
           "DockedHeight": 200,
-          "SelectedChildIndex": 3,
+          "SelectedChildIndex": 0,
           "Children": [
             {
               "$type": "Document",
-              "DocumentIndex": 6,
-              "Title": "phi-2.yaml",
-              "DocumentMoniker": "E:\\VSC\\phobert-chatbot-project\\models\\phi-2.yaml",
-              "RelativeDocumentMoniker": "models\\phi-2.yaml",
-              "ToolTip": "E:\\VSC\\phobert-chatbot-project\\models\\phi-2.yaml",
-              "RelativeToolTip": "models\\phi-2.yaml",
-              "ViewState": "AgIAAAMAAAAAAAAAAADwvx4AAAAAAAAAAAAAAA==",
+              "DocumentIndex": 0,
+              "Title": "docker-compose.yml",
+              "DocumentMoniker": "E:\\VSC\\phobert-chatbot-project\\docker-compose.yml",
+              "RelativeDocumentMoniker": "docker-compose.yml",
+              "ToolTip": "E:\\VSC\\phobert-chatbot-project\\docker-compose.yml",
+              "RelativeToolTip": "docker-compose.yml",
+              "ViewState": "AgIAABUAAAAAAAAAAAAowCkAAAAiAAAAAAAAAA==",
               "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.003775|",
-              "WhenOpened": "2026-01-24T03:16:08.837Z",
+              "WhenOpened": "2026-01-24T06:54:01.682Z",
               "EditorCaption": ""
             },
             {
               "$type": "Document",
-              "DocumentIndex": 7,
+              "DocumentIndex": 4,
+              "Title": "install_rocm.ps1",
+              "DocumentMoniker": "E:\\VSC\\install_rocm.ps1",
+              "RelativeDocumentMoniker": "..\\install_rocm.ps1",
+              "ToolTip": "E:\\VSC\\install_rocm.ps1",
+              "RelativeToolTip": "..\\install_rocm.ps1",
+              "ViewState": "AgIAAE4AAAAAAAAAAAAcwGsAAAAAAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.001001|",
+              "WhenOpened": "2026-01-24T06:25:15.316Z",
+              "EditorCaption": ""
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 6,
               "Title": "analytics.py",
               "DocumentMoniker": "E:\\VSC\\phobert-chatbot-project\\frontend\\pages\\analytics.py",
               "RelativeDocumentMoniker": "frontend\\pages\\analytics.py",
               "ToolTip": "E:\\VSC\\phobert-chatbot-project\\frontend\\pages\\analytics.py",
               "RelativeToolTip": "frontend\\pages\\analytics.py",
-              "ViewState": "AgIAAHUAAAAAAAAAAAAIwJAAAAAAAAAAAAAAAA==",
+              "ViewState": "AgIAAKQAAAAAAAAAAAAswMAAAAAAAAAAAAAAAA==",
               "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.002457|",
               "WhenOpened": "2026-01-21T12:40:15.808Z",
               "EditorCaption": ""
             },
             {
               "$type": "Document",
-              "DocumentIndex": 1,
+              "DocumentIndex": 7,
               "Title": "chatbot.py",
               "DocumentMoniker": "E:\\VSC\\phobert-chatbot-project\\frontend\\pages\\chatbot.py",
               "RelativeDocumentMoniker": "frontend\\pages\\chatbot.py",
@@ -233,41 +245,15 @@
             },
             {
               "$type": "Document",
-              "DocumentIndex": 0,
+              "DocumentIndex": 2,
               "Title": "chat_service.py",
               "DocumentMoniker": "E:\\VSC\\phobert-chatbot-project\\backend\\services\\chat_service.py",
               "RelativeDocumentMoniker": "backend\\services\\chat_service.py",
               "ToolTip": "E:\\VSC\\phobert-chatbot-project\\backend\\services\\chat_service.py",
               "RelativeToolTip": "backend\\services\\chat_service.py",
-              "ViewState": "AgIAAAIAAAAAAAAAAAAiwBAAAAAZAAAAAAAAAA==",
+              "ViewState": "AgIAAFEAAAAAAAAAAAAowGgAAAAeAAAAAAAAAA==",
               "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.002457|",
               "WhenOpened": "2026-01-21T12:46:01.773Z",
-              "EditorCaption": ""
-            },
-            {
-              "$type": "Document",
-              "DocumentIndex": 2,
-              "Title": "chat.py",
-              "DocumentMoniker": "E:\\VSC\\phobert-chatbot-project\\backend\\api\\routes\\chat.py",
-              "RelativeDocumentMoniker": "backend\\api\\routes\\chat.py",
-              "ToolTip": "E:\\VSC\\phobert-chatbot-project\\backend\\api\\routes\\chat.py",
-              "RelativeToolTip": "backend\\api\\routes\\chat.py",
-              "ViewState": "AgIAABkAAAAAAAAAAAAIwCoAAAANAAAAAAAAAA==",
-              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.002457|",
-              "WhenOpened": "2026-01-21T12:44:52.62Z",
-              "EditorCaption": ""
-            },
-            {
-              "$type": "Document",
-              "DocumentIndex": 5,
-              "Title": "docker-compose.yml",
-              "DocumentMoniker": "E:\\VSC\\phobert-chatbot-project\\docker-compose.yml",
-              "RelativeDocumentMoniker": "docker-compose.yml",
-              "ToolTip": "E:\\VSC\\phobert-chatbot-project\\docker-compose.yml",
-              "RelativeToolTip": "docker-compose.yml",
-              "ViewState": "AgIAAAMAAAAAAAAAAAAAABAAAAAbAAAAAAAAAA==",
-              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.003775|",
-              "WhenOpened": "2026-01-21T11:57:41.533Z",
               "EditorCaption": ""
             },
             {
@@ -278,14 +264,27 @@
               "RelativeDocumentMoniker": "frontend\\services\\api_client.py",
               "ToolTip": "E:\\VSC\\phobert-chatbot-project\\frontend\\services\\api_client.py",
               "RelativeToolTip": "frontend\\services\\api_client.py",
-              "ViewState": "AgIAABwAAAAAAAAAAADwvzcAAAAAAAAAAAAAAA==",
+              "ViewState": "AgIAABIAAAAAAAAAAAAowBUAAAAbAAAAAAAAAA==",
               "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.002457|",
               "WhenOpened": "2026-01-21T15:37:45.562Z",
               "EditorCaption": ""
             },
             {
               "$type": "Document",
-              "DocumentIndex": 4,
+              "DocumentIndex": 1,
+              "Title": "phi-2.yaml",
+              "DocumentMoniker": "E:\\VSC\\phobert-chatbot-project\\models\\phi-2.yaml",
+              "RelativeDocumentMoniker": "models\\phi-2.yaml",
+              "ToolTip": "E:\\VSC\\phobert-chatbot-project\\models\\phi-2.yaml",
+              "RelativeToolTip": "models\\phi-2.yaml",
+              "ViewState": "AgIAAAAAAAAAAAAAAAAAABoAAAAAAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.003775|",
+              "WhenOpened": "2026-01-24T03:16:08.837Z",
+              "EditorCaption": ""
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 9,
               "Title": "main.py",
               "DocumentMoniker": "E:\\VSC\\phobert-chatbot-project\\backend\\main.py",
               "RelativeDocumentMoniker": "backend\\main.py",
@@ -293,25 +292,36 @@
               "RelativeToolTip": "backend\\main.py",
               "ViewState": "AgIAAA8AAAAAAAAAAAAIwCoAAAAAAAAAAAAAAA==",
               "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.002457|",
-              "WhenOpened": "2026-01-21T12:44:19.415Z",
+              "WhenOpened": "2026-01-21T12:44:19.415Z"
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 5,
+              "Title": ".env",
+              "DocumentMoniker": "E:\\VSC\\phobert-chatbot-project\\.env",
+              "RelativeDocumentMoniker": ".env",
+              "ToolTip": "E:\\VSC\\phobert-chatbot-project\\.env",
+              "RelativeToolTip": ".env",
+              "ViewState": "AgIAAAAAAAAAAAAAAAAAAAcAAAAAAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.001001|",
+              "WhenOpened": "2026-01-21T14:42:50.065Z",
               "EditorCaption": ""
             },
             {
               "$type": "Document",
               "DocumentIndex": 8,
-              "Title": "app.py",
-              "DocumentMoniker": "E:\\VSC\\phobert-chatbot-project\\frontend\\app.py",
-              "RelativeDocumentMoniker": "frontend\\app.py",
-              "ToolTip": "E:\\VSC\\phobert-chatbot-project\\frontend\\app.py",
-              "RelativeToolTip": "frontend\\app.py",
-              "ViewState": "AgIAAGgAAAAAAAAAAAAIwIMAAAAAAAAAAAAAAA==",
+              "Title": "chat.py",
+              "DocumentMoniker": "E:\\VSC\\phobert-chatbot-project\\backend\\api\\routes\\chat.py",
+              "RelativeDocumentMoniker": "backend\\api\\routes\\chat.py",
+              "ToolTip": "E:\\VSC\\phobert-chatbot-project\\backend\\api\\routes\\chat.py",
+              "RelativeToolTip": "backend\\api\\routes\\chat.py",
+              "ViewState": "AgIAABkAAAAAAAAAAAAIwCoAAAANAAAAAAAAAA==",
               "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.002457|",
-              "WhenOpened": "2026-01-21T12:39:06.204Z",
-              "EditorCaption": ""
+              "WhenOpened": "2026-01-21T12:44:52.62Z"
             },
             {
               "$type": "Document",
-              "DocumentIndex": 9,
+              "DocumentIndex": 10,
               "Title": "Form_iso27001.py",
               "DocumentMoniker": "E:\\VSC\\phobert-chatbot-project\\frontend\\pages\\Form_iso27001.py",
               "RelativeDocumentMoniker": "frontend\\pages\\Form_iso27001.py",
@@ -319,12 +329,11 @@
               "RelativeToolTip": "frontend\\pages\\Form_iso27001.py",
               "ViewState": "AgIAAP8AAAAAAAAAAAAIwBoBAAAAAAAAAAAAAA==",
               "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.002457|",
-              "WhenOpened": "2026-01-21T15:22:40.232Z",
-              "EditorCaption": ""
+              "WhenOpened": "2026-01-21T15:22:40.232Z"
             },
             {
               "$type": "Document",
-              "DocumentIndex": 10,
+              "DocumentIndex": 11,
               "Title": "theme_loader.py",
               "DocumentMoniker": "E:\\VSC\\phobert-chatbot-project\\frontend\\utils\\theme_loader.py",
               "RelativeDocumentMoniker": "frontend\\utils\\theme_loader.py",
@@ -332,12 +341,11 @@
               "RelativeToolTip": "frontend\\utils\\theme_loader.py",
               "ViewState": "AgIAAC8BAAAAAAAAAAAIwEoBAAAAAAAAAAAAAA==",
               "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.002457|",
-              "WhenOpened": "2026-01-22T02:22:01.389Z",
-              "EditorCaption": ""
+              "WhenOpened": "2026-01-22T02:22:01.389Z"
             },
             {
               "$type": "Document",
-              "DocumentIndex": 11,
+              "DocumentIndex": 12,
               "Title": "theme.css",
               "DocumentMoniker": "E:\\VSC\\phobert-chatbot-project\\frontend\\static\\css\\theme.css",
               "RelativeDocumentMoniker": "frontend\\static\\css\\theme.css",
@@ -345,12 +353,11 @@
               "RelativeToolTip": "frontend\\static\\css\\theme.css",
               "ViewState": "AgIAAFYAAAAAAAAAAAAuwGsAAAAWAAAAAAAAAA==",
               "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.003000|",
-              "WhenOpened": "2026-01-22T02:20:20.068Z",
-              "EditorCaption": ""
+              "WhenOpened": "2026-01-22T02:20:20.068Z"
             },
             {
               "$type": "Document",
-              "DocumentIndex": 12,
+              "DocumentIndex": 13,
               "Title": "config.toml",
               "DocumentMoniker": "E:\\VSC\\phobert-chatbot-project\\frontend\\.streamlit\\config.toml",
               "RelativeDocumentMoniker": "frontend\\.streamlit\\config.toml",
@@ -362,7 +369,7 @@
             },
             {
               "$type": "Document",
-              "DocumentIndex": 13,
+              "DocumentIndex": 14,
               "Title": "Dockerfile",
               "DocumentMoniker": "E:\\VSC\\phobert-chatbot-project\\models\\Dockerfile",
               "RelativeDocumentMoniker": "models\\Dockerfile",
@@ -374,7 +381,7 @@
             },
             {
               "$type": "Document",
-              "DocumentIndex": 14,
+              "DocumentIndex": 15,
               "Title": "gpt-4.yaml",
               "DocumentMoniker": "E:\\VSC\\phobert-chatbot-project\\models\\gpt-4.yaml",
               "RelativeDocumentMoniker": "models\\gpt-4.yaml",
@@ -386,7 +393,7 @@
             },
             {
               "$type": "Document",
-              "DocumentIndex": 15,
+              "DocumentIndex": 16,
               "Title": "theme.js",
               "DocumentMoniker": "E:\\VSC\\phobert-chatbot-project\\frontend\\static\\js\\theme.js",
               "RelativeDocumentMoniker": "frontend\\static\\js\\theme.js",
@@ -398,7 +405,7 @@
             },
             {
               "$type": "Document",
-              "DocumentIndex": 16,
+              "DocumentIndex": 17,
               "Title": "iso27001.py",
               "DocumentMoniker": "E:\\VSC\\phobert-chatbot-project\\backend\\api\\routes\\iso27001.py",
               "RelativeDocumentMoniker": "backend\\api\\routes\\iso27001.py",
@@ -410,7 +417,7 @@
             },
             {
               "$type": "Document",
-              "DocumentIndex": 17,
+              "DocumentIndex": 18,
               "Title": "upload.py",
               "DocumentMoniker": "E:\\VSC\\phobert-chatbot-project\\frontend\\pages\\upload.py",
               "RelativeDocumentMoniker": "frontend\\pages\\upload.py",
@@ -422,7 +429,7 @@
             },
             {
               "$type": "Document",
-              "DocumentIndex": 19,
+              "DocumentIndex": 20,
               "Title": "requirements.txt",
               "DocumentMoniker": "E:\\VSC\\phobert-chatbot-project\\backend\\requirements.txt",
               "RelativeDocumentMoniker": "backend\\requirements.txt",
@@ -434,7 +441,7 @@
             },
             {
               "$type": "Document",
-              "DocumentIndex": 18,
+              "DocumentIndex": 19,
               "Title": "config.py",
               "DocumentMoniker": "E:\\VSC\\phobert-chatbot-project\\backend\\core\\config.py",
               "RelativeDocumentMoniker": "backend\\core\\config.py",
@@ -446,7 +453,7 @@
             },
             {
               "$type": "Document",
-              "DocumentIndex": 20,
+              "DocumentIndex": 21,
               "Title": "Dockerfile",
               "DocumentMoniker": "E:\\VSC\\phobert-chatbot-project\\frontend\\Dockerfile",
               "RelativeDocumentMoniker": "frontend\\Dockerfile",
@@ -455,18 +462,6 @@
               "ViewState": "AgIAAAAAAAAAAAAAAAAAAA4AAAAAAAAAAAAAAA==",
               "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.001001|",
               "WhenOpened": "2026-01-21T12:38:06.147Z"
-            },
-            {
-              "$type": "Document",
-              "DocumentIndex": 21,
-              "Title": ".env",
-              "DocumentMoniker": "E:\\VSC\\phobert-chatbot-project\\.env",
-              "RelativeDocumentMoniker": ".env",
-              "ToolTip": "E:\\VSC\\phobert-chatbot-project\\.env",
-              "RelativeToolTip": ".env",
-              "ViewState": "AgIAAAAAAAAAAAAAAAAAAAQAAAAAAAAAAAAAAA==",
-              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.001001|",
-              "WhenOpened": "2026-01-21T14:42:50.065Z"
             },
             {
               "$type": "Document",

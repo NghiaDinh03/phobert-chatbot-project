@@ -13,7 +13,7 @@ init_session()
 st.markdown("""
 <div class="hero-section" style="padding: 2.5rem 2rem;">
     <div style="font-size: 3rem; margin-bottom: 1rem; filter: drop-shadow(0 0 15px rgba(6, 182, 212, 0.6));">📊</div>
-    <h1 style="font-size: 2.5rem;">Analytics Dashboard</h1>
+    <h1 style="font-size: 2.5rem; color: #F8FAFC !important; -webkit-text-fill-color: #F8FAFC !important;">Analytics Dashboard</h1>
     <p style="font-size: 1.1rem; color: #CBD5E1; max-width: 700px; margin: 1rem auto 0;">
         Theo dõi hiệu năng hệ thống, tài nguyên và trạng thái dịch vụ <strong style="color:#06B6D4;">real-time</strong>
     </p>
@@ -84,21 +84,26 @@ st.markdown("<br>", unsafe_allow_html=True)
 # Services Status
 st.markdown("### 🔧 Trạng thái Dịch vụ")
 
+from utils.health_check import get_service_status
+services = get_service_status()
+
 col1, col2 = st.columns(2)
 
 with col1:
-    st.markdown("""
+    backend_status = services["backend"]
+    backend_badge = "status-online" if backend_status["ready"] else "status-loading"
+    st.markdown(f"""
     <div class="service-card">
         <div style="display:flex; justify-content:space-between; align-items:center;">
             <div>
                 <div style="font-size:1.15rem; font-weight:700; color:#F8FAFC; margin-bottom:0.5rem;">
-                    ✅ FastAPI Backend
+                    {"✅" if backend_status["ready"] else "⏳"} FastAPI Backend
                 </div>
                 <div style="font-size:0.9rem; color:#94A3B8;">
-                    Status: <strong style="color:#10B981;">Running</strong> | Port: <strong>8000</strong> | Version: <strong>1.0.0</strong>
+                    Status: <strong style="color:{"#10B981" if backend_status["ready"] else "#F59E0B"};">{backend_status["status"]}</strong> | Port: <strong>8000</strong> | Version: <strong>1.0.0</strong>
                 </div>
             </div>
-            <span class="status-badge status-online">Active</span>
+            <span class="status-badge {backend_badge}">{"Active" if backend_status["ready"] else "Starting"}</span>
         </div>
     </div>
     """, unsafe_allow_html=True)
@@ -136,18 +141,20 @@ with col1:
     """, unsafe_allow_html=True)
 
 with col2:
-    st.markdown("""
+    localai_status = services["localai"]
+    localai_badge = "status-online" if localai_status["ready"] else "status-loading"
+    st.markdown(f"""
     <div class="service-card">
         <div style="display:flex; justify-content:space-between; align-items:center;">
             <div>
                 <div style="font-size:1.15rem; font-weight:700; color:#F8FAFC; margin-bottom:0.5rem;">
-                    🔥 LocalAI Model Server
+                    {"🔥" if localai_status["ready"] else "⏳"} LocalAI Model Server
                 </div>
                 <div style="font-size:0.9rem; color:#94A3B8;">
-                    Status: <strong style="color:#F59E0B;">Initializing</strong> | Port: <strong>8080</strong> | GPU: <strong>CPU Mode</strong>
+                    Status: <strong style="color:{"#10B981" if localai_status["ready"] else "#F59E0B"};">{localai_status["status"]}</strong> | Port: <strong>8080</strong> | GPU: <strong>CPU Mode</strong>
                 </div>
             </div>
-            <span class="status-badge status-loading">Loading</span>
+            <span class="status-badge {localai_badge}">{"Ready" if localai_status["ready"] else "Loading"}</span>
         </div>
     </div>
     """, unsafe_allow_html=True)
@@ -168,18 +175,21 @@ with col2:
     </div>
     """, unsafe_allow_html=True)
     
-    st.markdown("""
+    model_ready = services["llama_ready"] or len(services["models"]) > 0
+    model_badge = "status-online" if model_ready else "status-loading"
+    model_name = services["models"][0] if services["models"] else "Llama-3.1-8B"
+    st.markdown(f"""
     <div class="service-card">
         <div style="display:flex; justify-content:space-between; align-items:center;">
             <div>
                 <div style="font-size:1.15rem; font-weight:700; color:#F8FAFC; margin-bottom:0.5rem;">
-                    ⚡ Phi-3 Mini (4K)
+                    {"⚡" if model_ready else "⏳"} {model_name[:25]}
                 </div>
                 <div style="font-size:0.9rem; color:#94A3B8;">
-                    Status: <strong style="color:#F59E0B;">Loading</strong> | Quant: <strong>Q4_K_M</strong> | Size: <strong>2.4GB</strong>
+                    Status: <strong style="color:{"#10B981" if model_ready else "#F59E0B"};">{"Loaded" if model_ready else "Loading"}</strong> | Quant: <strong>Q4_K_M</strong> | Size: <strong>4.9GB</strong>
                 </div>
             </div>
-            <span class="status-badge status-loading">Starting</span>
+            <span class="status-badge {model_badge}">{"Ready" if model_ready else "Starting"}</span>
         </div>
     </div>
     """, unsafe_allow_html=True)
@@ -249,11 +259,32 @@ with col3:
     </div>
     """, unsafe_allow_html=True)
 
-# Auto-refresh notice
+st.markdown("<br>", unsafe_allow_html=True)
+
+st.markdown("### 🧭 Điều hướng nhanh")
+nav_col1, nav_col2, nav_col3, nav_col4 = st.columns(4)
+
+with nav_col1:
+    if st.button("🏠 Trang chủ", key="nav_home", use_container_width=True):
+        st.switch_page("app.py")
+
+with nav_col2:
+    if st.button("💬 Chat Bot", key="nav_chat", use_container_width=True):
+        st.switch_page("pages/chatbot.py")
+
+with nav_col3:
+    if st.button("📝 Form ISO", key="nav_form", use_container_width=True):
+        st.switch_page("pages/Form_iso27001.py")
+
+with nav_col4:
+    if st.button("📊 Refresh Data", key="nav_refresh", use_container_width=True):
+        st.rerun()
+
+vietnam_time = datetime.datetime.utcnow() + datetime.timedelta(hours=7)
 st.markdown(f"""
-<div style="text-align: center; margin-top: 3rem; padding: 1.5rem; background: var(--bg-card); border: 1px solid var(--border); border-radius: 12px;">
+<div style="text-align: center; margin-top: 2rem; padding: 1.5rem; background: var(--bg-card); border: 1px solid var(--border); border-radius: 12px;">
     <p style="color: #94A3B8; margin: 0; font-size: 0.9rem;">
-        🔄 Dashboard cập nhật lúc: <strong style="color: #3B82F6;">{datetime.datetime.now().strftime('%H:%M:%S')}</strong>
+        🔄 Dashboard cập nhật lúc: <strong style="color: #3B82F6;">{vietnam_time.strftime('%H:%M:%S')}</strong> (GMT+7)
     </p>
 </div>
 """, unsafe_allow_html=True)

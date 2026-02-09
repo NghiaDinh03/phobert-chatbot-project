@@ -18,7 +18,7 @@ init_session()
 st.markdown("""
 <div class="hero-section">
     <div style="font-size: 4rem; margin-bottom: 1.5rem; filter: drop-shadow(0 0 20px rgba(59, 130, 246, 0.6));">⚡</div>
-    <h1 style="margin-bottom: 1rem;">PhoBERT AI Enterprise Platform</h1>
+    <h1 style="margin-bottom: 1rem; color: #F8FAFC !important; -webkit-text-fill-color: #F8FAFC !important;">PhoBERT AI Enterprise Platform</h1>
     <p style="font-size: 1.25rem; color: #CBD5E1; max-width: 800px; margin: 0 auto 2rem; line-height: 1.8;">
         Nền tảng AI tiên tiến cho đánh giá tuân thủ <strong style="color: #3B82F6;">ISO 27001:2022</strong> & <strong style="color: #3B82F6;">TCVN 14423</strong>.<br>
         Tích hợp công nghệ <strong>PhoBERT</strong> và <strong>Phi-3 Mini</strong> được tối ưu hóa cho tiếng Việt.
@@ -87,11 +87,12 @@ with col3:
 
 with col4:
     uptime_days = uptime_hours / 24
+    vietnam_now = datetime.datetime.utcnow() + datetime.timedelta(hours=7)
     st.markdown(f"""
     <div class="stat-card">
         <div class="stat-label">⚡ Uptime</div>
         <div class="stat-value">{uptime_days:.0f}<span style="font-size:1.5rem;">d</span></div>
-        <div style="font-size:0.85rem; color:#64748B; margin-top:0.5rem;">Last: {datetime.datetime.now().strftime('%d/%m %H:%M')}</div>
+        <div style="font-size:0.85rem; color:#64748B; margin-top:0.5rem;">Last: {vietnam_now.strftime('%d/%m %H:%M')}</div>
     </div>
     """, unsafe_allow_html=True)
 
@@ -100,21 +101,26 @@ st.markdown("<br>", unsafe_allow_html=True)
 # AI Services Status
 st.markdown("### 🤖 AI Services & Models")
 
+from utils.health_check import get_service_status
+services = get_service_status()
+
 col1, col2 = st.columns(2)
 
 with col1:
-    st.markdown("""
+    backend_status = services["backend"]
+    backend_badge = "status-online" if backend_status["ready"] else "status-loading"
+    st.markdown(f"""
     <div class="service-card">
         <div style="display:flex; justify-content:space-between; align-items:center;">
             <div>
                 <div style="font-size:1.1rem; font-weight:700; color:#F8FAFC; margin-bottom:0.5rem;">
-                    ✅ FastAPI Backend
+                    {"✅" if backend_status["ready"] else "⏳"} FastAPI Backend
                 </div>
                 <div style="font-size:0.9rem; color:#94A3B8;">
                     Core API Service | Port: <strong style="color:#3B82F6;">8000</strong> | Version: <strong>1.0.0</strong>
                 </div>
             </div>
-            <span class="status-badge status-online">Running</span>
+            <span class="status-badge {backend_badge}">{backend_status["status"]}</span>
         </div>
     </div>
     """, unsafe_allow_html=True)
@@ -136,34 +142,40 @@ with col1:
     """, unsafe_allow_html=True)
 
 with col2:
-    st.markdown("""
+    localai_status = services["localai"]
+    localai_badge = "status-online" if localai_status["ready"] else "status-loading"
+    st.markdown(f"""
     <div class="service-card">
         <div style="display:flex; justify-content:space-between; align-items:center;">
             <div>
                 <div style="font-size:1.1rem; font-weight:700; color:#F8FAFC; margin-bottom:0.5rem;">
-                    🔥 LocalAI Engine
+                    {"🔥" if localai_status["ready"] else "⏳"} LocalAI Engine
                 </div>
                 <div style="font-size:0.9rem; color:#94A3B8;">
                     Model Server | Port: <strong style="color:#3B82F6;">8080</strong> | GPU: <strong>CPU Mode</strong>
                 </div>
             </div>
-            <span class="status-badge status-loading">Initializing</span>
+            <span class="status-badge {localai_badge}">{localai_status["status"]}</span>
         </div>
     </div>
     """, unsafe_allow_html=True)
     
-    st.markdown("""
+    model_ready = services["llama_ready"] or len(services["models"]) > 0
+    model_badge = "status-online" if model_ready else "status-loading"
+    model_status = "Ready" if model_ready else "Loading"
+    model_name = services["models"][0] if services["models"] else "Llama-3.1-8B"
+    st.markdown(f"""
     <div class="service-card">
         <div style="display:flex; justify-content:space-between; align-items:center;">
             <div>
                 <div style="font-size:1.1rem; font-weight:700; color:#F8FAFC; margin-bottom:0.5rem;">
-                    ⚡ Phi-3 Mini (4K)
+                    {"⚡" if model_ready else "⏳"} {model_name[:20]}
                 </div>
                 <div style="font-size:0.9rem; color:#94A3B8;">
-                    Microsoft SLM | Quant: <strong style="color:#F59E0B;">Q4_K_M</strong> | Size: <strong>2.4GB</strong>
+                    LLM Model | Quant: <strong style="color:#F59E0B;">Q4_K_M</strong> | Size: <strong>4.9GB</strong>
                 </div>
             </div>
-            <span class="status-badge status-loading">Loading</span>
+            <span class="status-badge {model_badge}">{model_status}</span>
         </div>
     </div>
     """, unsafe_allow_html=True)

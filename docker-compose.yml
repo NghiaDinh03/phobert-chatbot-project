@@ -8,7 +8,7 @@
       - "8000:8000"
     environment:
       - LOCALAI_URL=http://localai:8080
-      - MODEL_NAME=phi-2
+      - MODEL_NAME=${MODEL_NAME}
       - LOG_LEVEL=INFO
     networks:
       - phobert-network
@@ -48,7 +48,7 @@
       - THREADS=8
       - CONTEXT_SIZE=2048
     volumes:
-      - ./models:/models
+      - ./models:/build/models
     networks:
       - phobert-network
     restart: unless-stopped

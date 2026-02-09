@@ -22,7 +22,7 @@ class RAGService:
                 json={
                     "model": "llama-3.1-8b",
                     "prompt": prompt,
-                    "max_tokens": 500
+                    "max_tokens": 2048
                 },
                 timeout=30
             )

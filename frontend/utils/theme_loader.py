@@ -57,11 +57,15 @@ def load_theme():
     h1 {
         font-size: 3rem !important;
         font-weight: 900 !important;
-        background: linear-gradient(135deg, #F8FAFC 0%, #3B82F6 100%);
-        -webkit-background-clip: text;
-        -webkit-text-fill-color: transparent;
-        background-clip: text;
+        color: #F8FAFC !important;
+        -webkit-text-fill-color: #F8FAFC !important;
+        background: none !important;
         margin-bottom: 1rem !important;
+    }
+    
+    h2, h3, h4, h5, h6 {
+        color: #F8FAFC !important;
+        -webkit-text-fill-color: #F8FAFC !important;
     }
     
     h2 {
@@ -144,10 +148,42 @@ def load_theme():
         color: var(--text-primary) !important;
     }
     
-    .stChatInputContainer {
-        background: var(--bg-card) !important;
+    .stChatInputContainer,
+    [data-testid="stChatInput"],
+    [data-testid="stChatInput"] > div,
+    [data-testid="stChatInput"] > div > div,
+    [data-testid="stBottom"] > div > div {
+        background: #1E293B !important;
+        background-color: #1E293B !important;
         border: 2px solid var(--border-light) !important;
-        border-radius: 16px !important;
+        border-radius: 20px !important;
+    }
+    
+    [data-testid="stBottom"] {
+        background: #0A0E1A !important;
+    }
+    
+    [data-testid="stChatInput"] textarea,
+    [data-testid="stChatInput"] input {
+        background: transparent !important;
+        color: #F8FAFC !important;
+        -webkit-text-fill-color: #F8FAFC !important;
+        caret-color: #3B82F6 !important;
+    }
+    
+    [data-testid="stChatInput"] textarea::placeholder {
+        color: #64748B !important;
+        -webkit-text-fill-color: #64748B !important;
+    }
+    
+    [data-testid="stChatInputSubmitButton"] {
+        background: linear-gradient(135deg, #3B82F6, #2563EB) !important;
+        border: none !important;
+        border-radius: 50% !important;
+    }
+    
+    [data-testid="stChatInputSubmitButton"] svg {
+        fill: #FFFFFF !important;
     }
 
     .hero-section {
@@ -230,10 +266,9 @@ def load_theme():
     .stat-value {
         font-size: 2.5rem;
         font-weight: 900;
-        background: linear-gradient(135deg, var(--text-primary), var(--primary));
-        -webkit-background-clip: text;
-        -webkit-text-fill-color: transparent;
-        background-clip: text;
+        color: #F8FAFC !important;
+        -webkit-text-fill-color: #F8FAFC !important;
+        background: none !important;
         margin: 0.5rem 0;
     }
     
