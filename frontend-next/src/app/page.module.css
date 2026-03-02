@@ -1,161 +1,113 @@
 .hero {
     text-align: center;
-    padding: 4rem 0 3rem;
-    margin-bottom: 2rem;
-}
-
-.heroIcon {
-    font-size: 4rem;
-    margin-bottom: 1.5rem;
-    filter: drop-shadow(0 0 30px rgba(59, 130, 246, 0.6));
+    padding: 3rem 0 2.5rem;
 }
 
 .heroTitle {
-    font-size: 2.8rem;
-    font-weight: 900;
-    margin-bottom: 1rem;
-    background: linear-gradient(135deg, #F8FAFC, #CBD5E1);
-    -webkit-background-clip: text;
-    -webkit-text-fill-color: transparent;
+    font-size: 2.2rem;
+    font-weight: 800;
+    letter-spacing: -1px;
+    margin-bottom: 0.75rem;
 }
 
-.heroDesc {
-    font-size: 1.15rem;
-    color: var(--text-secondary);
-    max-width: 700px;
-    margin: 0 auto 2rem;
-    line-height: 1.8;
+.heroSub {
+    font-size: 1rem;
+    color: var(--text-muted);
+    max-width: 550px;
+    margin: 0 auto;
+    line-height: 1.7;
 }
 
-.heroDesc strong {
+.heroSub strong {
     color: var(--accent-blue);
 }
 
-.heroBadges {
-    display: flex;
-    gap: 1rem;
-    justify-content: center;
-    align-items: center;
-    flex-wrap: wrap;
-}
-
 .features {
-    display: grid;
-    grid-template-columns: repeat(3, 1fr);
-    gap: 1.5rem;
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
 }
 
-.featureCard {
-    position: relative;
-    background: linear-gradient(135deg, rgba(30, 41, 59, 0.6), rgba(15, 23, 42, 0.8));
-    border: 1px solid rgba(148, 163, 184, 0.1);
-    border-radius: 20px;
-    padding: 2rem;
-    text-align: center;
-    transition: all 0.3s ease;
+.card {
+    display: flex;
+    align-items: center;
+    gap: 1.25rem;
+    background: var(--bg-card);
+    border: 1px solid rgba(255, 255, 255, 0.05);
+    border-radius: 14px;
+    padding: 1.25rem 1.5rem;
+    transition: all 0.2s;
     cursor: pointer;
-    overflow: hidden;
 }
 
-.featureCard::before {
-    content: '';
-    position: absolute;
-    top: 0;
-    left: 0;
-    right: 0;
-    height: 3px;
-    background: linear-gradient(90deg, transparent, var(--accent-blue), transparent);
-    opacity: 0;
-    transition: opacity 0.3s;
+.card:hover {
+    border-color: rgba(59, 130, 246, 0.2);
+    transform: translateX(4px);
 }
 
-.featureCard:hover {
-    border-color: rgba(59, 130, 246, 0.4);
-    transform: translateY(-4px);
-    box-shadow: 0 8px 30px rgba(0, 0, 0, 0.4);
+.cardIcon {
+    font-size: 2rem;
+    flex-shrink: 0;
+    width: 50px;
+    text-align: center;
 }
 
-.featureCard:hover::before {
-    opacity: 1;
+.cardBody {
+    flex: 1;
 }
 
-.featureIcon {
-    font-size: 3rem;
-    margin-bottom: 1.5rem;
-}
-
-.featureTitle {
-    font-size: 1.15rem;
-    margin-bottom: 1rem;
-}
-
-.featureDesc {
-    color: var(--text-secondary);
-    font-size: 0.95rem;
-    line-height: 1.7;
-    margin-bottom: 1.5rem;
-}
-
-.featureHighlight {
+.cardBody h3 {
+    font-size: 1rem;
     font-weight: 700;
-    font-size: 0.9rem;
+    margin-bottom: 0.25rem;
 }
 
-.featureArrow {
-    position: absolute;
-    bottom: 1rem;
-    right: 1.5rem;
+.cardBody p {
+    font-size: 0.85rem;
+    color: var(--text-muted);
+    margin-bottom: 0.5rem;
+}
+
+.tag {
+    display: inline-block;
+    padding: 2px 8px;
+    border-radius: 12px;
+    font-size: 0.7rem;
+    font-weight: 600;
+    border: 1px solid;
+}
+
+.arrow {
     font-size: 1.2rem;
     color: var(--text-dim);
     opacity: 0;
-    transform: translateX(-10px);
-    transition: all 0.3s;
+    transition: opacity 0.15s;
+    flex-shrink: 0;
 }
 
-.featureCard:hover .featureArrow {
+.card:hover .arrow {
     opacity: 1;
-    transform: translateX(0);
 }
 
 .footer {
     text-align: center;
-    margin-top: 5rem;
-    padding-top: 2.5rem;
-    border-top: 1px solid var(--border);
+    padding: 3rem 0 1rem;
     color: var(--text-dim);
-    font-size: 0.9rem;
-}
-
-.footerTech {
-    margin-top: 0.5rem;
-    font-size: 0.85rem;
-    color: var(--text-dim);
-}
-
-@media (max-width: 1024px) {
-    .features {
-        grid-template-columns: repeat(2, 1fr);
-    }
-
-    .heroTitle {
-        font-size: 2.2rem;
-    }
+    font-size: 0.78rem;
 }
 
 @media (max-width: 640px) {
-    .features {
-        grid-template-columns: 1fr;
-    }
-
-    .hero {
-        padding: 2rem 0;
-    }
-
     .heroTitle {
-        font-size: 1.8rem;
+        font-size: 1.6rem;
     }
 
-    .heroDesc {
-        font-size: 1rem;
+    .card {
+        padding: 1rem;
+        gap: 0.75rem;
+    }
+
+    .cardIcon {
+        font-size: 1.5rem;
+        width: 36px;
     }
 }

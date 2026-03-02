@@ -16,38 +16,28 @@ export default function Navbar() {
 
     return (
         <nav className={styles.navbar}>
-            <div className={styles.container}>
-                <Link href="/" className={styles.logo}>
-                    <div className={styles.logoGlow}>
-                        <span className={styles.logoIcon}>⚡</span>
-                    </div>
-                    <div className={styles.logoTextGroup}>
-                        <span className={styles.logoText}>PhoBERT</span>
-                        <span className={styles.logoSub}>AI Platform</span>
-                    </div>
+            <div className={styles.inner}>
+                <Link href="/" className={styles.brand}>
+                    <div className={styles.brandIcon}>⚡</div>
+                    <span className={styles.brandName}>PhoBERT AI</span>
                 </Link>
 
-                <div className={styles.navCenter}>
-                    <div className={styles.navPill}>
-                        {NAV_ITEMS.map(item => (
-                            <Link
-                                key={item.href}
-                                href={item.href}
-                                className={`${styles.navLink} ${pathname === item.href ? styles.active : ''}`}
-                            >
-                                <span className={styles.navIcon}>{item.icon}</span>
-                                <span className={styles.navLabel}>{item.label}</span>
-                                {pathname === item.href && <div className={styles.activeIndicator} />}
-                            </Link>
-                        ))}
-                    </div>
+                <div className={styles.nav}>
+                    {NAV_ITEMS.map(item => (
+                        <Link
+                            key={item.href}
+                            href={item.href}
+                            className={`${styles.link} ${pathname === item.href ? styles.linkActive : ''}`}
+                        >
+                            <span>{item.icon}</span>
+                            <span>{item.label}</span>
+                        </Link>
+                    ))}
                 </div>
 
-                <div className={styles.navRight}>
-                    <div className={styles.statusChip}>
-                        <div className={styles.statusDot} />
-                        <span>Online</span>
-                    </div>
+                <div className={styles.status}>
+                    <span className={styles.dot} />
+                    <span>Online</span>
                 </div>
             </div>
         </nav>

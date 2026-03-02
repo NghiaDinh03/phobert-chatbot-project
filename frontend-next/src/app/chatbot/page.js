@@ -6,262 +6,230 @@ import remarkGfm from 'remark-gfm'
 import styles from './page.module.css'
 
 const SUGGESTIONS = [
-    { icon: '📋', title: 'ISO 27001 là gì?', sub: 'Tổng quan tiêu chuẩn' },
-    { icon: '🔍', title: 'TCVN 14423 quy định gì?', sub: 'Pháp luật Việt Nam' },
-    { icon: '💡', title: 'Làm sao triển khai ISMS?', sub: 'Lộ trình thực hiện' },
-    { icon: '✅', title: 'Cách đánh giá rủi ro ATTT', sub: 'Phương pháp & quy trình' }
+    { icon: '📋', text: 'ISO 27001 là gì?' },
+    { icon: '🔍', text: 'TCVN 14423 quy định gì?' },
+    { icon: '💡', text: 'Làm sao triển khai ISMS?' },
+    { icon: '✅', text: 'Cách đánh giá rủi ro ATTT' }
 ]
 
 const SESSIONS_KEY = 'phobert_chat_sessions'
 const ACTIVE_KEY = 'phobert_active_session'
 
-function generateId() {
+function uid() {
     return `s_${Date.now()}_${Math.random().toString(36).slice(2, 6)}`
 }
 
-function getTimeStr() {
+function now() {
     return new Date().toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit', hour12: false })
 }
 
-function loadSessions() {
-    if (typeof window === 'undefined') return []
-    try { return JSON.parse(localStorage.getItem(SESSIONS_KEY) || '[]') } catch { return [] }
+function loadStore(key, fallback) {
+    if (typeof window === 'undefined') return fallback
+    try { return JSON.parse(localStorage.getItem(key)) || fallback } catch { return fallback }
 }
 
-function saveSessions(sessions) {
-    try { localStorage.setItem(SESSIONS_KEY, JSON.stringify(sessions)) } catch { }
-}
-
-function loadActiveId() {
-    if (typeof window === 'undefined') return null
-    return localStorage.getItem(ACTIVE_KEY) || null
-}
-
-function saveActiveId(id) {
-    try {
-        if (id) localStorage.setItem(ACTIVE_KEY, id)
-        else localStorage.removeItem(ACTIVE_KEY)
-    } catch { }
+function saveStore(key, val) {
+    try { localStorage.setItem(key, JSON.stringify(val)) } catch { }
 }
 
 export default function ChatbotPage() {
     const [sessions, setSessions] = useState([])
-    const [currentId, setCurrentId] = useState(null)
-    const [messages, setMessages] = useState([])
+    const [activeId, setActiveId] = useState(null)
+    const [msgs, setMsgs] = useState([])
     const [input, setInput] = useState('')
-    const [loading, setLoading] = useState(false)
-    const [showHistory, setShowHistory] = useState(false)
-    const [initialized, setInitialized] = useState(false)
+    const [sending, setSending] = useState(false)
+    const [sidebar, setSidebar] = useState(false)
+    const [ready, setReady] = useState(false)
     const endRef = useRef(null)
     const inputRef = useRef(null)
 
     useEffect(() => {
-        const saved = loadSessions()
-        const activeId = loadActiveId()
+        const saved = loadStore(SESSIONS_KEY, [])
+        const id = loadStore(ACTIVE_KEY, null)
         setSessions(saved)
-
-        if (activeId) {
-            const active = saved.find(s => s.id === activeId)
-            if (active) {
-                setCurrentId(activeId)
-                setMessages(active.messages || [])
-            }
+        if (id) {
+            const s = saved.find(x => x.id === id)
+            if (s) { setActiveId(id); setMsgs(s.messages || []) }
         }
-        setInitialized(true)
+        setReady(true)
     }, [])
 
-    useEffect(() => {
-        if (initialized) saveSessions(sessions)
-    }, [sessions, initialized])
+    useEffect(() => { if (ready) saveStore(SESSIONS_KEY, sessions) }, [sessions, ready])
+    useEffect(() => { if (ready) saveStore(ACTIVE_KEY, activeId) }, [activeId, ready])
+    useEffect(() => { endRef.current?.scrollIntoView({ behavior: 'smooth' }) }, [msgs])
 
-    useEffect(() => {
-        if (initialized) saveActiveId(currentId)
-    }, [currentId, initialized])
-
-    useEffect(() => {
-        endRef.current?.scrollIntoView({ behavior: 'smooth' })
-    }, [messages])
-
-    const persistSession = useCallback((msgs, sessionId) => {
+    const save = useCallback((messages, id) => {
         setSessions(prev => {
-            const title = msgs[0]?.content?.slice(0, 50) + (msgs[0]?.content?.length > 50 ? '...' : '')
-            const session = {
-                id: sessionId,
-                title,
-                timestamp: new Date().toLocaleString('vi-VN'),
-                messages: msgs,
-                count: msgs.length
+            const entry = {
+                id,
+                title: messages[0]?.content?.slice(0, 50) || 'Chat mới',
+                time: new Date().toLocaleString('vi-VN'),
+                messages,
+                count: messages.length
             }
-            const idx = prev.findIndex(s => s.id === sessionId)
-            if (idx >= 0) {
-                const updated = [...prev]
-                updated[idx] = session
-                return updated
-            }
-            return [session, ...prev]
+            const i = prev.findIndex(x => x.id === id)
+            if (i >= 0) { const u = [...prev]; u[i] = entry; return u }
+            return [entry, ...prev]
         })
     }, [])
 
-    const sendMessage = async (text) => {
-        if (!text.trim() || loading) return
+    const send = async (text) => {
+        if (!text.trim() || sending) return
+        const id = activeId || uid()
+        if (!activeId) setActiveId(id)
 
-        const sessionId = currentId || generateId()
-        if (!currentId) setCurrentId(sessionId)
-
-        const userMsg = { role: 'user', content: text.trim(), time: getTimeStr() }
-        const nextMsgs = [...messages, userMsg]
-        setMessages(nextMsgs)
+        const userMsg = { role: 'user', content: text.trim(), time: now() }
+        const next = [...msgs, userMsg]
+        setMsgs(next)
         setInput('')
-        setLoading(true)
-
-        persistSession(nextMsgs, sessionId)
+        setSending(true)
+        save(next, id)
 
         try {
             const res = await fetch('/api/chat', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ message: text.trim(), session_id: sessionId })
+                body: JSON.stringify({ message: text.trim(), session_id: id })
             })
             const data = await res.json()
-            const content = data.error
-                ? `❌ ${data.error}`
-                : (data.response || '⚠️ Không nhận được phản hồi.')
-
-            const botMsg = { role: 'assistant', content, time: getTimeStr() }
-            const final = [...nextMsgs, botMsg]
-            setMessages(final)
-            persistSession(final, sessionId)
+            const botMsg = {
+                role: 'assistant',
+                content: data.error ? `Lỗi: ${data.error}` : (data.response || 'Không có phản hồi.'),
+                time: now()
+            }
+            const final = [...next, botMsg]
+            setMsgs(final)
+            save(final, id)
         } catch {
-            const errMsg = { role: 'assistant', content: '❌ Không kết nối được backend.', time: getTimeStr() }
-            const final = [...nextMsgs, errMsg]
-            setMessages(final)
-            persistSession(final, sessionId)
+            const errMsg = { role: 'assistant', content: 'Không kết nối được server.', time: now() }
+            const final = [...next, errMsg]
+            setMsgs(final)
+            save(final, id)
         } finally {
-            setLoading(false)
+            setSending(false)
         }
     }
 
-    const startNew = () => {
-        setCurrentId(null)
-        setMessages([])
-        setShowHistory(false)
-        inputRef.current?.focus()
+    const newChat = () => {
+        setActiveId(null)
+        setMsgs([])
+        setSidebar(false)
+        setTimeout(() => inputRef.current?.focus(), 100)
     }
 
-    const loadSession = (session) => {
-        setCurrentId(session.id)
-        setMessages(session.messages || [])
-        setShowHistory(false)
+    const openSession = (s) => {
+        setActiveId(s.id)
+        setMsgs(s.messages || [])
+        setSidebar(false)
     }
 
-    const deleteSession = (id) => {
-        setSessions(prev => prev.filter(s => s.id !== id))
-        if (currentId === id) {
-            setCurrentId(null)
-            setMessages([])
-        }
+    const removeSession = (e, id) => {
+        e.stopPropagation()
+        setSessions(prev => prev.filter(x => x.id !== id))
+        if (activeId === id) { setActiveId(null); setMsgs([]) }
     }
 
     return (
-        <div className={styles.container}>
-            <div className={styles.header}>
-                <div>
-                    <h1 className={styles.title}>💬 AI Knowledge Assistant</h1>
-                    <p className={styles.subtitle}>ISO 27001:2022 & TCVN 14423:2025</p>
-                </div>
-                <div className={styles.actions}>
-                    <button className={styles.btnNew} onClick={startNew}>＋ Chat mới</button>
-                    <button className={styles.btnHistory} onClick={() => setShowHistory(!showHistory)}>
-                        📚 Lịch sử ({sessions.length})
-                    </button>
-                </div>
-            </div>
-
-            {showHistory && (
-                <div className={styles.historyPanel}>
-                    {sessions.length === 0 ? (
-                        <p className={styles.emptyHistory}>Chưa có lịch sử</p>
-                    ) : (
-                        sessions.map(s => (
-                            <div key={s.id} className={`${styles.historyItem} ${s.id === currentId ? styles.historyActive : ''}`}>
-                                <div className={styles.historyInfo} onClick={() => loadSession(s)}>
-                                    <div className={styles.historyTitle}>{s.title}</div>
-                                    <div className={styles.historyMeta}>{s.timestamp} · {s.count} tin</div>
-                                </div>
-                                <button className={styles.historyDel} onClick={() => deleteSession(s.id)}>✕</button>
-                            </div>
-                        ))
-                    )}
-                </div>
+        <div className={styles.layout}>
+            {sidebar && (
+                <div className={styles.overlay} onClick={() => setSidebar(false)} />
             )}
 
-            <div className={styles.chatArea}>
-                {messages.length === 0 ? (
-                    <div className={styles.welcome}>
-                        <div className={styles.welcomeIcon}>👋</div>
-                        <h2 className={styles.welcomeTitle}>Xin chào!</h2>
-                        <p className={styles.welcomeDesc}>Hãy đặt câu hỏi về ISO 27001 hoặc chọn chủ đề bên dưới</p>
-                        <div className={styles.suggestions}>
-                            {SUGGESTIONS.map((s, i) => (
-                                <button key={i} className={styles.sugCard} onClick={() => sendMessage(s.title)}>
-                                    <span className={styles.sugIcon}>{s.icon}</span>
-                                    <span className={styles.sugTitle}>{s.title}</span>
-                                    <span className={styles.sugSub}>{s.sub}</span>
-                                </button>
-                            ))}
+            <aside className={`${styles.sidebar} ${sidebar ? styles.sidebarOpen : ''}`}>
+                <div className={styles.sidebarHeader}>
+                    <h3>Lịch sử</h3>
+                    <button className={styles.sidebarClose} onClick={() => setSidebar(false)}>✕</button>
+                </div>
+                <button className={styles.newBtn} onClick={newChat}>＋ Chat mới</button>
+                <div className={styles.sessionList}>
+                    {sessions.length === 0 && <p className={styles.empty}>Chưa có cuộc hội thoại nào</p>}
+                    {sessions.map(s => (
+                        <div
+                            key={s.id}
+                            className={`${styles.sessionItem} ${s.id === activeId ? styles.sessionActive : ''}`}
+                            onClick={() => openSession(s)}
+                        >
+                            <div className={styles.sessionInfo}>
+                                <div className={styles.sessionTitle}>{s.title}</div>
+                                <div className={styles.sessionMeta}>{s.count} tin · {s.time}</div>
+                            </div>
+                            <button className={styles.sessionDel} onClick={e => removeSession(e, s.id)}>✕</button>
+                        </div>
+                    ))}
+                </div>
+            </aside>
+
+            <div className={styles.main}>
+                <div className={styles.topBar}>
+                    <div className={styles.topLeft}>
+                        <button className={styles.menuBtn} onClick={() => setSidebar(true)}>
+                            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M3 12h18M3 6h18M3 18h18" /></svg>
+                        </button>
+                        <div>
+                            <h1 className={styles.pageTitle}>AI Chat</h1>
+                            <p className={styles.pageSub}>Trợ lý ISO 27001 · TCVN 14423</p>
                         </div>
                     </div>
-                ) : (
-                    <div className={styles.msgList}>
-                        {messages.map((msg, i) => (
-                            <div key={i} className={`${styles.msgRow} ${msg.role === 'user' ? styles.userRow : styles.botRow}`}>
-                                {msg.role === 'assistant' && <div className={styles.botAvatar}>🤖</div>}
-                                <div className={`${styles.bubble} ${msg.role === 'user' ? styles.userBubble : styles.botBubble}`}>
-                                    {msg.role === 'assistant' ? (
-                                        <div className={styles.mdContent}>
-                                            <ReactMarkdown remarkPlugins={[remarkGfm]}>{msg.content}</ReactMarkdown>
-                                        </div>
-                                    ) : (
-                                        <div>{msg.content}</div>
-                                    )}
-                                    <div className={styles.msgTime}>{msg.time}</div>
-                                </div>
-                                {msg.role === 'user' && <div className={styles.userAvatar}>👤</div>}
+                    <div className={styles.topRight}>
+                        <button className={styles.topBtn} onClick={newChat}>＋ Mới</button>
+                        <button className={styles.topBtn} onClick={() => setSidebar(true)}>📚 {sessions.length}</button>
+                    </div>
+                </div>
+
+                <div className={styles.chatArea}>
+                    {msgs.length === 0 ? (
+                        <div className={styles.welcome}>
+                            <h2 className={styles.welcomeTitle}>Xin chào 👋</h2>
+                            <p className={styles.welcomeSub}>Hỏi bất cứ điều gì về ISO 27001 và TCVN 14423</p>
+                            <div className={styles.chips}>
+                                {SUGGESTIONS.map((s, i) => (
+                                    <button key={i} className={styles.chip} onClick={() => send(s.text)}>
+                                        <span>{s.icon}</span> {s.text}
+                                    </button>
+                                ))}
                             </div>
-                        ))}
-                        {loading && (
-                            <div className={`${styles.msgRow} ${styles.botRow}`}>
-                                <div className={styles.botAvatar}>🤖</div>
-                                <div className={`${styles.bubble} ${styles.botBubble}`}>
-                                    <div className={styles.typing}>
-                                        <span /><span /><span />
+                        </div>
+                    ) : (
+                        <div className={styles.msgList}>
+                            {msgs.map((m, i) => (
+                                <div key={i} className={`${styles.msg} ${m.role === 'user' ? styles.msgUser : styles.msgBot}`}>
+                                    {m.role === 'assistant' && <div className={styles.avatar}>🤖</div>}
+                                    <div className={`${styles.bubble} ${m.role === 'user' ? styles.bubbleUser : styles.bubbleBot}`}>
+                                        {m.role === 'assistant' ? (
+                                            <div className={styles.md}><ReactMarkdown remarkPlugins={[remarkGfm]}>{m.content}</ReactMarkdown></div>
+                                        ) : m.content}
+                                        <span className={styles.time}>{m.time}</span>
+                                    </div>
+                                    {m.role === 'user' && <div className={styles.avatarUser}>👤</div>}
+                                </div>
+                            ))}
+                            {sending && (
+                                <div className={`${styles.msg} ${styles.msgBot}`}>
+                                    <div className={styles.avatar}>🤖</div>
+                                    <div className={`${styles.bubble} ${styles.bubbleBot}`}>
+                                        <div className={styles.dots}><span /><span /><span /></div>
                                     </div>
                                 </div>
-                            </div>
-                        )}
-                        <div ref={endRef} />
-                    </div>
-                )}
-            </div>
+                            )}
+                            <div ref={endRef} />
+                        </div>
+                    )}
+                </div>
 
-            <form className={styles.inputArea} onSubmit={e => { e.preventDefault(); sendMessage(input) }}>
-                <div className={styles.inputWrap}>
+                <form className={styles.inputBar} onSubmit={e => { e.preventDefault(); send(input) }}>
                     <input
                         ref={inputRef}
                         value={input}
                         onChange={e => setInput(e.target.value)}
                         placeholder="Nhập câu hỏi..."
-                        className={styles.input}
-                        disabled={loading}
+                        disabled={sending}
                         autoFocus
                     />
-                    <button type="submit" className={styles.sendBtn} disabled={!input.trim() || loading}>
-                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-                            <line x1="22" y1="2" x2="11" y2="13" /><polygon points="22 2 15 22 11 13 2 9 22 2" />
-                        </svg>
+                    <button type="submit" disabled={!input.trim() || sending}>
+                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round"><line x1="22" y1="2" x2="11" y2="13" /><polygon points="22 2 15 22 11 13 2 9 22 2" /></svg>
                     </button>
-                </div>
-            </form>
+                </form>
+            </div>
         </div>
     )
 }

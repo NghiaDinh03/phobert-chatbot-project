@@ -2,191 +2,136 @@
     position: sticky;
     top: 0;
     z-index: 100;
-    background: rgba(10, 14, 26, 0.6);
-    backdrop-filter: blur(24px) saturate(180%);
+    background: rgba(10, 14, 26, 0.75);
+    backdrop-filter: blur(20px);
     border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+    height: 56px;
 }
 
-.container {
+.inner {
     max-width: 1400px;
     margin: 0 auto;
+    padding: 0 2rem;
+    height: 100%;
     display: flex;
     align-items: center;
     justify-content: space-between;
-    height: 60px;
-    padding: 0 2rem;
 }
 
-.logo {
+.brand {
     display: flex;
     align-items: center;
-    gap: 0.75rem;
+    gap: 10px;
     text-decoration: none;
+    flex-shrink: 0;
 }
 
-.logoGlow {
-    width: 36px;
-    height: 36px;
-    border-radius: 10px;
-    background: linear-gradient(135deg, #3B82F6, #8B5CF6);
+.brandIcon {
+    width: 32px;
+    height: 32px;
+    border-radius: 8px;
+    background: linear-gradient(135deg, #3B82F6, #7C3AED);
     display: flex;
     align-items: center;
     justify-content: center;
-    box-shadow: 0 0 20px rgba(59, 130, 246, 0.35);
+    font-size: 0.95rem;
+    box-shadow: 0 2px 12px rgba(59, 130, 246, 0.3);
 }
 
-.logoIcon {
-    font-size: 1.1rem;
+.brandName {
+    font-size: 1.05rem;
+    font-weight: 700;
+    color: #F1F5F9;
+    letter-spacing: -0.3px;
 }
 
-.logoTextGroup {
-    display: flex;
-    flex-direction: column;
-    line-height: 1.1;
-}
-
-.logoText {
-    font-size: 1rem;
-    font-weight: 800;
-    color: var(--text-primary);
-    letter-spacing: -0.5px;
-}
-
-.logoSub {
-    font-size: 0.65rem;
-    font-weight: 500;
-    color: var(--text-dim);
-    text-transform: uppercase;
-    letter-spacing: 1.5px;
-}
-
-.navCenter {
-    position: absolute;
-    left: 50%;
-    transform: translateX(-50%);
-}
-
-.navPill {
+.nav {
     display: flex;
     align-items: center;
-    gap: 2px;
-    background: rgba(255, 255, 255, 0.04);
-    border: 1px solid rgba(255, 255, 255, 0.06);
-    border-radius: 14px;
-    padding: 4px;
+    gap: 4px;
+    background: rgba(255, 255, 255, 0.03);
+    border: 1px solid rgba(255, 255, 255, 0.05);
+    border-radius: 12px;
+    padding: 3px;
 }
 
-.navLink {
-    position: relative;
+.link {
     display: flex;
     align-items: center;
     gap: 6px;
-    padding: 8px 16px;
-    border-radius: 11px;
-    font-size: 0.85rem;
+    padding: 7px 14px;
+    border-radius: 9px;
+    font-size: 0.82rem;
     font-weight: 500;
-    color: var(--text-dim);
-    transition: all 0.2s ease;
+    color: #64748B;
     text-decoration: none;
-    white-space: nowrap;
+    transition: color 0.15s, background 0.15s;
 }
 
-.navLink:hover {
-    color: var(--text-secondary);
+.link:hover {
+    color: #CBD5E1;
     background: rgba(255, 255, 255, 0.05);
 }
 
-.navIcon {
-    font-size: 0.9rem;
-}
-
-.navLabel {
-    font-size: 0.82rem;
-}
-
-.active {
-    color: var(--text-primary) !important;
-    background: rgba(59, 130, 246, 0.12) !important;
+.linkActive {
+    color: #F1F5F9 !important;
+    background: rgba(59, 130, 246, 0.15) !important;
     font-weight: 600;
 }
 
-.activeIndicator {
-    position: absolute;
-    bottom: -1px;
-    left: 50%;
-    transform: translateX(-50%);
-    width: 16px;
-    height: 2px;
-    background: var(--accent-blue);
-    border-radius: 1px;
-}
-
-.navRight {
-    display: flex;
-    align-items: center;
-    gap: 0.75rem;
-}
-
-.statusChip {
+.status {
     display: flex;
     align-items: center;
     gap: 6px;
-    padding: 5px 12px;
-    border-radius: 20px;
-    font-size: 0.75rem;
+    font-size: 0.72rem;
     font-weight: 600;
-    color: var(--accent-green);
+    color: #10B981;
+    padding: 4px 10px;
+    border-radius: 16px;
     background: rgba(16, 185, 129, 0.08);
-    border: 1px solid rgba(16, 185, 129, 0.2);
+    border: 1px solid rgba(16, 185, 129, 0.15);
+    flex-shrink: 0;
 }
 
-.statusDot {
+.dot {
     width: 6px;
     height: 6px;
     border-radius: 50%;
-    background: var(--accent-green);
-    box-shadow: 0 0 6px var(--accent-green);
-    animation: pulse 2s ease-in-out infinite;
+    background: #10B981;
+    box-shadow: 0 0 6px rgba(16, 185, 129, 0.6);
+    animation: blink 2s ease-in-out infinite;
 }
 
-@keyframes pulse {
+@keyframes blink {
 
     0%,
     100% {
         opacity: 1;
-        box-shadow: 0 0 6px var(--accent-green);
     }
 
     50% {
-        opacity: 0.5;
-        box-shadow: 0 0 2px var(--accent-green);
+        opacity: 0.4;
     }
 }
 
-@media (max-width: 900px) {
-    .navCenter {
-        position: static;
-        transform: none;
-    }
-
-    .container {
-        gap: 0.5rem;
+@media (max-width: 768px) {
+    .inner {
         padding: 0 1rem;
     }
 
-    .navLabel {
+    .link span:last-child {
         display: none;
     }
 
-    .logoTextGroup {
+    .link {
+        padding: 7px 10px;
+    }
+
+    .status span {
         display: none;
     }
 
-    .navLink {
-        padding: 8px 12px;
-    }
-
-    .statusChip span {
+    .brandName {
         display: none;
     }
 }
