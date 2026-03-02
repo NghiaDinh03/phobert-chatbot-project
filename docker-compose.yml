@@ -37,6 +37,7 @@
       - ./frontend-next/src:/app/src
       - ./frontend-next/public:/app/public
       - ./frontend-next/next.config.js:/app/next.config.js
+      - ./frontend-next/jsconfig.json:/app/jsconfig.json
     networks:
       - phobert-network
     depends_on:
