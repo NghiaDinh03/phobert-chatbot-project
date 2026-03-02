@@ -1,4 +1,9 @@
-﻿phobert-chatbot-project/
+﻿# PhoBERT Chatbot Project
+
+## Cấu trúc thư mục
+
+```text
+phobert-chatbot-project/
 │
 ├── .vs/                                    # Visual Studio cache (gitignored)
 ├── venv/                                   # Python virtual environment (gitignored)
@@ -115,3 +120,4 @@
 ├── docker-compose.yml
 ├── README.md
 └── requirements.txt
+```
