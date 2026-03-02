@@ -2,10 +2,9 @@
     position: sticky;
     top: 0;
     z-index: 100;
-    background: rgba(10, 14, 26, 0.85);
-    backdrop-filter: blur(20px);
-    border-bottom: 1px solid rgba(59, 130, 246, 0.15);
-    padding: 0 2rem;
+    background: rgba(10, 14, 26, 0.6);
+    backdrop-filter: blur(24px) saturate(180%);
+    border-bottom: 1px solid rgba(255, 255, 255, 0.06);
 }
 
 .container {
@@ -14,76 +13,139 @@
     display: flex;
     align-items: center;
     justify-content: space-between;
-    height: 64px;
+    height: 60px;
+    padding: 0 2rem;
 }
 
 .logo {
     display: flex;
     align-items: center;
-    gap: 0.5rem;
-    font-weight: 800;
-    font-size: 1.1rem;
-    color: var(--text-primary);
+    gap: 0.75rem;
+    text-decoration: none;
+}
+
+.logoGlow {
+    width: 36px;
+    height: 36px;
+    border-radius: 10px;
+    background: linear-gradient(135deg, #3B82F6, #8B5CF6);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-shadow: 0 0 20px rgba(59, 130, 246, 0.35);
 }
 
 .logoIcon {
-    font-size: 1.4rem;
-    filter: drop-shadow(0 0 10px rgba(59, 130, 246, 0.6));
+    font-size: 1.1rem;
+}
+
+.logoTextGroup {
+    display: flex;
+    flex-direction: column;
+    line-height: 1.1;
 }
 
 .logoText {
-    background: linear-gradient(135deg, #60A5FA, #A78BFA);
-    -webkit-background-clip: text;
-    -webkit-text-fill-color: transparent;
+    font-size: 1rem;
+    font-weight: 800;
+    color: var(--text-primary);
+    letter-spacing: -0.5px;
 }
 
-.navLinks {
+.logoSub {
+    font-size: 0.65rem;
+    font-weight: 500;
+    color: var(--text-dim);
+    text-transform: uppercase;
+    letter-spacing: 1.5px;
+}
+
+.navCenter {
+    position: absolute;
+    left: 50%;
+    transform: translateX(-50%);
+}
+
+.navPill {
     display: flex;
     align-items: center;
-    gap: 0.25rem;
+    gap: 2px;
+    background: rgba(255, 255, 255, 0.04);
+    border: 1px solid rgba(255, 255, 255, 0.06);
+    border-radius: 14px;
+    padding: 4px;
 }
 
 .navLink {
+    position: relative;
     display: flex;
     align-items: center;
     gap: 6px;
-    padding: 0.5rem 1rem;
-    border-radius: 10px;
-    font-size: 0.9rem;
+    padding: 8px 16px;
+    border-radius: 11px;
+    font-size: 0.85rem;
     font-weight: 500;
-    color: var(--text-muted);
-    transition: var(--transition);
+    color: var(--text-dim);
+    transition: all 0.2s ease;
+    text-decoration: none;
+    white-space: nowrap;
 }
 
 .navLink:hover {
-    color: var(--text-primary);
-    background: rgba(59, 130, 246, 0.1);
+    color: var(--text-secondary);
+    background: rgba(255, 255, 255, 0.05);
+}
+
+.navIcon {
+    font-size: 0.9rem;
+}
+
+.navLabel {
+    font-size: 0.82rem;
 }
 
 .active {
-    color: var(--accent-blue) !important;
-    background: rgba(59, 130, 246, 0.15);
+    color: var(--text-primary) !important;
+    background: rgba(59, 130, 246, 0.12) !important;
     font-weight: 600;
 }
 
-.badge {
+.activeIndicator {
+    position: absolute;
+    bottom: -1px;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 16px;
+    height: 2px;
+    background: var(--accent-blue);
+    border-radius: 1px;
+}
+
+.navRight {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+}
+
+.statusChip {
     display: flex;
     align-items: center;
     gap: 6px;
-    padding: 4px 12px;
+    padding: 5px 12px;
     border-radius: 20px;
-    font-size: 0.8rem;
+    font-size: 0.75rem;
     font-weight: 600;
     color: var(--accent-green);
-    background: rgba(16, 185, 129, 0.1);
-    border: 1px solid rgba(16, 185, 129, 0.3);
+    background: rgba(16, 185, 129, 0.08);
+    border: 1px solid rgba(16, 185, 129, 0.2);
 }
 
-.dot {
-    width: 8px;
-    height: 8px;
+.statusDot {
+    width: 6px;
+    height: 6px;
     border-radius: 50%;
     background: var(--accent-green);
+    box-shadow: 0 0 6px var(--accent-green);
     animation: pulse 2s ease-in-out infinite;
 }
 
@@ -92,23 +154,39 @@
     0%,
     100% {
         opacity: 1;
+        box-shadow: 0 0 6px var(--accent-green);
     }
 
     50% {
-        opacity: 0.4;
+        opacity: 0.5;
+        box-shadow: 0 0 2px var(--accent-green);
     }
 }
 
-@media (max-width: 768px) {
-    .navbar {
+@media (max-width: 900px) {
+    .navCenter {
+        position: static;
+        transform: none;
+    }
+
+    .container {
+        gap: 0.5rem;
         padding: 0 1rem;
     }
 
-    .navLink span:last-child {
+    .navLabel {
         display: none;
     }
 
-    .badge {
+    .logoTextGroup {
+        display: none;
+    }
+
+    .navLink {
+        padding: 8px 12px;
+    }
+
+    .statusChip span {
         display: none;
     }
 }

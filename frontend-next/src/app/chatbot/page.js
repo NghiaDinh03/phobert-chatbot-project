@@ -1,82 +1,120 @@
 'use client'
 
-import { useState, useEffect, useRef } from 'react'
+import { useState, useEffect, useRef, useCallback } from 'react'
 import ReactMarkdown from 'react-markdown'
 import remarkGfm from 'remark-gfm'
 import styles from './page.module.css'
 
 const SUGGESTIONS = [
-    { icon: '📋', title: 'Giải thích điều khoản', sub: 'Chi tiết về ISO 27001' },
-    { icon: '🔍', title: 'Tra cứu văn bản', sub: 'Pháp luật liên quan' },
-    { icon: '💡', title: 'Tư vấn triển khai', sub: 'Lộ trình ISMS' },
-    { icon: '✅', title: 'Đánh giá rủi ro', sub: 'Phương pháp & quy trình' }
+    { icon: '📋', title: 'ISO 27001 là gì?', sub: 'Tổng quan tiêu chuẩn' },
+    { icon: '🔍', title: 'TCVN 14423 quy định gì?', sub: 'Pháp luật Việt Nam' },
+    { icon: '💡', title: 'Làm sao triển khai ISMS?', sub: 'Lộ trình thực hiện' },
+    { icon: '✅', title: 'Cách đánh giá rủi ro ATTT', sub: 'Phương pháp & quy trình' }
 ]
 
+const SESSIONS_KEY = 'phobert_chat_sessions'
+const ACTIVE_KEY = 'phobert_active_session'
+
 function generateId() {
-    return `chat_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`
+    return `s_${Date.now()}_${Math.random().toString(36).slice(2, 6)}`
 }
 
 function getTimeStr() {
     return new Date().toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit', hour12: false })
 }
 
+function loadSessions() {
+    if (typeof window === 'undefined') return []
+    try { return JSON.parse(localStorage.getItem(SESSIONS_KEY) || '[]') } catch { return [] }
+}
+
+function saveSessions(sessions) {
+    try { localStorage.setItem(SESSIONS_KEY, JSON.stringify(sessions)) } catch { }
+}
+
+function loadActiveId() {
+    if (typeof window === 'undefined') return null
+    return localStorage.getItem(ACTIVE_KEY) || null
+}
+
+function saveActiveId(id) {
+    try {
+        if (id) localStorage.setItem(ACTIVE_KEY, id)
+        else localStorage.removeItem(ACTIVE_KEY)
+    } catch { }
+}
+
 export default function ChatbotPage() {
     const [sessions, setSessions] = useState([])
-    const [currentSessionId, setCurrentSessionId] = useState(null)
+    const [currentId, setCurrentId] = useState(null)
     const [messages, setMessages] = useState([])
     const [input, setInput] = useState('')
     const [loading, setLoading] = useState(false)
     const [showHistory, setShowHistory] = useState(false)
-    const messagesEndRef = useRef(null)
+    const [initialized, setInitialized] = useState(false)
+    const endRef = useRef(null)
     const inputRef = useRef(null)
 
     useEffect(() => {
-        const saved = localStorage.getItem('chat_sessions')
-        if (saved) {
-            try { setSessions(JSON.parse(saved)) } catch { }
+        const saved = loadSessions()
+        const activeId = loadActiveId()
+        setSessions(saved)
+
+        if (activeId) {
+            const active = saved.find(s => s.id === activeId)
+            if (active) {
+                setCurrentId(activeId)
+                setMessages(active.messages || [])
+            }
         }
+        setInitialized(true)
     }, [])
 
     useEffect(() => {
-        if (sessions.length > 0) {
-            localStorage.setItem('chat_sessions', JSON.stringify(sessions))
-        }
-    }, [sessions])
+        if (initialized) saveSessions(sessions)
+    }, [sessions, initialized])
 
     useEffect(() => {
-        messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' })
+        if (initialized) saveActiveId(currentId)
+    }, [currentId, initialized])
+
+    useEffect(() => {
+        endRef.current?.scrollIntoView({ behavior: 'smooth' })
     }, [messages])
 
-    const saveSession = (msgs, sessionId) => {
+    const persistSession = useCallback((msgs, sessionId) => {
         setSessions(prev => {
-            const existing = prev.findIndex(s => s.id === sessionId)
+            const title = msgs[0]?.content?.slice(0, 50) + (msgs[0]?.content?.length > 50 ? '...' : '')
             const session = {
                 id: sessionId,
-                title: msgs[0]?.content?.slice(0, 40) + (msgs[0]?.content?.length > 40 ? '...' : ''),
+                title,
                 timestamp: new Date().toLocaleString('vi-VN'),
                 messages: msgs,
-                messageCount: msgs.length
+                count: msgs.length
             }
-            if (existing >= 0) {
+            const idx = prev.findIndex(s => s.id === sessionId)
+            if (idx >= 0) {
                 const updated = [...prev]
-                updated[existing] = session
+                updated[idx] = session
                 return updated
             }
             return [session, ...prev]
         })
-    }
+    }, [])
 
     const sendMessage = async (text) => {
         if (!text.trim() || loading) return
 
-        const sessionId = currentSessionId || generateId()
-        if (!currentSessionId) setCurrentSessionId(sessionId)
+        const sessionId = currentId || generateId()
+        if (!currentId) setCurrentId(sessionId)
 
-        const userMsg = { role: 'user', content: text.trim(), timestamp: getTimeStr() }
-        const newMessages = [...messages, userMsg]
-        setMessages(newMessages)
+        const userMsg = { role: 'user', content: text.trim(), time: getTimeStr() }
+        const nextMsgs = [...messages, userMsg]
+        setMessages(nextMsgs)
         setInput('')
         setLoading(true)
+
+        persistSession(nextMsgs, sessionId)
 
         try {
             const res = await fetch('/api/chat', {
@@ -84,54 +122,44 @@ export default function ChatbotPage() {
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ message: text.trim(), session_id: sessionId })
             })
-
             const data = await res.json()
-            const botContent = data.error
-                ? `❌ **Lỗi**: ${data.error}`
+            const content = data.error
+                ? `❌ ${data.error}`
                 : (data.response || '⚠️ Không nhận được phản hồi.')
 
-            const botMsg = { role: 'assistant', content: botContent, timestamp: getTimeStr() }
-            const updatedMessages = [...newMessages, botMsg]
-            setMessages(updatedMessages)
-            saveSession(updatedMessages, sessionId)
+            const botMsg = { role: 'assistant', content, time: getTimeStr() }
+            const final = [...nextMsgs, botMsg]
+            setMessages(final)
+            persistSession(final, sessionId)
         } catch {
-            const errorMsg = { role: 'assistant', content: '❌ **Lỗi**: Không kết nối được backend.', timestamp: getTimeStr() }
-            const updatedMessages = [...newMessages, errorMsg]
-            setMessages(updatedMessages)
-            saveSession(updatedMessages, sessionId)
+            const errMsg = { role: 'assistant', content: '❌ Không kết nối được backend.', time: getTimeStr() }
+            const final = [...nextMsgs, errMsg]
+            setMessages(final)
+            persistSession(final, sessionId)
         } finally {
             setLoading(false)
         }
     }
 
-    const handleSubmit = (e) => {
-        e.preventDefault()
-        sendMessage(input)
-    }
-
-    const startNewChat = () => {
-        setCurrentSessionId(null)
+    const startNew = () => {
+        setCurrentId(null)
         setMessages([])
         setShowHistory(false)
         inputRef.current?.focus()
     }
 
     const loadSession = (session) => {
-        setCurrentSessionId(session.id)
+        setCurrentId(session.id)
         setMessages(session.messages || [])
         setShowHistory(false)
     }
 
     const deleteSession = (id) => {
         setSessions(prev => prev.filter(s => s.id !== id))
-        if (currentSessionId === id) {
-            setCurrentSessionId(null)
+        if (currentId === id) {
+            setCurrentId(null)
             setMessages([])
         }
-    }
-
-    const handleSuggestion = (text) => {
-        sendMessage(text)
     }
 
     return (
@@ -139,11 +167,11 @@ export default function ChatbotPage() {
             <div className={styles.header}>
                 <div>
                     <h1 className={styles.title}>💬 AI Knowledge Assistant</h1>
-                    <p className={styles.subtitle}>Trợ lý AI chuyên về ISO 27001:2022 & TCVN 14423:2025</p>
+                    <p className={styles.subtitle}>ISO 27001:2022 & TCVN 14423:2025</p>
                 </div>
-                <div className={styles.headerActions}>
-                    <button className="btn btn-primary" onClick={startNewChat}>➕ Chat mới</button>
-                    <button className="btn btn-ghost" onClick={() => setShowHistory(!showHistory)}>
+                <div className={styles.actions}>
+                    <button className={styles.btnNew} onClick={startNew}>＋ Chat mới</button>
+                    <button className={styles.btnHistory} onClick={() => setShowHistory(!showHistory)}>
                         📚 Lịch sử ({sessions.length})
                     </button>
                 </div>
@@ -151,28 +179,18 @@ export default function ChatbotPage() {
 
             {showHistory && (
                 <div className={styles.historyPanel}>
-                    <h3 className={styles.historyTitle}>📚 Lịch sử Chat</h3>
                     {sessions.length === 0 ? (
-                        <p className={styles.historyEmpty}>Chưa có lịch sử chat nào</p>
+                        <p className={styles.emptyHistory}>Chưa có lịch sử</p>
                     ) : (
-                        <div className={styles.historyList}>
-                            {sessions.map(session => (
-                                <div key={session.id} className={styles.historyItem}>
-                                    <div className={styles.historyInfo} onClick={() => loadSession(session)}>
-                                        <span className={styles.historyDot}></span>
-                                        <div>
-                                            <div className={styles.historyItemTitle}>{session.title}</div>
-                                            <div className={styles.historyMeta}>
-                                                🕒 {session.timestamp} • 💬 {session.messageCount} tin
-                                            </div>
-                                        </div>
-                                    </div>
-                                    <button className={styles.historyDelete} onClick={() => deleteSession(session.id)}>
-                                        🗑️
-                                    </button>
+                        sessions.map(s => (
+                            <div key={s.id} className={`${styles.historyItem} ${s.id === currentId ? styles.historyActive : ''}`}>
+                                <div className={styles.historyInfo} onClick={() => loadSession(s)}>
+                                    <div className={styles.historyTitle}>{s.title}</div>
+                                    <div className={styles.historyMeta}>{s.timestamp} · {s.count} tin</div>
                                 </div>
-                            ))}
-                        </div>
+                                <button className={styles.historyDel} onClick={() => deleteSession(s.id)}>✕</button>
+                            </div>
+                        ))
                     )}
                 </div>
             )}
@@ -180,85 +198,70 @@ export default function ChatbotPage() {
             <div className={styles.chatArea}>
                 {messages.length === 0 ? (
                     <div className={styles.welcome}>
-                        <div className={styles.welcomeEmoji}>👋</div>
-                        <h2 className={styles.welcomeTitle}>Xin chào! Tôi có thể giúp gì cho bạn?</h2>
-                        <p className={styles.welcomeDesc}>
-                            Trợ lý ảo hỗ trợ ISO 27001 và TCVN 14423.<br />
-                            Hãy đặt câu hỏi hoặc chọn các chủ đề bên dưới.
-                        </p>
+                        <div className={styles.welcomeIcon}>👋</div>
+                        <h2 className={styles.welcomeTitle}>Xin chào!</h2>
+                        <p className={styles.welcomeDesc}>Hãy đặt câu hỏi về ISO 27001 hoặc chọn chủ đề bên dưới</p>
                         <div className={styles.suggestions}>
                             {SUGGESTIONS.map((s, i) => (
-                                <button key={i} className={styles.suggestionCard} onClick={() => handleSuggestion(s.title)}>
-                                    <span className={styles.suggestionIcon}>{s.icon}</span>
-                                    <span className={styles.suggestionTitle}>{s.title}</span>
-                                    <span className={styles.suggestionSub}>{s.sub}</span>
+                                <button key={i} className={styles.sugCard} onClick={() => sendMessage(s.title)}>
+                                    <span className={styles.sugIcon}>{s.icon}</span>
+                                    <span className={styles.sugTitle}>{s.title}</span>
+                                    <span className={styles.sugSub}>{s.sub}</span>
                                 </button>
                             ))}
                         </div>
                     </div>
                 ) : (
-                    <div className={styles.messageList}>
+                    <div className={styles.msgList}>
                         {messages.map((msg, i) => (
-                            <div key={i} className={`${styles.messageRow} ${msg.role === 'user' ? styles.userRow : styles.botRow}`}>
-                                {msg.role === 'assistant' && (
-                                    <div className={`${styles.avatar} ${styles.botAvatar}`}>🤖</div>
-                                )}
+                            <div key={i} className={`${styles.msgRow} ${msg.role === 'user' ? styles.userRow : styles.botRow}`}>
+                                {msg.role === 'assistant' && <div className={styles.botAvatar}>🤖</div>}
                                 <div className={`${styles.bubble} ${msg.role === 'user' ? styles.userBubble : styles.botBubble}`}>
-                                    <div className={styles.bubbleContent}>
-                                        {msg.role === 'assistant' ? (
+                                    {msg.role === 'assistant' ? (
+                                        <div className={styles.mdContent}>
                                             <ReactMarkdown remarkPlugins={[remarkGfm]}>{msg.content}</ReactMarkdown>
-                                        ) : (
-                                            msg.content
-                                        )}
-                                    </div>
-                                    <div className={styles.bubbleTime}>🕒 {msg.timestamp}</div>
+                                        </div>
+                                    ) : (
+                                        <div>{msg.content}</div>
+                                    )}
+                                    <div className={styles.msgTime}>{msg.time}</div>
                                 </div>
-                                {msg.role === 'user' && (
-                                    <div className={`${styles.avatar} ${styles.userAvatar}`}>👤</div>
-                                )}
+                                {msg.role === 'user' && <div className={styles.userAvatar}>👤</div>}
                             </div>
                         ))}
-
                         {loading && (
-                            <div className={`${styles.messageRow} ${styles.botRow}`}>
-                                <div className={`${styles.avatar} ${styles.botAvatar}`}>🤖</div>
+                            <div className={`${styles.msgRow} ${styles.botRow}`}>
+                                <div className={styles.botAvatar}>🤖</div>
                                 <div className={`${styles.bubble} ${styles.botBubble}`}>
-                                    <div className={styles.loadingIndicator}>
-                                        <div className={styles.spinner}></div>
-                                        <span>Đang xử lý câu hỏi...</span>
+                                    <div className={styles.typing}>
+                                        <span /><span /><span />
                                     </div>
                                 </div>
                             </div>
                         )}
-                        <div ref={messagesEndRef} />
+                        <div ref={endRef} />
                     </div>
                 )}
             </div>
 
-            <form className={styles.inputArea} onSubmit={handleSubmit}>
-                <div className={styles.inputGroup}>
+            <form className={styles.inputArea} onSubmit={e => { e.preventDefault(); sendMessage(input) }}>
+                <div className={styles.inputWrap}>
                     <input
                         ref={inputRef}
-                        type="text"
                         value={input}
                         onChange={e => setInput(e.target.value)}
-                        placeholder={messages.length === 0 ? '💬 Hỏi tôi về ISO 27001, TCVN 14423...' : '💬 Nhập câu hỏi tiếp theo...'}
+                        placeholder="Nhập câu hỏi..."
                         className={styles.input}
                         disabled={loading}
                         autoFocus
                     />
                     <button type="submit" className={styles.sendBtn} disabled={!input.trim() || loading}>
-                        ➤
+                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                            <line x1="22" y1="2" x2="11" y2="13" /><polygon points="22 2 15 22 11 13 2 9 22 2" />
+                        </svg>
                     </button>
                 </div>
             </form>
-
-            {messages.length > 0 && (
-                <div className={styles.chatMeta}>
-                    💬 <strong>{messages.length}</strong> tin nhắn •
-                    📚 <strong>{sessions.length}</strong> lịch sử
-                </div>
-            )}
         </div>
     )
 }

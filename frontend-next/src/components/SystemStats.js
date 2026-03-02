@@ -1,36 +1,62 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useCallback } from 'react'
 import styles from './SystemStats.module.css'
 
-export default function SystemStats() {
-    const [stats, setStats] = useState(null)
-    const [loading, setLoading] = useState(true)
+const CACHE_KEY = 'system_stats_cache'
 
-    const fetchStats = async () => {
+function getCachedStats() {
+    if (typeof window === 'undefined') return null
+    try {
+        const cached = sessionStorage.getItem(CACHE_KEY)
+        if (cached) return JSON.parse(cached)
+    } catch { }
+    return null
+}
+
+function setCachedStats(data) {
+    if (typeof window === 'undefined') return
+    try {
+        sessionStorage.setItem(CACHE_KEY, JSON.stringify(data))
+    } catch { }
+}
+
+export default function SystemStats() {
+    const [stats, setStats] = useState(() => getCachedStats())
+    const [loading, setLoading] = useState(!getCachedStats())
+    const [refreshing, setRefreshing] = useState(false)
+
+    const fetchStats = useCallback(async (isBackground = false) => {
+        if (isBackground) setRefreshing(true)
         try {
             const res = await fetch('/api/system/stats')
             if (res.ok) {
                 const data = await res.json()
                 setStats(data)
+                setCachedStats(data)
             }
         } catch (err) {
-            console.error('Failed to fetch system stats:', err)
+            console.error('System stats fetch failed:', err)
         } finally {
             setLoading(false)
+            setRefreshing(false)
         }
-    }
+    }, [])
 
     useEffect(() => {
-        fetchStats()
-        const interval = setInterval(fetchStats, 10000)
+        if (!stats) {
+            fetchStats(false)
+        } else {
+            fetchStats(true)
+        }
+        const interval = setInterval(() => fetchStats(true), 15000)
         return () => clearInterval(interval)
-    }, [])
+    }, [fetchStats])
 
     const formatBytes = (bytes) => {
         if (!bytes) return '0'
         const gb = bytes / (1024 ** 3)
-        return gb >= 1 ? `${gb.toFixed(1)}` : `${(bytes / (1024 ** 2)).toFixed(0)}MB`
+        return gb.toFixed(1)
     }
 
     const formatUptime = (seconds) => {
@@ -40,12 +66,12 @@ export default function SystemStats() {
         return days > 0 ? `${days}d ${hours}h` : `${hours}h`
     }
 
-    if (loading) {
+    if (loading && !stats) {
         return (
             <div className={styles.grid}>
                 {[1, 2, 3, 4].map(i => (
                     <div key={i} className={styles.card}>
-                        <div className={styles.skeleton}></div>
+                        <div className={styles.skeleton} />
                     </div>
                 ))}
             </div>
@@ -54,47 +80,47 @@ export default function SystemStats() {
 
     if (!stats) {
         return (
-            <div className={styles.grid}>
-                <div className={styles.card}>
-                    <p style={{ color: 'var(--text-muted)' }}>Không thể kết nối hệ thống</p>
-                </div>
+            <div className={styles.errorCard}>
+                <p>⚠️ Không thể kết nối hệ thống</p>
             </div>
         )
     }
 
+    const getColor = (percent, thresholds = [50, 80]) => {
+        if (percent > thresholds[1]) return 'var(--accent-red)'
+        if (percent > thresholds[0]) return 'var(--accent-amber)'
+        return 'var(--accent-green)'
+    }
+
     const items = [
         {
-            icon: '💻',
-            label: 'CPU Usage',
+            icon: '💻', label: 'CPU',
             value: `${stats.cpu.percent}%`,
-            detail: `${stats.cpu.name}`,
+            detail: stats.cpu.name,
             sub: `${stats.cpu.cores} Cores`,
-            color: stats.cpu.percent > 80 ? 'var(--accent-red)' : stats.cpu.percent > 50 ? 'var(--accent-amber)' : 'var(--accent-green)',
+            color: getColor(stats.cpu.percent),
             percent: stats.cpu.percent
         },
         {
-            icon: '🧠',
-            label: 'Memory',
-            value: `${formatBytes(stats.memory.used)}`,
+            icon: '🧠', label: 'RAM',
+            value: formatBytes(stats.memory.used),
             unit: 'GB',
             detail: `${stats.memory.percent}% sử dụng`,
-            sub: `/ ${formatBytes(stats.memory.total)} GB tổng`,
-            color: stats.memory.percent > 80 ? 'var(--accent-red)' : stats.memory.percent > 60 ? 'var(--accent-amber)' : 'var(--accent-green)',
+            sub: `Tổng: ${formatBytes(stats.memory.total)} GB`,
+            color: getColor(stats.memory.percent, [60, 85]),
             percent: stats.memory.percent
         },
         {
-            icon: '💾',
-            label: 'Storage',
-            value: `${formatBytes(stats.disk.used)}`,
+            icon: '💾', label: 'Disk',
+            value: formatBytes(stats.disk.used),
             unit: 'GB',
             detail: `${stats.disk.percent}% sử dụng`,
-            sub: `/ ${formatBytes(stats.disk.total)} GB tổng`,
-            color: stats.disk.percent > 85 ? 'var(--accent-red)' : stats.disk.percent > 70 ? 'var(--accent-amber)' : 'var(--accent-green)',
+            sub: `Tổng: ${formatBytes(stats.disk.total)} GB`,
+            color: getColor(stats.disk.percent, [70, 90]),
             percent: stats.disk.percent
         },
         {
-            icon: '⚡',
-            label: 'Uptime',
+            icon: '⚡', label: 'Uptime',
             value: formatUptime(stats.uptime_seconds),
             detail: stats.platform,
             sub: 'Hệ điều hành',
@@ -104,27 +130,30 @@ export default function SystemStats() {
     ]
 
     return (
-        <div className={styles.grid}>
-            {items.map((item, i) => (
-                <div key={i} className={`${styles.card} fade-in`} style={{ animationDelay: `${i * 0.1}s` }}>
-                    <div className={styles.header}>
-                        <span className={styles.icon}>{item.icon}</span>
-                        <span className={styles.label}>{item.label}</span>
+        <div className={styles.wrapper}>
+            {refreshing && <div className={styles.refreshDot} title="Đang cập nhật..." />}
+            <div className={styles.grid}>
+                {items.map((item, i) => (
+                    <div key={i} className={styles.card}>
+                        <div className={styles.header}>
+                            <span className={styles.icon}>{item.icon}</span>
+                            <span className={styles.label}>{item.label}</span>
+                        </div>
+                        <div className={styles.value} style={{ color: item.color }}>
+                            {item.value}
+                            {item.unit && <span className={styles.unit}>{item.unit}</span>}
+                        </div>
+                        <div className={styles.progressBar}>
+                            <div
+                                className={styles.progressFill}
+                                style={{ width: `${Math.min(item.percent, 100)}%`, background: item.color }}
+                            />
+                        </div>
+                        <div className={styles.detail} title={item.detail}>{item.detail}</div>
+                        <div className={styles.sub}>{item.sub}</div>
                     </div>
-                    <div className={styles.value} style={{ color: item.color }}>
-                        {item.value}
-                        {item.unit && <span className={styles.unit}>{item.unit}</span>}
-                    </div>
-                    <div className={styles.progressBar}>
-                        <div
-                            className={styles.progressFill}
-                            style={{ width: `${Math.min(item.percent, 100)}%`, background: item.color }}
-                        />
-                    </div>
-                    <div className={styles.detail} title={item.detail}>{item.detail}</div>
-                    <div className={styles.sub}>{item.sub}</div>
-                </div>
-            ))}
+                ))}
+            </div>
         </div>
     )
 }

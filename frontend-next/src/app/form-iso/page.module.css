@@ -4,199 +4,255 @@
 }
 
 .title {
-    font-size: 2rem;
+    font-size: 1.8rem;
     font-weight: 800;
-    margin-bottom: 0.5rem;
+    margin-bottom: 0.4rem;
 }
 
 .subtitle {
     color: var(--text-muted);
-    font-size: 1rem;
+    font-size: 0.95rem;
 }
 
 .topBar {
-    background: linear-gradient(135deg, rgba(30, 41, 59, 0.7), rgba(15, 23, 42, 0.8));
-    border: 1px solid var(--border-light);
-    border-radius: 16px;
-    padding: 1.5rem;
-    margin-bottom: 1.5rem;
+    background: rgba(15, 23, 42, 0.6);
+    border: 1px solid rgba(255, 255, 255, 0.05);
+    border-radius: 14px;
+    padding: 1.25rem;
+    margin-bottom: 1.25rem;
 }
 
-.formRow {
+.fields {
     display: grid;
     grid-template-columns: 1fr 1fr;
-    gap: 1.25rem;
+    gap: 1rem;
 }
 
 .field {
     display: flex;
     flex-direction: column;
-    gap: 0.5rem;
+    gap: 0.4rem;
 }
 
-.label {
-    font-size: 0.85rem;
+.field label {
+    font-size: 0.75rem;
     font-weight: 600;
-    color: var(--text-muted);
+    color: var(--text-dim);
     text-transform: uppercase;
     letter-spacing: 0.5px;
 }
 
-.textInput {
+.field input {
     background: var(--bg-secondary);
-    border: 1px solid var(--border-light);
+    border: 1px solid rgba(255, 255, 255, 0.06);
     border-radius: 10px;
-    padding: 0.75rem 1rem;
+    padding: 0.65rem 0.9rem;
     color: var(--text-primary);
-    font-size: 0.95rem;
-    font-family: inherit;
+    font-size: 0.9rem;
     outline: none;
+    font-family: inherit;
     transition: border-color 0.2s;
 }
 
-.textInput:focus {
-    border-color: var(--accent-blue);
-    box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.15);
+.field input:focus {
+    border-color: rgba(59, 130, 246, 0.5);
 }
 
-.statsBar {
+.statsRow {
     display: flex;
     align-items: center;
     justify-content: center;
     gap: 2rem;
-    padding: 1rem;
-    margin-bottom: 0.75rem;
+    padding: 0.75rem 0;
+    margin-bottom: 0.5rem;
     flex-wrap: wrap;
 }
 
-.statItem {
+.stat {
     display: flex;
     flex-direction: column;
     align-items: center;
-    gap: 0.25rem;
+    gap: 2px;
 }
 
-.statValue {
-    font-size: 1.5rem;
+.statNum {
+    font-size: 1.4rem;
     font-weight: 800;
 }
 
-.statLabel {
-    font-size: 0.75rem;
+.statLbl {
+    font-size: 0.68rem;
     color: var(--text-dim);
     text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.exportBtn {
+    padding: 8px 18px;
+    border-radius: 10px;
+    font-size: 0.82rem;
+    font-weight: 600;
+    background: linear-gradient(135deg, #3B82F6, #2563EB);
+    color: white;
+    border: none;
+    cursor: pointer;
+    transition: all 0.2s;
+    font-family: inherit;
+}
+
+.exportBtn:hover {
+    box-shadow: 0 4px 16px rgba(59, 130, 246, 0.4);
+    transform: translateY(-1px);
 }
 
 .progressBar {
     width: 100%;
-    height: 6px;
-    background: rgba(148, 163, 184, 0.1);
-    border-radius: 3px;
+    height: 4px;
+    background: rgba(255, 255, 255, 0.04);
+    border-radius: 2px;
     overflow: hidden;
-    margin-bottom: 2rem;
+    margin-bottom: 1.5rem;
 }
 
 .progressFill {
     height: 100%;
     background: linear-gradient(90deg, var(--accent-blue), var(--accent-purple));
-    border-radius: 3px;
+    border-radius: 2px;
     transition: width 0.5s ease;
 }
 
 .section {
-    margin-bottom: 2rem;
-}
-
-.sectionTitle {
-    font-size: 1.1rem;
-    font-weight: 700;
-    padding: 0.75rem 1rem;
-    background: linear-gradient(135deg, rgba(59, 130, 246, 0.1), rgba(139, 92, 246, 0.05));
-    border: 1px solid var(--border-light);
-    border-radius: 12px;
     margin-bottom: 0.75rem;
 }
 
-.itemList {
+.sectionHead {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.75rem 1rem;
+    border-radius: 12px;
+    cursor: pointer;
+    background: rgba(59, 130, 246, 0.06);
+    border: 1px solid rgba(255, 255, 255, 0.05);
+    font-size: 0.95rem;
+    font-weight: 700;
+    color: var(--text-primary);
+    transition: background 0.15s;
+}
+
+.sectionHead:hover {
+    background: rgba(59, 130, 246, 0.1);
+}
+
+.sectionArrow {
+    color: var(--text-dim);
+    font-size: 0.8rem;
+    width: 16px;
+}
+
+.sectionCount {
+    margin-left: auto;
+    font-size: 0.75rem;
+    font-weight: 600;
+    color: var(--text-dim);
+}
+
+.items {
     display: flex;
     flex-direction: column;
-    gap: 0.5rem;
+    gap: 0.4rem;
+    padding: 0.5rem 0 0.5rem 1rem;
 }
 
 .item {
     background: rgba(15, 23, 42, 0.5);
-    border: 1px solid rgba(148, 163, 184, 0.1);
-    border-radius: 12px;
-    padding: 1rem 1.25rem;
-    transition: all 0.2s;
+    border: 1px solid rgba(255, 255, 255, 0.04);
+    border-radius: 10px;
+    padding: 0.9rem 1rem;
+    transition: border-color 0.15s;
 }
 
 .item:hover {
-    border-color: rgba(59, 130, 246, 0.3);
-    background: rgba(30, 41, 59, 0.4);
+    border-color: rgba(59, 130, 246, 0.2);
 }
 
-.itemContent {
+.itemTop {
     display: flex;
-    flex-direction: column;
+    align-items: center;
+    justify-content: space-between;
     gap: 0.75rem;
+    margin-bottom: 0.4rem;
 }
 
-.itemText {
-    font-size: 0.95rem;
+.itemCode {
+    font-size: 0.78rem;
+    font-weight: 700;
+    color: var(--accent-blue);
+    margin-right: 0.5rem;
+}
+
+.itemName {
+    font-size: 0.9rem;
+    font-weight: 600;
     color: var(--text-primary);
-    line-height: 1.5;
 }
 
-.itemControls {
-    display: flex;
-    gap: 0.75rem;
+.itemDesc {
+    font-size: 0.8rem;
+    color: var(--text-dim);
+    margin-bottom: 0.5rem;
+    line-height: 1.4;
 }
 
 .select {
     background: var(--bg-secondary);
-    border: 1px solid var(--border-light);
+    border: 1px solid rgba(255, 255, 255, 0.06);
     border-radius: 8px;
-    padding: 0.5rem 0.75rem;
+    padding: 5px 8px;
     color: var(--text-primary);
-    font-size: 0.85rem;
-    font-family: inherit;
+    font-size: 0.8rem;
     outline: none;
-    min-width: 200px;
     cursor: pointer;
+    min-width: 160px;
+    font-family: inherit;
 }
 
 .select:focus {
-    border-color: var(--accent-blue);
+    border-color: rgba(59, 130, 246, 0.4);
 }
 
 .noteInput {
-    flex: 1;
-    background: var(--bg-secondary);
-    border: 1px solid rgba(148, 163, 184, 0.1);
+    width: 100%;
+    background: rgba(15, 23, 42, 0.6);
+    border: 1px solid rgba(255, 255, 255, 0.04);
     border-radius: 8px;
-    padding: 0.5rem 0.75rem;
-    color: var(--text-primary);
-    font-size: 0.85rem;
-    font-family: inherit;
+    padding: 6px 10px;
+    color: var(--text-secondary);
+    font-size: 0.8rem;
     outline: none;
+    font-family: inherit;
 }
 
 .noteInput:focus {
-    border-color: var(--accent-blue);
+    border-color: rgba(59, 130, 246, 0.3);
+}
+
+.noteInput::placeholder {
+    color: rgba(100, 116, 139, 0.5);
 }
 
 @media (max-width: 768px) {
-    .formRow {
+    .fields {
         grid-template-columns: 1fr;
     }
 
-    .statsBar {
+    .statsRow {
         gap: 1rem;
     }
 
-    .itemControls {
+    .itemTop {
         flex-direction: column;
+        align-items: flex-start;
     }
 
     .select {
