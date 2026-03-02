@@ -212,22 +212,19 @@ export default function ChatbotPage() {
                 lsSet(PENDING_KEY, { sessionId: id, finalMessages: final, done: true })
             }
         } catch (err) {
-            const isAbort = err?.name === 'AbortError'
-            const errContent = isAbort
-                ? 'Request timeout (5 phút). Model đang quá tải.'
-                : 'Model đang xử lý. Quay lại sau để xem kết quả.'
-            const errMsg = { role: 'assistant', content: errContent, time: now() }
-            const final = [...next, errMsg]
-
-            directSaveSession(id, final)
-
+            clearTimeout(timeoutId)
             if (mountedRef.current) {
+                const isAbort = err?.name === 'AbortError'
+                const errContent = isAbort
+                    ? 'Request timeout (5 phút). Model đang quá tải.'
+                    : 'Lỗi kết nối. Vui lòng thử lại.'
+                const errMsg = { role: 'assistant', content: errContent, time: now() }
+                const final = [...next, errMsg]
+                directSaveSession(id, final)
                 setMsgs(final)
                 updateSessions(final, id)
-            } else {
-                lsSet(PENDING_KEY, { sessionId: id, finalMessages: final, done: true })
+                lsDel(PENDING_KEY)
             }
-            lsDel(PENDING_KEY)
         } finally {
             if (mountedRef.current) setSending(false)
         }

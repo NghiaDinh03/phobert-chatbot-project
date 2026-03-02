@@ -1,12 +1,24 @@
 ﻿import requests
 import os
+import re
 from typing import Dict, Any
 
 class ChatService:
     LOCALAI_URL = os.getenv("LOCALAI_URL", "http://localai:8080")
     MODEL_NAME = os.getenv("MODEL_NAME", "Meta-Llama-3.1-8B-Instruct-Q4_K_M.gguf")
     MAX_TOKENS = int(os.getenv("MAX_TOKENS", "-1"))
-    
+
+    SPECIAL_TOKENS = re.compile(
+        r'<\|eot_id\|>|<\|start_header_id\|>|<\|end_header_id\|>|'
+        r'<\|begin_of_text\|>|<\|end_of_text\|>|<\|finetune_right_pad_id\|>|'
+        r'<\|reserved_special_token_\d+\|>'
+    )
+
+    @staticmethod
+    def clean_response(text: str) -> str:
+        cleaned = ChatService.SPECIAL_TOKENS.sub('', text)
+        return cleaned.strip()
+
     @staticmethod
     def generate_response(message: str, session_id: str = "default") -> Dict[str, Any]:
         try:
@@ -37,9 +49,11 @@ class ChatService:
                 
                 if not bot_message:
                     bot_message = "Model không trả về response. Vui lòng thử lại."
+                else:
+                    bot_message = ChatService.clean_response(bot_message)
                 
                 return {
-                    "response": bot_message.strip(),
+                    "response": bot_message,
                     "model": ChatService.MODEL_NAME,
                     "session_id": session_id,
                     "tokens": {
