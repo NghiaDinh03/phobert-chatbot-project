@@ -9,12 +9,14 @@
     environment:
       - LOCALAI_URL=http://localai:8080
       - MODEL_NAME=${MODEL_NAME}
+      - MAX_TOKENS=-1
       - LOG_LEVEL=INFO
     networks:
       - phobert-network
     volumes:
       - ./backend:/app
       - ./data:/data
+      - /proc:/host/proc:ro
     depends_on:
       localai:
         condition: service_started
@@ -22,17 +24,16 @@
 
   frontend:
     build:
-      context: ./frontend
+      context: ./frontend-next
       dockerfile: Dockerfile
     container_name: phobert-frontend
     ports:
-      - "8501:8501"
+      - "3000:3000"
     environment:
-      - BACKEND_URL=http://backend:8000
+      - NEXT_PUBLIC_API_URL=http://backend:8000
+      - API_URL=http://backend:8000
     networks:
       - phobert-network
-    volumes:
-      - ./frontend:/app
     depends_on:
       backend:
         condition: service_started
@@ -46,7 +47,7 @@
     environment:
       - DEBUG=true
       - THREADS=8
-      - CONTEXT_SIZE=2048
+      - CONTEXT_SIZE=8192
     volumes:
       - ./models:/build/models
     networks:

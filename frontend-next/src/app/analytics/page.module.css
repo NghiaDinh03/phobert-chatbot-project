@@ -1,0 +1,86 @@
+.header {
+    text-align: center;
+    padding: 2rem 0 2.5rem;
+}
+
+.title {
+    font-size: 2rem;
+    font-weight: 800;
+    margin-bottom: 0.5rem;
+}
+
+.subtitle {
+    color: var(--text-muted);
+    font-size: 1rem;
+}
+
+.loading {
+    text-align: center;
+    padding: 2rem;
+    color: var(--text-muted);
+}
+
+.serviceCard {
+    background: linear-gradient(135deg, rgba(30, 41, 59, 0.8), rgba(15, 23, 42, 0.9));
+    border: 1px solid rgba(59, 130, 246, 0.2);
+    border-radius: 16px;
+    padding: 1.25rem 1.5rem;
+    transition: all 0.2s;
+}
+
+.serviceCard:hover {
+    border-color: rgba(59, 130, 246, 0.4);
+    box-shadow: 0 0 15px rgba(59, 130, 246, 0.1);
+}
+
+.serviceHeader {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.serviceName {
+    font-size: 1.05rem;
+    font-weight: 700;
+    color: var(--text-primary);
+    margin-bottom: 0.4rem;
+}
+
+.serviceDetail {
+    font-size: 0.85rem;
+    color: var(--text-muted);
+}
+
+.configCard {
+    background: linear-gradient(135deg, rgba(30, 41, 59, 0.6), rgba(15, 23, 42, 0.8));
+    border: 1px solid rgba(59, 130, 246, 0.2);
+    border-radius: 16px;
+    padding: 1.5rem;
+    text-align: center;
+    transition: all 0.2s;
+}
+
+.configCard:hover {
+    border-color: rgba(59, 130, 246, 0.4);
+    transform: translateY(-2px);
+}
+
+.configLabel {
+    font-size: 0.85rem;
+    color: var(--text-muted);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    margin-bottom: 0.75rem;
+}
+
+.configValue {
+    font-size: 2rem;
+    font-weight: 800;
+    color: var(--accent-blue);
+    margin-bottom: 0.25rem;
+}
+
+.configUnit {
+    font-size: 0.8rem;
+    color: var(--text-dim);
+}

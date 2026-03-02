@@ -1,0 +1,205 @@
+.header {
+    text-align: center;
+    padding: 2rem 0 1.5rem;
+}
+
+.title {
+    font-size: 2rem;
+    font-weight: 800;
+    margin-bottom: 0.5rem;
+}
+
+.subtitle {
+    color: var(--text-muted);
+    font-size: 1rem;
+}
+
+.topBar {
+    background: linear-gradient(135deg, rgba(30, 41, 59, 0.7), rgba(15, 23, 42, 0.8));
+    border: 1px solid var(--border-light);
+    border-radius: 16px;
+    padding: 1.5rem;
+    margin-bottom: 1.5rem;
+}
+
+.formRow {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 1.25rem;
+}
+
+.field {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+}
+
+.label {
+    font-size: 0.85rem;
+    font-weight: 600;
+    color: var(--text-muted);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.textInput {
+    background: var(--bg-secondary);
+    border: 1px solid var(--border-light);
+    border-radius: 10px;
+    padding: 0.75rem 1rem;
+    color: var(--text-primary);
+    font-size: 0.95rem;
+    font-family: inherit;
+    outline: none;
+    transition: border-color 0.2s;
+}
+
+.textInput:focus {
+    border-color: var(--accent-blue);
+    box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.15);
+}
+
+.statsBar {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 2rem;
+    padding: 1rem;
+    margin-bottom: 0.75rem;
+    flex-wrap: wrap;
+}
+
+.statItem {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0.25rem;
+}
+
+.statValue {
+    font-size: 1.5rem;
+    font-weight: 800;
+}
+
+.statLabel {
+    font-size: 0.75rem;
+    color: var(--text-dim);
+    text-transform: uppercase;
+}
+
+.progressBar {
+    width: 100%;
+    height: 6px;
+    background: rgba(148, 163, 184, 0.1);
+    border-radius: 3px;
+    overflow: hidden;
+    margin-bottom: 2rem;
+}
+
+.progressFill {
+    height: 100%;
+    background: linear-gradient(90deg, var(--accent-blue), var(--accent-purple));
+    border-radius: 3px;
+    transition: width 0.5s ease;
+}
+
+.section {
+    margin-bottom: 2rem;
+}
+
+.sectionTitle {
+    font-size: 1.1rem;
+    font-weight: 700;
+    padding: 0.75rem 1rem;
+    background: linear-gradient(135deg, rgba(59, 130, 246, 0.1), rgba(139, 92, 246, 0.05));
+    border: 1px solid var(--border-light);
+    border-radius: 12px;
+    margin-bottom: 0.75rem;
+}
+
+.itemList {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+}
+
+.item {
+    background: rgba(15, 23, 42, 0.5);
+    border: 1px solid rgba(148, 163, 184, 0.1);
+    border-radius: 12px;
+    padding: 1rem 1.25rem;
+    transition: all 0.2s;
+}
+
+.item:hover {
+    border-color: rgba(59, 130, 246, 0.3);
+    background: rgba(30, 41, 59, 0.4);
+}
+
+.itemContent {
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+}
+
+.itemText {
+    font-size: 0.95rem;
+    color: var(--text-primary);
+    line-height: 1.5;
+}
+
+.itemControls {
+    display: flex;
+    gap: 0.75rem;
+}
+
+.select {
+    background: var(--bg-secondary);
+    border: 1px solid var(--border-light);
+    border-radius: 8px;
+    padding: 0.5rem 0.75rem;
+    color: var(--text-primary);
+    font-size: 0.85rem;
+    font-family: inherit;
+    outline: none;
+    min-width: 200px;
+    cursor: pointer;
+}
+
+.select:focus {
+    border-color: var(--accent-blue);
+}
+
+.noteInput {
+    flex: 1;
+    background: var(--bg-secondary);
+    border: 1px solid rgba(148, 163, 184, 0.1);
+    border-radius: 8px;
+    padding: 0.5rem 0.75rem;
+    color: var(--text-primary);
+    font-size: 0.85rem;
+    font-family: inherit;
+    outline: none;
+}
+
+.noteInput:focus {
+    border-color: var(--accent-blue);
+}
+
+@media (max-width: 768px) {
+    .formRow {
+        grid-template-columns: 1fr;
+    }
+
+    .statsBar {
+        gap: 1rem;
+    }
+
+    .itemControls {
+        flex-direction: column;
+    }
+
+    .select {
+        min-width: 100%;
+    }
+}

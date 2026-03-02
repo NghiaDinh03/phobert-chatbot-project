@@ -5,6 +5,7 @@ from typing import Dict, Any
 class ChatService:
     LOCALAI_URL = os.getenv("LOCALAI_URL", "http://localai:8080")
     MODEL_NAME = os.getenv("MODEL_NAME", "Meta-Llama-3.1-8B-Instruct-Q4_K_M.gguf")
+    MAX_TOKENS = int(os.getenv("MAX_TOKENS", "-1"))
     
     @staticmethod
     def generate_response(message: str, session_id: str = "default") -> Dict[str, Any]:
@@ -18,9 +19,11 @@ class ChatService:
                     }
                 ],
                 "temperature": 0.7,
-                "max_tokens": 2048,
                 "stream": False
             }
+
+            if ChatService.MAX_TOKENS > 0:
+                payload["max_tokens"] = ChatService.MAX_TOKENS
             
             response = requests.post(
                 f"{ChatService.LOCALAI_URL}/v1/chat/completions",

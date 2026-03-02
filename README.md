@@ -1,101 +1,58 @@
-﻿# PhoBERT Chatbot Project
+﻿# PhoBERT AI Platform - Enterprise Edition
+
+Nền tảng AI tiên tiến cho đánh giá tuân thủ **ISO 27001:2022** & **TCVN 14423**.
+Tích hợp công nghệ **PhoBERT** và **Llama 3.1 8B** được tối ưu hóa cho tiếng Việt.
 
 ## Cấu trúc thư mục
 
 ```text
 phobert-chatbot-project/
 │
-├── .vs/                                    # Visual Studio cache (gitignored)
-├── venv/                                   # Python virtual environment (gitignored)
-│
-├── frontend/
-│   ├── .streamlit/
-│   │   └── config.toml
-│   ├── components/
-│   │   ├── __init__.py
-│   │   └── html_renderer.py
-│   ├── pages/
-│   │   ├── analytics.py
-│   │   ├── chatbot.py
-│   │   └── upload.py
-│   ├── static/
-│   │   ├── css/
-│   │   │   ├── analytics.css
-│   │   │   ├── base.css
-│   │   │   ├── chatbot.css
-│   │   │   └── upload.css
-│   │   ├── images/
-│   │   │   ├── avatar-bot.svg
-│   │   │   ├── avatar-user.svg
-│   │   │   └── logo.svg
-│   │   └── js/
-│   │       ├── analytics.js
-│   │       ├── base.js
-│   │       ├── chatbot.js
-│   │       └── upload.js
-│   ├── templates/
-│   │   ├── analytics.html
-│   │   ├── base.html
-│   │   ├── chatbot.html
-│   │   └── upload.html
-│   ├── utils/
-│   │   ├── __init__.py
-│   │   └── session.py
-│   ├── app.py
+├── frontend-next/                          # Next.js Frontend (React)
+│   ├── src/
+│   │   ├── app/
+│   │   │   ├── layout.js                   # Root layout + Navbar
+│   │   │   ├── globals.css                 # Design system
+│   │   │   ├── page.js                     # Dashboard (trang chủ)
+│   │   │   ├── chatbot/
+│   │   │   │   └── page.js                 # AI Chatbot
+│   │   │   ├── analytics/
+│   │   │   │   └── page.js                 # Analytics Dashboard
+│   │   │   └── form-iso/
+│   │   │       └── page.js                 # ISO 27001 Assessment
+│   │   ├── components/
+│   │   │   ├── Navbar.js
+│   │   │   └── SystemStats.js              # Real-time system monitoring
+│   │   └── lib/
+│   │       └── api.js                      # API client
 │   ├── Dockerfile
-│   └── requirements.txt
+│   ├── package.json
+│   └── next.config.js
 │
 ├── backend/
 │   ├── api/
 │   │   ├── routes/
-│   │   │   ├── __init__.py
-│   │   │   ├── chat.py
-│   │   │   ├── document.py
-│   │   │   └── health.py
-│   │   ├── schemas/
-│   │   │   ├── __init__.py
-│   │   │   ├── chat.py
-│   │   │   └── document.py
-│   │   └── __init__.py
+│   │   │   ├── chat.py                     # Chat API
+│   │   │   ├── document.py                 # Document upload
+│   │   │   ├── health.py                   # Health check
+│   │   │   ├── iso27001.py                 # ISO 27001 API
+│   │   │   └── system.py                   # System stats API (real-time)
+│   │   └── schemas/
+│   │       ├── chat.py
+│   │       └── document.py
 │   ├── core/
-│   │   ├── __init__.py
 │   │   ├── config.py
 │   │   └── exceptions.py
-│   ├── repositories/
-│   │   ├── __init__.py
-│   │   ├── session_store.py
-│   │   └── vector_store.py
 │   ├── services/
-│   │   ├── __init__.py
 │   │   ├── chat_service.py
 │   │   ├── document_service.py
 │   │   └── rag_service.py
 │   ├── utils/
-│   │   ├── __init__.py
 │   │   ├── helpers.py
 │   │   └── logger.py
 │   ├── Dockerfile
 │   ├── main.py
 │   └── requirements.txt
-│
-├── models/
-│   ├── configs/
-│   │   ├── llm_config.py
-│   │   └── phobert_config.py
-│   ├── llm/
-│   │   └── llama-3.1-8b.yaml
-│   ├── phobert/
-│   │   ├── added_tokens.json
-│   │   ├── bpe.codes
-│   │   ├── config.json
-│   │   ├── model.safetensors
-│   │   ├── special_tokens_map.json
-│   │   ├── tokenizer_config.json
-│   │   └── vocab.txt
-│   ├── scripts/
-│   │   ├── build_index.py
-│   │   └── download_models.py
-│   └── Dockerfile
 │
 ├── data/
 │   ├── knowledge_base/
@@ -103,21 +60,59 @@ phobert-chatbot-project/
 │   │   ├── iso27001.json
 │   │   └── tcvn14423.json
 │   ├── sessions/
-│   │   └── .gitkeep
 │   ├── uploads/
-│   │   └── .gitkeep
 │   └── vector_store/
-│       ├── index.faiss
-│       └── metadata.json
-│
-├── docs/
-│   ├── api.md
-│   ├── architecture.md
-│   └── deployment.md
 │
 ├── .env.example
 ├── .gitignore
 ├── docker-compose.yml
-├── README.md
-└── requirements.txt
+└── README.md
 ```
+
+## Công nghệ sử dụng
+
+| Thành phần | Công nghệ |
+|---|---|
+| **Frontend** | Next.js 15, React 19, CSS Modules |
+| **Backend** | FastAPI, Python 3.10 |
+| **LLM** | Llama 3.1 8B (Q4_K_M) via LocalAI |
+| **NLP** | PhoBERT (Vietnamese) |
+| **Container** | Docker Compose |
+
+## Cài đặt & Chạy
+
+### Yêu cầu
+- Docker & Docker Compose
+- Tối thiểu 16GB RAM (khuyến nghị 32GB)
+
+### Chạy project
+
+```bash
+# Clone repository
+git clone https://github.com/NghiaDinh03/phobert-chatbot-project.git
+cd phobert-chatbot-project
+
+# Copy file environment
+cp .env.example .env
+
+# Khởi chạy toàn bộ services
+docker-compose up --build -d
+```
+
+### Truy cập
+
+| Service | URL |
+|---|---|
+| **Frontend** | http://localhost:3000 |
+| **Backend API** | http://localhost:8000 |
+| **API Docs** | http://localhost:8000/docs |
+| **LocalAI** | http://localhost:8080 |
+
+## Cấu hình
+
+| Biến | Mô tả | Default |
+|---|---|---|
+| `MODEL_NAME` | Tên model LLM | `Meta-Llama-3.1-8B-Instruct-Q4_K_M.gguf` |
+| `CONTEXT_SIZE` | Context window (tokens) | `8192` |
+| `MAX_TOKENS` | Giới hạn output (-1 = unlimited) | `-1` |
+| `THREADS` | Số CPU threads cho LocalAI | `8` |

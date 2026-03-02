@@ -1,6 +1,6 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
-from api.routes import chat, document, health, iso27001
+from api.routes import chat, document, health, iso27001, system
 
 # Create FastAPI app
 app = FastAPI(
@@ -25,6 +25,7 @@ app.include_router(health.router, prefix="/api", tags=["Health"])
 app.include_router(chat.router, prefix="/api", tags=["Chat"])
 app.include_router(document.router, prefix="/api", tags=["Documents"])
 app.include_router(iso27001.router, prefix="/api", tags=["ISO27001"])
+app.include_router(system.router, prefix="/api", tags=["System"])
 
 @app.get("/")
 def root():

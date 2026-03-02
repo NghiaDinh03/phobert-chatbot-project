@@ -34,3 +34,13 @@ Thumbs.db
 
 # Docker
 .dockerignore
+
+# Node.js / Next.js
+node_modules/
+.next/
+frontend-next/.next/
+frontend-next/node_modules/
+
+# Misc
+hash.txt
+.vs/
