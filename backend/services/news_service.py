@@ -22,7 +22,7 @@ RSS_SOURCES = {
         {"name": "Yahoo Finance", "url": "https://finance.yahoo.com/news/rssindex", "icon": "💰", "lang": "en"},
     ],
     "stocks_vietnam": [
-        {"name": "CafeF", "url": "https://cafef.vn/rss/trang-chu.rss", "icon": "🇻🇳", "lang": "vi"},
+        {"name": "CafeF", "url": "https://cafef.vn/rss/trang-chu.rss", "icon": "☕", "lang": "vi"},
         {"name": "VnExpress Kinh doanh", "url": "https://vnexpress.net/rss/kinh-doanh.rss", "icon": "📰", "lang": "vi"},
         {"name": "VnEconomy", "url": "https://vneconomy.vn/chung-khoan.rss", "icon": "💹", "lang": "vi"},
     ]
@@ -183,7 +183,7 @@ class NewsService:
              "sources": [s["name"] for s in RSS_SOURCES["cybersecurity"]]},
             {"id": "stocks_international", "name": "Cổ Phiếu Quốc Tế", "icon": "📈",
              "sources": [s["name"] for s in RSS_SOURCES["stocks_international"]]},
-            {"id": "stocks_vietnam", "name": "Chứng Khoán VN", "icon": "🇻🇳",
+            {"id": "stocks_vietnam", "name": "Chứng Khoán VN", "icon": "💹",
              "sources": [s["name"] for s in RSS_SOURCES["stocks_vietnam"]]},
         ]
 
@@ -202,7 +202,7 @@ def _auto_translate_worker():
             except Exception as e:
                 logger.warning(f"Auto-translate [{cat}] lỗi: {e}")
             time.sleep(10)
-        time.sleep(43200)
+        time.sleep(7200)
 
 
 def start_bg_worker():
@@ -211,4 +211,4 @@ def start_bg_worker():
         _bg_started = True
         t = threading.Thread(target=_auto_translate_worker, daemon=True)
         t.start()
-        logger.info("Background translation worker started (12h interval)")
+        logger.info("Background translation worker started (2h interval)")

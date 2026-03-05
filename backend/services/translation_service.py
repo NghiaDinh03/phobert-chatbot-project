@@ -126,25 +126,30 @@ class TranslationService:
         if not missing:
             return cache
 
-        translated = []
-        try:
-            translated = TranslationService._translate_via_gemini(missing)
-            logger.info(f"Dịch {len(missing)} titles qua Gemini")
-        except Exception as e:
-            logger.info(f"Gemini không khả dụng ({e}), chuyển sang LocalAI")
+        CHUNK_SIZE = 5
+        for chunk_start in range(0, len(missing), CHUNK_SIZE):
+            chunk = missing[chunk_start:chunk_start + CHUNK_SIZE]
+            translated = []
+
             try:
-                translated = TranslationService._translate_via_localai(missing)
-                logger.info(f"Dịch {len(missing)} titles qua LocalAI")
-            except Exception as e2:
-                logger.warning(f"Translation thất bại: {e2}")
+                translated = TranslationService._translate_via_gemini(chunk)
+                logger.info(f"Dịch {len(chunk)} titles qua Gemini")
+            except Exception as e:
+                logger.info(f"Gemini không khả dụng ({e}), chuyển sang LocalAI")
+                try:
+                    translated = TranslationService._translate_via_localai(chunk)
+                    logger.info(f"Dịch {len(chunk)} titles qua LocalAI")
+                except Exception as e2:
+                    logger.warning(f"Chunk translation thất bại: {e2}")
+                    continue
 
-        for i, t in enumerate(missing):
-            key = TranslationService._make_key(t)
-            if i < len(translated):
-                cache[key] = translated[i]
+            for i, t in enumerate(chunk):
+                key = TranslationService._make_key(t)
+                if i < len(translated) and translated[i]:
+                    cache[key] = translated[i]
 
-        if translated:
-            TranslationService._save_cache(category, cache)
+            if translated:
+                TranslationService._save_cache(category, cache)
 
         return cache
 
@@ -152,3 +157,4 @@ class TranslationService:
     def get_translation(title: str, cache: Dict) -> Optional[str]:
         key = TranslationService._make_key(title)
         return cache.get(key)
+

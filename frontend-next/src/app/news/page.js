@@ -6,7 +6,7 @@ import styles from './page.module.css'
 const CATEGORIES = [
     { id: 'cybersecurity', name: 'An Ninh Mạng', icon: '🛡️' },
     { id: 'stocks_international', name: 'Cổ Phiếu Quốc Tế', icon: '📈' },
-    { id: 'stocks_vietnam', name: 'Chứng Khoán VN', icon: '🇻🇳' },
+    { id: 'stocks_vietnam', name: 'Chứng Khoán VN', icon: '💹' },
 ]
 
 export default function NewsPage() {
