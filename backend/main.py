@@ -3,7 +3,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from api.routes import chat, document, health, iso27001, system, news
 
 app = FastAPI(
-    title="PhoBERT ISO27001 API",
+    title="CyberAI Assessment API",
     description="AI-powered ISO 27001 compliance chatbot",
     version="1.0.0",
     docs_url="/docs",
@@ -35,7 +35,7 @@ def on_startup():
 def root():
     return {
         "status": "running",
-        "service": "PhoBERT ISO27001 API",
+        "service": "CyberAI Assessment API",
         "version": "1.0.0",
         "docs": "/docs"
     }

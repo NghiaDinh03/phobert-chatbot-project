@@ -68,7 +68,7 @@ export default function Navbar() {
             <div className={styles.inner}>
                 <Link href="/" className={styles.brand}>
                     <div className={styles.brandIcon}>⚡</div>
-                    <span className={styles.brandName}>PhoBERT AI</span>
+                    <span className={styles.brandName}>CyberAI Assessment</span>
                 </Link>
 
                 <div className={styles.nav}>

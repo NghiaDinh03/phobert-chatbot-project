@@ -15,6 +15,7 @@
       - ISO_DOCS_PATH=/data/iso_documents
       - VECTOR_STORE_PATH=/data/vector_store
       - GEMINI_API_KEY=${GEMINI_API_KEY:-}
+      - HF_HOME=/data/models/huggingface
     networks:
       - phobert-network
     volumes:

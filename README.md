@@ -1,260 +1,107 @@
-﻿# PhoBERT AI Platform — Hệ thống Đánh giá An toàn Thông tin
+﻿# PhoBERT AI Platform — Hệ thống RAG & Đánh giá An toàn Thông tin Toàn diện
 
-Nền tảng AI on-premise cho **đánh giá tuân thủ ISO 27001:2022**, **TCVN 11930:2017** và **pháp luật ATTT Việt Nam**.
-Tích hợp Multi-Model RAG (Retrieval-Augmented Generation) với **PhoBERT**, **Llama 3.1 8B** và **SecurityLLM 7B**, toàn bộ chạy cục bộ bằng Docker — không gửi dữ liệu ra bên ngoài.
-
----
-
-## Tính năng chính
-
-| Tính năng | Mô tả |
-|---|---|
-| **AI Chatbot** | Trò chuyện với AI bằng tiếng Việt, hỏi đáp về ATTT, ISO 27001 |
-| **Form ISO 27001** | Nhập thông tin hệ thống của tổ chức, AI tự động phân tích compliance |
-| **Analytics Dashboard** | Xem tài nguyên hệ thống (CPU, RAM, Disk), trạng thái dịch vụ, lịch sử đánh giá |
-| **ChromaDB Monitor** | Giám sát Vector Database, xem danh sách tài liệu đã nạp, test tìm kiếm trực tiếp |
-| **Multi-Model RAG** | SecurityLLM phân tích → Llama 3.1 sinh báo cáo, ChromaDB tra cứu tài liệu chuẩn |
-| **Live Clock** | Đồng hồ thời gian thực, chuyển đổi 4 múi giờ (VN, UTC, US, JP) |
-| **Xóa lịch sử** | Xóa assessment cũ với popup xác nhận, chặn cảnh báo 24h |
-| **Tái sử dụng form** | Click vào lịch sử đánh giá → xem chi tiết hoặc nạp lại form cũ |
+Nền tảng AI on-premise kết hợp đánh giá tuân thủ **ISO 27001:2022**, Tra cứu thông tin (RAG), và Tổng hợp Tin tức Tự động. Toàn bộ hệ thống chạy cục bộ bằng Docker, đảm bảo an toàn dữ liệu 100%.
 
 ---
 
-## Công nghệ sử dụng
+## Tính năng và Phân bổ theo Trang (Pages)
 
-| Thành phần | Công nghệ | Vai trò |
-|---|---|---|
-| **Frontend** | Next.js 15, React 19, CSS Modules | Giao diện web SPA |
-| **Backend** | FastAPI, Python 3.10, Uvicorn | API server, AI pipeline |
-| **LLM chính** | Llama 3.1 8B (Q4_K_M) | Sinh báo cáo tiếng Việt |
-| **LLM bảo mật** | SecurityLLM 7B (Q4_K_M) | Phân tích compliance ISO |
-| **NLP** | PhoBERT (VinAI) | Xử lý ngôn ngữ tự nhiên tiếng Việt |
-| **Vector DB** | ChromaDB 0.4.24 | Lưu trữ/Tìm kiếm tài liệu tiêu chuẩn |
-| **LLM Runtime** | LocalAI | Chạy GGUF models trên CPU |
-| **Container** | Docker Compose | Triển khai 1 lệnh duy nhất |
+Hệ thống được thiết kế theo dạng Single Page Application (SPA), phân chia tính năng rõ ràng qua từng Tab:
+
+### 1. 🏠 Trang chủ (Dashboard)
+- Hiển thị giới thiệu tổng quan hệ thống và các chỉ mục dẫn hướng nhanh.
+- Tích hợp Đồng hồ thời gian thực (Live Clock) chuyển đổi 4 múi giờ (VN, UTC, US, JP).
+
+### 2. 💬 AI Chat (Chatbot RAG)
+👉 **[Xem chi tiết Hướng dẫn Cơ chế Hoạt động RAG](./docs/chatbot_rag.md)**
+- Trò chuyện với AI bằng tiếng Việt, hỏi đáp sâu về ATTT, tiêu chuẩn ISO 27001.
+- Tích hợp **ChromaDB** nạp trực tiếp file `.md`. Khi người dùng hỏi, AI tự động nhúng (Embed) và trích xuất (RAG) các khoản luật liên quan vào câu trả lời.
+
+### 3. 📊 Analytics (Giám sát Hệ thống)
+👉 **[Xem chi tiết Hướng dẫn Quản trị và Analytics](./docs/analytics_monitoring.md)**
+- **Status Hub:** Xem trạng thái sống của các container (FastAPI, LocalAI) và các Model đang được nạp.
+- **Tài nguyên phần cứng:** Giám sát mức tiêu thụ CPU, RAM, Disk.
+- **Cache Controller:** Thống kê sinh cache (Dịch & Audio) tránh tràn Disk ổ cứng.
+- **ChromaDB Monitor:** Giao diện quản trị Database vector. Tích hợp nút `🔄 Nạp lại` dữ liệu và `Tìm kiếm thử`.  👉 *([Đọc thêm Guide ChromaDB](./docs/chromadb_guide.md))*
+- **Lịch sử ISO:** Quản lý xem lại Form đánh giá cũ, Nạp lại, và Xoá rác với cảnh báo Confirm Browser-side.
+
+### 4. 📝 Form ISO (Đánh giá Tuân thủ)
+👉 **[Xem chi tiết Luồng Data Form Đánh giá ISO](./docs/iso_assessment_form.md)**
+- Điền khảo sát hệ thống mạng doanh nghiệp toàn diện.
+- Gửi lên **SecurityLLM** soi lỗi phân tích bảo mật. Sau đó **Llama 3.1** đóng vai trò báo cáo sinh ra văn bản đánh giá (Action Plan).
+
+### 5. 📰 Tin tức (AI News Aggregator & TTS)
+👉 **[Xem chi tiết Cơ chế Crawl Tin & Sinh Audio TTS Nội bộ](./docs/news_aggregator.md)**
+- Thu thập bài báo mới từ RSS của các trang Cybersecurity chuyên sâu.
+- Các báo Anh ngữ được **Mô hình VinAI Translate** (135M parameters) dịch ngầm Title qua tiếng Việt hoàn tòan nội bộ.
+- Dùng **Llama 3.1** Rút gọn nội dung link gốc. Đọc văn thành tiếng Voice Việt "Quốc dân" bằng modul Python `edge-tts`. Tối ưu tự xóa Cache định kỳ bảo vệ ổ cứng.
 
 ---
 
-## Cấu trúc thư mục
+## Hệ thống Models & AI đang sử dụng (On-Premise)
+
+| Model | Tham số | Nhiệm vụ chính trong Project | Engine |
+|---|---|---|---|
+| **Llama 3.1 Instruct** | 8B (Q4_K_M) | Chatbot, Sinh Report ISO 27001, Tóm tắt bài báo, Phân loại gán tự động Tag tin tức. | LocalAI |
+| **SecurityLLM** | 7B (Q4_K_M) | Soi lỗi bảo mật Form ISO, đánh giá điểm rủi ro chuyên sâu hệ thống mạng. | LocalAI |
+| **VinAI Translate (En-Vi)** | 135M | Chạy ngầm liên tục, phiên dịch Title bài báo Tiếng Anh -> Tiếng Việt theo ngữ cảnh. | HuggingFace (Transformers) |
+| **all-MiniLM-L6-v2** | - | Nhúng chữ (Embedding) các tài liệu, luật, nghị định ISO thành Vector. | ChromaDB |
+| **Edge-TTS** | - | Service tổng hợp giọng nói tiếng Việt mượt mà (Không chiếm Card, call API nội bộ thiết bị). | Python lib |
+
+---
+
+## Kiến trúc Thư mục Kỹ thuật (Tóm tắt)
 
 ```text
 phobert-chatbot-project/
 │
-├── frontend-next/                          # Next.js Frontend
-│   ├── src/
-│   │   ├── app/
-│   │   │   ├── layout.js                   # Root layout (Navbar + Footer)
-│   │   │   ├── globals.css                 # Design system toàn cục
-│   │   │   ├── page.js                     # Trang chủ Dashboard
-│   │   │   ├── chatbot/page.js             # Chatbot AI tiếng Việt
-│   │   │   ├── analytics/page.js           # Analytics + ChromaDB Monitor
-│   │   │   └── form-iso/page.js            # Form đánh giá ISO 27001
-│   │   └── components/
-│   │       ├── Navbar.js                   # Thanh điều hướng + Đồng hồ Live
-│   │       └── SystemStats.js              # Card tài nguyên CPU/RAM/Disk
-│   ├── Dockerfile                          # Build production image
-│   ├── package.json
-│   └── next.config.js                      # Proxy API → Backend
+├── frontend-next/                          # Next.js 15 Frontend
+│   ├── src/app/
+│   │   ├── (các tab: chatbot, analytics, form-iso, news)
 │
 ├── backend/                                # FastAPI Backend
 │   ├── api/routes/
-│   │   ├── chat.py                         # POST /api/chat — Chatbot endpoint
-│   │   ├── iso27001.py                     # CRUD đánh giá + ChromaDB API
-│   │   ├── health.py                       # GET /api/health — Health check
-│   │   ├── system.py                       # GET /api/system/stats — CPU/RAM/Disk
-│   │   └── document.py                     # Upload tài liệu
+│   │   ├── chat.py, iso27001.py, system.py, news.py
 │   ├── services/
-│   │   ├── chat_service.py                 # Gọi LocalAI, quản lý VectorStore
-│   │   ├── mcp_server.py                   # MCP Server (semantic search tool)
-│   │   └── model_router.py                 # Điều phối SecurityLLM ↔ Llama 3.1
+│   │   ├── chat_service.py                 # RAG & LocalAI interaction
+│   │   ├── model_router.py                 # Phối hợp SecurityLLM ↔ Llama 3.1
+│   │   ├── news_service.py                 # Crawl RSS, kích hoạt dịch và gán Tag ngầm
+│   │   ├── translation_service.py          # Load VinAI Transformers & Dịch Title báo
+│   │   └── summary_service.py              # Extract báo, gọi Llama tóm tắt & gTTS audio
 │   ├── repositories/
-│   │   └── vector_store.py                 # ChromaDB wrapper (chunk, index, search)
-│   ├── core/config.py                      # Biến cấu hình tập trung
-│   ├── utils/logger.py                     # Logging
-│   ├── main.py                             # Điểm khởi chạy FastAPI
-│   ├── Dockerfile
-│   └── requirements.txt
+│   │   └── vector_store.py                 # Cầu nối gọi lệnh tới ChromaDB
+│   └── requirements.txt                    # edge-tts, newspaper3k, httpx, lxml...
 │
 ├── data/
-│   ├── iso_documents/                      # Tài liệu tiêu chuẩn cho RAG
-│   │   ├── iso27001_annex_a.md             # ISO 27001:2022 Phụ lục A (93 controls)
-│   │   ├── tcvn_11930_2017.md              # TCVN 11930:2017 (5 cấp HTTT)
-│   │   ├── nghi_dinh_13_2023_bvdlcn.md     # NĐ 13/2023 Bảo vệ DLCN
-│   │   ├── luat_an_ninh_mang_2018.md       # Luật An ninh mạng 2018
-│   │   ├── checklist_danh_gia_he_thong.md  # Checklist đánh giá hệ thống IT
-│   │   ├── assessment_criteria.md          # Tiêu chí chấm điểm đánh giá
-│   │   └── network_infrastructure.md       # Hạ tầng mạng tham chiếu
-│   ├── assessments/                        # Kết quả đánh giá (JSON files)
-│   ├── knowledge_base/                     # Knowledge base JSON
-│   ├── sessions/                           # Phiên chat
-│   ├── uploads/                            # File upload (tài liệu, ảnh)
-│   └── vector_store/                       # ChromaDB persistent data
+│   ├── iso_documents/                      # Chứa file .md cho RAG (Mount động)
+│   ├── summaries/                          # Cache JSON & AUDIO (.mp3) từ Tin tức Text-to-Speech
+│   ├── translations/                       # Cache title_vi JSON
+│   ├── assessments/                        # JSON report form đánh giá 
+│   ├── vector_store/                       # ChromaDB persistent data (sqlite)
+│   └── models/huggingface/                 # Nơi VinAI tải Model cache ẩn
 │
-├── models/                                 # GGUF model files (tải tự động)
-├── docker-compose.yml                      # Orchestration toàn bộ services
-├── .env.example                            # Mẫu biến môi trường
-└── README.md
+├── models/                                 # Chứa file vật lý GGUF (Llama, SecurityLLM)
+├── docs/                                   # File hướng dẫn bổ sung (vd: chromadb_guide.md)
+└── docker-compose.yml                      # Script 1-lệnh duy nhất (Frontend + Backend + LLMs)
 ```
 
 ---
 
-## Cài đặt và Triển khai
+## Cài đặt và Triển khai (Docker-based)
 
-### Yêu cầu hệ thống
-- **Docker** và **Docker Compose** (phiên bản mới nhất)
-- **RAM**: Tối thiểu 16GB (khuyến nghị 32GB)
-- **Disk**: Tối thiểu 20GB trống (cho models ~10GB)
-- **CPU**: 4 cores trở lên (models chạy trên CPU)
+Yêu cầu duy nhất để hệ thống hoạt động là máy có chạy `Docker Compose`. Dự án không phụ thuộc vào thư viện cài trực tiếp trên máy host nào cả.
 
-### Bước 1 — Clone và cấu hình
+1. **Clone mã nguồn:**
+   ```bash
+   git clone https://github.com/NghiaDinh03/phobert-chatbot-project.git
+   cd phobert-chatbot-project
+   cp .env.example .env
+   ```
+2. **Khởi chạy toán hệ thống:**
+   ```bash
+   docker-compose up --build -d
+   ```
+3. Lệnh này sẽ tự kéo các image, tải GGUF model vào `/models`, nạp thư viện `transformers` và chạy 3 container `phobert-frontend`, `phobert-backend`, `phobert-localai`.
+4. Truy cập giao diện tại: **http://localhost:3000**
 
-```bash
-git clone https://github.com/NghiaDinh03/phobert-chatbot-project.git
-cd phobert-chatbot-project
-
-cp .env.example .env
-```
-
-### Bước 2 — Khởi chạy toàn bộ (1 lệnh duy nhất)
-
-```bash
-docker-compose up --build -d
-```
-
-Lệnh trên sẽ:
-1. Build 2 Docker images (Frontend + Backend)
-2. Tự động kéo image LocalAI từ Docker Hub
-3. Tải model Llama 3.1 8B và SecurityLLM 7B (~10GB, chỉ lần đầu)
-4. Khởi động 3 containers: `phobert-frontend`, `phobert-backend`, `phobert-localai`
-
-### Bước 3 — Truy cập
-
-| Dịch vụ | URL | Mô tả |
-|---|---|---|
-| **Giao diện web** | http://localhost:3000 | Trang chính (Dashboard, Chatbot, Form, Analytics) |
-| **Backend API** | http://localhost:8000 | FastAPI endpoints |
-| **API Docs (Swagger)** | http://localhost:8000/docs | Tài liệu API tương tác |
-| **LocalAI** | http://localhost:8080 | LLM inference server |
-
----
-
-## Hướng dẫn sử dụng
-
-### 1. Chatbot AI
-- Truy cập tab **"AI Chat"** trên thanh điều hướng
-- Nhập câu hỏi bằng tiếng Việt về an toàn thông tin, ISO 27001
-- AI sẽ trả lời dựa trên tài liệu chuẩn đã được nạp vào ChromaDB
-
-### 2. Đánh giá ISO 27001
-- Truy cập tab **"Form ISO"**
-- Nhập thông tin tổ chức: tên, quy mô, ngành nghề
-- Nhập thông tin hạ tầng: số server, firewall, VPN, cloud
-- Chọn các chính sách ATTT đã có (checkbox)
-- Nhấn **"🤖 Đánh giá bằng AI"** → AI phân tích và trả về báo cáo
-- Xem kết quả tại tab **"Analytics"** → click vào lịch sử để xem chi tiết
-
-### 3. Quản lý tài liệu ChromaDB
-- Thả file `.md` (Markdown) vào thư mục `data/iso_documents/`
-- Truy cập Analytics Dashboard → phần **"ChromaDB Monitor"**
-- Nhấn **"🔄 Reindex tài liệu"** để nạp file mới vào Vector Database
-- Dùng ô **"Test tìm kiếm"** để kiểm tra ChromaDB đã đọc được tài liệu
-
-### 4. Xem Analytics
-- Tab **"Analytics"** hiển thị:
-  - Tài nguyên hệ thống (CPU, RAM, Disk, Uptime)
-  - Trạng thái tất cả dịch vụ (Backend, LocalAI, ChromaDB, Models)
-  - ChromaDB Monitor (số chunks, files, metric, search test)
-  - Lịch sử đánh giá ISO 27001 (click xem chi tiết / tái sử dụng / xóa)
-
----
-
-## Cấu hình biến môi trường
-
-| Biến | Mô tả | Mặc định |
-|---|---|---|
-| `MODEL_NAME` | Tên file GGUF model chính | `Meta-Llama-3.1-8B-Instruct-Q4_K_M.gguf` |
-| `SECURITY_MODEL_NAME` | Tên model phân tích bảo mật | `SecurityLLM-7B-v0.1-Q4_K_M.gguf` |
-| `LOCALAI_URL` | URL nội bộ của LocalAI | `http://localai:8080` |
-| `MAX_TOKENS` | Giới hạn output tokens | `-1` (không giới hạn) |
-| `ISO_DOCS_PATH` | Thư mục tài liệu ISO | `/data/iso_documents` |
-| `VECTOR_STORE_PATH` | Thư mục lưu ChromaDB | `/data/vector_store` |
-| `DATA_PATH` | Thư mục dữ liệu chung | `/data` |
-| `LOG_LEVEL` | Mức ghi log | `INFO` |
-
----
-
-## Kiến trúc hệ thống
-
-```
-┌─────────────────┐       ┌─────────────────────┐       ┌─────────────────┐
-│   Next.js 15    │──────▶│    FastAPI Backend   │──────▶│    LocalAI      │
-│   (Port 3000)   │  API  │    (Port 8000)       │  HTTP │    (Port 8080)  │
-│                 │       │                     │       │                 │
-│  - Dashboard    │       │  - Model Router     │       │  - Llama 3.1 8B │
-│  - Chatbot      │       │  - Vector Store     │       │  - SecurityLLM  │
-│  - Form ISO     │       │  - MCP Server       │       │  - PhoBERT      │
-│  - Analytics    │       │  - Assessment CRUD  │       │                 │
-└─────────────────┘       └────────┬────────────┘       └─────────────────┘
-                                   │
-                          ┌────────▼────────────┐
-                          │     ChromaDB         │
-                          │  (Vector Database)   │
-                          │                     │
-                          │  - ISO 27001 Annex A │
-                          │  - TCVN 11930:2017   │
-                          │  - NĐ 13/2023 BVDLCN │
-                          │  - Luật ANM 2018     │
-                          └─────────────────────┘
-```
-
----
-
-## API Endpoints
-
-### Chat
-| Method | Endpoint | Mô tả |
-|---|---|---|
-| POST | `/api/chat` | Gửi tin nhắn tới AI Chatbot |
-
-### ISO 27001
-| Method | Endpoint | Mô tả |
-|---|---|---|
-| POST | `/api/iso27001/assess` | Submit đánh giá ISO 27001 |
-| GET | `/api/iso27001/assessments` | Lấy danh sách lịch sử đánh giá |
-| GET | `/api/iso27001/assessments/{id}` | Xem chi tiết 1 đánh giá |
-| DELETE | `/api/iso27001/assessments/{id}` | Xóa 1 đánh giá |
-| POST | `/api/iso27001/reindex` | Nạp lại tài liệu vào ChromaDB |
-| GET | `/api/iso27001/chromadb/stats` | Thống kê ChromaDB |
-| POST | `/api/iso27001/chromadb/search` | Test tìm kiếm ChromaDB |
-
-### Hệ thống
-| Method | Endpoint | Mô tả |
-|---|---|---|
-| GET | `/api/health` | Kiểm tra trạng thái Backend |
-| GET | `/api/system/stats` | Lấy thông tin CPU, RAM, Disk |
-
----
-
-## Tài liệu tiêu chuẩn đã tích hợp
-
-| File | Nội dung | Nguồn |
-|---|---|---|
-| `iso27001_annex_a.md` | Phụ lục A — 93 biện pháp kiểm soát (4 nhóm) | ISO/IEC 27001:2022 |
-| `tcvn_11930_2017.md` | Phân cấp 5 cấp HTTT, yêu cầu kỹ thuật 5 lớp bảo vệ | TCVN 11930:2017 |
-| `nghi_dinh_13_2023_bvdlcn.md` | Bảo vệ dữ liệu cá nhân, quyền chủ thể, DPIA | NĐ 13/2023/NĐ-CP |
-| `luat_an_ninh_mang_2018.md` | Luật An ninh mạng, nghĩa vụ doanh nghiệp | Luật số 24/2018/QH14 |
-| `checklist_danh_gia_he_thong.md` | Checklist đánh giá toàn diện hạ tầng IT | Tổng hợp ISO + TCVN |
-| `assessment_criteria.md` | Thang điểm và tiêu chí đánh giá | ISO 27001:2022 |
-| `network_infrastructure.md` | Kiến trúc mạng tham chiếu, checklist thiết bị | Best practices |
-
----
-
-## Khắc phục sự cố
-
-| Vấn đề | Giải pháp |
-|---|---|
-| ChromaDB lỗi `duplicate column bool_value` | Xóa `data/vector_store/`, restart backend |
-| Model tải quá lâu | Lần đầu tải ~10GB, kiểm tra mạng và dung lượng disk |
-| AI timeout khi đánh giá | Request timeout đã được tăng lên 15 phút cho CPU |
-| Frontend bị Hydration error | Dùng `suppressHydrationWarning` hoặc `mounted` state |
-| RAM không đủ | Cần tối thiểu 16GB, khuyến nghị 32GB |
+👉 _Tham khảo Hướng dẫn nạp file tự động vào ChromaDB tại: **[Hướng dẫn ChromaDB](./docs/chromadb_guide.md)**._

@@ -21,6 +21,7 @@ export default function AnalyticsPage() {
     const [searchResults, setSearchResults] = useState(null)
     const [searching, setSearching] = useState(false)
     const [showFiles, setShowFiles] = useState(false)
+    const [cacheStats, setCacheStats] = useState(null)
     const router = useRouter()
 
     const openDetail = async (id) => {
@@ -105,6 +106,13 @@ export default function AnalyticsPage() {
                     const chromaRes = await fetch('/api/iso27001/chromadb/stats')
                     if (chromaRes.ok) {
                         setChromaStats(await chromaRes.json())
+                    }
+                } catch { }
+
+                try {
+                    const cacheRes = await fetch('/api/system/cache-stats')
+                    if (cacheRes.ok) {
+                        setCacheStats(await cacheRes.json())
                     }
                 } catch { }
 
@@ -197,7 +205,7 @@ export default function AnalyticsPage() {
                         <div className={styles.serviceCard}>
                             <div className={styles.serviceHeader}>
                                 <div>
-                                    <div className={styles.serviceName}>🧠 PhoBERT Model</div>
+                                    <div className={styles.serviceName}>🧠 VinAI Translate Model</div>
                                     <div className={styles.serviceDetail}>
                                         Vietnamese NLP • Parameters: <strong style={{ color: 'var(--accent-green)' }}>135M</strong>
                                     </div>
@@ -234,6 +242,31 @@ export default function AnalyticsPage() {
                             </div>
                         </div>
                     </div>
+                )}
+            </section>
+
+            <section style={{ marginBottom: '2.5rem' }}>
+                <h2 className="section-title">💾 Giám sát Sinh Cache (Audio & Translate)</h2>
+                {cacheStats ? (
+                    <div className="grid-3">
+                        <div className={styles.configCard} style={{ background: 'var(--bg-secondary)' }}>
+                            <div className={styles.configLabel}>Cache Translations (Text)</div>
+                            <div className={styles.configValue}>{cacheStats.translations.files}</div>
+                            <div className={styles.configUnit}>files • {(cacheStats.translations.size_bytes / 1024 / 1024).toFixed(2)} MB</div>
+                        </div>
+                        <div className={styles.configCard} style={{ background: 'var(--bg-secondary)' }}>
+                            <div className={styles.configLabel}>Cache Summaries (Audio)</div>
+                            <div className={styles.configValue}>{cacheStats.summaries.files}</div>
+                            <div className={styles.configUnit}>files • {(cacheStats.summaries.size_bytes / 1024 / 1024).toFixed(2)} MB</div>
+                        </div>
+                        <div className={styles.configCard} style={{ background: 'rgba(59, 130, 246, 0.1)', border: '1px solid var(--accent-blue)' }}>
+                            <div className={styles.configLabel} style={{ color: 'var(--accent-blue)' }}>Tổng dung lượng Storage</div>
+                            <div className={styles.configValue} style={{ color: 'var(--text-primary)' }}>{(cacheStats.total_size_bytes / 1024 / 1024).toFixed(2)}</div>
+                            <div className={styles.configUnit}>Megabytes (Tự dọn dẹp mỗi 2h)</div>
+                        </div>
+                    </div>
+                ) : (
+                    <div className={styles.loading}>Đang tải thống kê cache...</div>
                 )}
             </section>
 
@@ -330,30 +363,6 @@ export default function AnalyticsPage() {
                                     </div>
                                 </div>
                             </div>
-                            <div className={styles.chromaStatusRow}>
-                                <span className={`${styles.chromaStatusDot} ${chromaStats?.status === 'ok' ? styles.dotOk : styles.dotErr}`} />
-                                <span className={styles.chromaStatusText}>{chromaStats?.status === 'ok' ? 'Database sẵn sàng' : 'Đang kiểm tra...'}</span>
-                                <button
-                                    className={styles.btnReindex}
-                                    disabled={reindexing}
-                                    onClick={async () => {
-                                        setReindexing(true)
-                                        try {
-                                            const res = await fetch('/api/iso27001/reindex', { method: 'POST' })
-                                            if (res.ok) {
-                                                const data = await res.json()
-                                                alert(`Nạp lại thành công! ${data.files} files → ${data.chunks} chunks`)
-                                                const r2 = await fetch('/api/iso27001/chromadb/stats')
-                                                if (r2.ok) setChromaStats(await r2.json())
-                                            }
-                                        } catch (e) {
-                                            alert('Lỗi: ' + e.message)
-                                        } finally { setReindexing(false) }
-                                    }}
-                                >
-                                    {reindexing ? '⏳ Đang nạp...' : '🔄 Nạp lại'}
-                                </button>
-                            </div>
                         </div>
 
                         <div className={styles.chromaHeaderRight}>
@@ -408,6 +417,30 @@ export default function AnalyticsPage() {
                                     ))}
                                 </div>
                             )}
+                            <div className={styles.chromaStatusRow} style={{ marginTop: 'auto', paddingTop: '1rem' }}>
+                                <span className={`${styles.chromaStatusDot} ${chromaStats?.status === 'ok' ? styles.dotOk : styles.dotErr}`} />
+                                <span className={styles.chromaStatusText}>{chromaStats?.status === 'ok' ? 'Database sẵn sàng' : 'Đang kiểm tra...'}</span>
+                                <button
+                                    className={styles.btnReindex}
+                                    disabled={reindexing}
+                                    onClick={async () => {
+                                        setReindexing(true)
+                                        try {
+                                            const res = await fetch('/api/iso27001/reindex', { method: 'POST' })
+                                            if (res.ok) {
+                                                const data = await res.json()
+                                                alert(`Nạp lại thành công! ${data.files} files → ${data.chunks} chunks`)
+                                                const r2 = await fetch('/api/iso27001/chromadb/stats')
+                                                if (r2.ok) setChromaStats(await r2.json())
+                                            }
+                                        } catch (e) {
+                                            alert('Lỗi: ' + e.message)
+                                        } finally { setReindexing(false) }
+                                    }}
+                                >
+                                    {reindexing ? '⏳ Đang nạp...' : '🔄 Nạp lại'}
+                                </button>
+                            </div>
                         </div>
                     </div>
 

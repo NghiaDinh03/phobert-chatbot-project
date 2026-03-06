@@ -14,10 +14,10 @@ export default function HomePage() {
     return (
         <div className="page-container">
             <div className={styles.hero}>
-                <h1 className={styles.heroTitle}>PhoBERT AI Platform</h1>
+                <h1 className={styles.heroTitle}>CyberAI Assessment Platform</h1>
                 <p className={styles.heroSub}>
                     Nền tảng AI đánh giá tuân thủ <strong>ISO 27001:2022</strong> và <strong>TCVN 14423</strong>.
-                    Tích hợp <strong>PhoBERT</strong> + <strong>Llama 3.1 8B</strong>.
+                    Tích hợp <strong>VinAI Translate</strong> + <strong>Llama 3.1 8B</strong>.
                 </p>
             </div>
 
@@ -44,7 +44,7 @@ export default function HomePage() {
             </section>
 
             <footer className={styles.footer}>
-                © 2026 PhoBERT AI Platform · FastAPI · Next.js · LocalAI
+                © 2026 CyberAI Assessment Platform · FastAPI · Next.js · LocalAI
             </footer>
         </div>
     )

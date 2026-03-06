@@ -120,3 +120,33 @@ def system_stats():
         "uptime_seconds": uptime,
         "platform": platform.system()
     }
+
+def get_dir_size(path: str):
+    total_size = 0
+    total_files = 0
+    if os.path.exists(path):
+        for dirpath, dirnames, filenames in os.walk(path):
+            for f in filenames:
+                fp = os.path.join(dirpath, f)
+                if not os.path.islink(fp):
+                    total_size += os.path.getsize(fp)
+                    total_files += 1
+    return total_size, total_files
+
+@router.get("/system/cache-stats")
+def cache_stats():
+    trans_size, trans_files = get_dir_size("/data/translations")
+    sum_size, sum_files = get_dir_size("/data/summaries")
+    
+    return {
+        "translations": {
+            "size_bytes": trans_size,
+            "files": trans_files
+        },
+        "summaries": {
+            "size_bytes": sum_size,
+            "files": sum_files
+        },
+        "total_size_bytes": trans_size + sum_size,
+        "total_files": trans_files + sum_files
+    }
