@@ -1,5 +1,5 @@
 {
-  "timestamp": 1773152779.4657545,
+  "timestamp": 1773154146.2887926,
   "translations": {
     "8aa6f4be328a": "Mối đe doạ Actors Mass-Scan Salesforce Experience Cloud thông qua Công cụ AuraInspector đã sửa đổi",
     "6befd798f0b6": "Cờ CISA SolarWinds, Ivanti và Không gian làm việc Một lỗ hổng được khai thác tích cực",
@@ -35,6 +35,8 @@
     "294cf117178d": "Hàng trăm khách hàng Salesforce bị cáo buộc nhắm mục tiêu trong chiến dịch trộm cắp dữ liệu mới",
     "01bb129ec01b": "Lỗ hổng \"LeakyLooker\" mới trong Google Looker Studio có thể cho phép truy vấn SQL của người thuê chéo",
     "d22b74533b08": "OpenAI triển khai Máy quét lỗ hổng bảo mật Codex",
-    "cc3d3011da8b": "Hàng ngàn người bị ảnh hưởng bởi vi phạm dữ liệu Ericsson"
+    "cc3d3011da8b": "Hàng ngàn người bị ảnh hưởng bởi vi phạm dữ liệu Ericsson",
+    "4e00ba968d65": "Các bản vá lỗi SAP Critical FS-QUO, NetWeaver Lỗ hổng",
+    "d9b442229589": "Kẻ giết người EDR 'BlackSanta' nhắm vào quy trình làm việc của nhân sự"
   }
 }
