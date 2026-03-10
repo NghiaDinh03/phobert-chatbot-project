@@ -1,5 +1,83 @@
 [
   {
+    "title": "Kai Emerges From Stealth With $125M in Funding for AI Platform Bridging IT and OT Security",
+    "url": "https://www.securityweek.com/kai-emerges-from-stealth-with-125m-in-funding-for-ai-platform-bridging-it-and-ot-security/",
+    "description": "The company was created by a Claroty founder and is backed by Evolution Equity Partners, N47, and other investors. \nThe post Kai Emerges From Stealth With $125M in Funding for AI Platform Bridging IT ",
+    "date": "10/03/2026 15:13",
+    "source": "SecurityWeek",
+    "icon": "🛡️",
+    "lang": "en",
+    "category": "cybersecurity",
+    "audio_cached": false,
+    "added_at": "2026-03-10T15:13:32.082596",
+    "title_vi": "Kai nổi lên từ tàng hình với 125 triệu đô la tài trợ cho nền tảng AI kết nối bảo mật CNTT và OT"
+  },
+  {
+    "title": "Webinar Today: Securing Fragile OT in an Exposed World",
+    "url": "https://www.securityweek.com/webinar-today-securing-fragile-ot-in-an-exposed-world/",
+    "description": "Join the webinar as we examine the current OT threat landscape and move past the \"doom and gloom\" to discuss the mechanics of modern OT exposure.\nThe post Webinar Today: Securing Fragile OT in an Expo",
+    "date": "10/03/2026 15:04",
+    "source": "SecurityWeek",
+    "icon": "🛡️",
+    "lang": "en",
+    "category": "cybersecurity",
+    "audio_cached": false,
+    "added_at": "2026-03-10T15:13:32.082596",
+    "title_vi": "Webinar Hôm nay: Bảo vệ OT mong manh trong một thế giới tiếp xúc"
+  },
+  {
+    "title": "Flipkart completes re-domiciliation to India ahead of IPO",
+    "url": "https://finance.yahoo.com/news/flipkart-completes-domiciliation-india-ahead-145819023.html",
+    "description": "",
+    "date": "2026-03-10T14:58:19Z",
+    "source": "Yahoo Finance",
+    "icon": "💰",
+    "lang": "en",
+    "category": "stocks_international",
+    "audio_cached": false,
+    "added_at": "2026-03-10T15:13:15.554248",
+    "title_vi": "Flipkart hoàn tất việc tái hoà giải với Ấn Độ trước IPO"
+  },
+  {
+    "title": "How To Take Advantage Of Micron Stock's Current Prosperity",
+    "url": "https://www.investors.com/research/options/micron-stock-mu-diagonal-put-spread-options/?src=A00220&yptr=yahoo",
+    "description": "",
+    "date": "2026-03-10T14:57:54Z",
+    "source": "Yahoo Finance",
+    "icon": "💰",
+    "lang": "en",
+    "category": "stocks_international",
+    "audio_cached": false,
+    "added_at": "2026-03-10T15:13:15.554248",
+    "title_vi": "Làm thế nào để tận dụng sự thịnh vượng hiện tại của Micron Stock"
+  },
+  {
+    "title": "Oracle Earnings Due Today With AI Spending In Focus. Here's What To Watch.",
+    "url": "https://www.investors.com/news/technology/oracle-stock-earnings-preview-q3-2026-ai/?src=A00220&yptr=yahoo",
+    "description": "",
+    "date": "2026-03-10T14:52:46Z",
+    "source": "Yahoo Finance",
+    "icon": "💰",
+    "lang": "en",
+    "category": "stocks_international",
+    "audio_cached": false,
+    "added_at": "2026-03-10T15:13:15.554248",
+    "title_vi": "Oracle thu nhập do ngày hôm nay với AI chi tiêu tập trung. Đây là những gì để xem."
+  },
+  {
+    "title": "Stock Market Today: Dow Falls After Trump's Iran Comments As Oil Prices Slide (Live Coverage)",
+    "url": "https://www.investors.com/market-trend/stock-market-today/dow-jones-sp500-nasdaq-trump-iran-oil-prices-tsmc/?src=A00220&yptr=yahoo",
+    "description": "",
+    "date": "2026-03-10T14:40:09Z",
+    "source": "Yahoo Finance",
+    "icon": "💰",
+    "lang": "en",
+    "category": "stocks_international",
+    "audio_cached": false,
+    "added_at": "2026-03-10T15:13:15.554248",
+    "title_vi": "Thị trường chứng khoán hôm nay: Dow giảm sau bình luận của Trump về Iran khi giá dầu trượt (Bảo hiểm trực tiếp)"
+  },
+  {
     "title": "PepsiCo opens first Lay’s-branded restaurant in Spain",
     "url": "https://finance.yahoo.com/news/pepsico-opens-first-lay-branded-144936239.html",
     "description": "",
@@ -433,7 +511,7 @@
     "added_at": "2026-03-10T14:47:58.053458",
     "title_vi": "Các bản vá lỗi SAP Critical FS-QUO, NetWeaver Lỗ hổng",
     "summary_text": "SAP Khắc Phục Các Lỗ Hổng Nghiêm Trọng trong FS-QUO và NetWeaver\n\nCông ty bảo mật doanh nghiệp SAP vào thứ Ba đã công bố phát hành 15 bản ghi chú bảo mật mới như một phần của Ngày Vá Lỗi Bảo Mật tháng 3 năm 2026 của mình.\n\nQuan trọng nhất trong số",
-    "tag": "Thể loại tin tức: Lỗ hổng"
+    "tag": "- Thể loại tin tức: Lỗ h"
   },
   {
     "title": "'BlackSanta' EDR Killer Targets HR Workflows",
@@ -493,7 +571,7 @@
     "added_at": "2026-03-10T13:23:16.075761",
     "title_vi": "OpenAI triển khai Máy quét lỗ hổng bảo mật Codex",
     "summary_text": "OpenAItriển khai Máy quét lỗ hổng bảo mật Codex\n\nOpenAI đang triển khai công cụ quét lỗ hổng bảo mật AI mới, được hãng tuyên bố có khả năng tìm ra các lỗi phức tạp mà các công cụ agentic khác có thể bỏ qua.\n\nCông cụ này, được gọi là Codex Security (trước đây là Aardvark), hiện đang trong giai đoạn nghiên cứu, nhưng đã được thử nghiệm trong phiên bản beta riêng tư kể từ năm ngoái, bao gồm các công ty lớn như Netgear.\n\nCodex Security hiện có sẵn cho khách hàng của ChatGPT Pro, Doanh nghiệp, Doanh nghiệp và Giáo dục với sử dụng miễn phí trong tháng đầu tiên.\n\nHãng AI cho biết công cụ mới của mình được thiết kế để phân tích kho lưu trữ cho hệ thống và tạo ra mô hình nguy cơ tập trung vào vai trò của hệ thống, các phần tử tin cậy và các lỗ hổng.\n\nDựa trên mô hình nguy cơ được tạo ra, Codex sẽ tìm kiếm các lỗ hổng và đánh giá chúng theo mức độ ảnh hưởng thực tế. Nó cũng đề xuất các bản sửa lỗi cho các lỗi đã được phát hiện.\n\nTheo OpenAI, Codex Security đã được thử nghiệm trên 1.2 triệu lệnh trong 30 ngày gần nhất, phát hiện gần 800 lỗi nghiêm trọng và hơn 10.000 lỗi độ cao.\n\nCác lỗ hổng này đã được tìm thấy trong các dự án mã nguồn mở phổ biến như Chromium, OpenSSL, PHP, GOGS và GnuTLS.\n\nThông báo của OpenAI đến sau khi Claude giới thiệu máy quét lỗ hổng bảo mật của riêng mình, Claude Code Security, điều này đã dẫn đến giảm giá trị của các công ty an ninh lớn.\n\nCác công cụ quét lỗ hổng bảo mật dựa trên AI không mới lạ. GitHub đã cung cấp những khả năng này trong nhiều năm, và Google tuyên bố đã tiến bộ đáng kể trong khu vực này.\n\nLiên quan: Nhà lập trình viên sử dụng Claude Code để tấn công chính phủ Mexico\n\nLiên quan: OpenClaw Vulnerability Cho phép Website Tấn công AI Agents\n\nLiên quan: Lỗ hổng trong MS-Agent AI Framework Có thể Dẫn đến Hợp đồng Hệ thống Hoàn toàn Thất bại",
-    "tag": "Thể loại tin tức: Lỗ hổng"
+    "tag": "Thể loại: Lỗ hổng<|eot_id|>"
   },
   {
     "title": "Kevin Mandia’s Armadin Launches With $190 Million in Funding",
@@ -508,7 +586,7 @@
     "added_at": "2026-03-10T13:22:14.735201",
     "title_vi": "Kevin Mandias Armadin ra mắt với 190 triệu đô la trong tài trợ",
     "summary_text": "Armadin của Kevin Mandia Khởi Động Với 190 Triệu USD Ngân Sách  \n\nKevin Mandia, người từng thành lập Mandiant và bán công ty cung cấp dịch vụ phản ứng sự cố và thông báo mối đe dọa cho FireEye với giá 1 tỷ USD năm 2014 trước khi Google mua lại FireEye với 5,4 tỷ USD, đã khởi động một startup mới trong lĩnh vực bảo mật mạng. Armadin, công ty có trụ sở tại San Francisco, đã công bố một vòng tài chính Seed và Series A với tổng số 189,9 triệu USD, đồng nghĩa với việc khởi động chính thức (công ty đã đồng thời đăng tải một bài blog của Mandia có tiêu đề Giới thiệu Armadin).  \n\nArmadin áp dụng phương pháp đụng cưỡng dựa trên AI để tìm và khai thác các lỗ hổng như cách mà các kẻ tấn công thực hiện. Mandia từng thành lập công ty phản ứng sự cố Mandiant, được FireEye mua với 1 tỷ USD năm 2014 và sau đó bị Google mua lại với 5,4 tỷ USD. Tài chính này được Accel lãnh đạo, với sự tham gia từ Google Ventures, Kleiner Perkins, Menlo Ventures, In-Q-Tel, và đầu tư tiếp theo từ 8VC và Ballistic Ventures – được cho là là vòng tài chính Seed và Series A lớn nhất trong lịch sử bảo mật mạng.  \n\nCông ty được khởi động một cách hiền hòa vào cuối năm 2025 với đầu tư Seed ban đầu 24 triệu USD. Bây giờ, với việc khởi động chính thức, các co-founder của Mandia được công khai là Travis Lanham (Chuyên gia kỹ thuật), Evan Peña (chủ tịch an ninh tấn công) và David Slater (giáo sư kiến trúc). Mandia giữ vai trò là CEO.  \n\nArmadin có thể được mô tả là đội đụng cưỡng biến đổi với AI. Tôi tin rằng trong vài năm tới, hầu hết các cuộc tấn công mạng sẽ dựa trên AI – tập thể, cá nhân hóa và không ngừng, Mandia viết trong blog của mình. Chúng sẽ không bị giới hạn bởi khả năng của con người và có thể thực hiện quy mô mà chúng ta chưa từng thấy trước.  \n\nArmadin ý định đấu tranh bằng cách dùng vũ khí tương tự. Trong thế giới có tốc độ tấn công máy tính, phòng thủ phải trở nên tự động. Bạn không thể có con người trong vòng lặp cho mỗi quyết định phòng thủ và vẫn hy vọng thắng, ông nhấn mạnh trong tài liệu khởi động. Chúng tôi đang xây dựng một đội đụng cưỡng mạnh mẽ nhất để cho các tổ chức có phòng thủ tốt nhất. Điều này quan trọng cho an ninh quốc gia.  \n\nĐội đụng cưỡng mạnh mẽ được xây dựng từ đội ngũ chuyên gia đụng cưỡng và nhà nghiên cứu AI. Mục tiêu là cung cấp một nền tảng có thể thực hiện an ninh tấn công dựa trên AI nhanh chóng như kẻ tấn công – để đóng hoặc ít nhất giảm khoảng cách tính nhanh truyền thống – với đàn tấn công tự động, có tính chủ động của riêng nó.  \n\nTrước khi có Armadin, bạn không thể đặt một kẻ thù cấp quốc gia bên trong mạng của mỗi tổ chức 24/7, Lanham nói. Chúng tôi đã xây dựng kẻ thù tối cực – nó không chỉ tuân theo kịch bản, mà còn có khả năng suy luận và học hỏi khi tập thể tấn công các hệ thống bảo vệ của bạn. Chúng tôi đào tạo các mô hình và xây dựng các tác nhân theo tiêu chuẩn đội đụng cưỡng cấp cao nhất, với an toàn là nền tảng và giải phóng chúng để phát hiện rủi ro có thể bị khai thác với tốc độ máy tính.  \n\nPhương pháp đụng cưỡng truyền thống không thể đối phó với thời đại mới của các cuộc tấn công được đẩy bởi AI. Armadin dự kiến giải quyết vấn đề này bằng phương pháp đụng cưỡng dựa trên AI.",
-    "tag": "Thể loại:<|eot_id|>"
+    "tag": "Thể loại: Chứng khoán<|eot_id|>"
   },
   {
     "title": "Hundreds of Salesforce Customers Allegedly Targeted in New Data Theft Campaign",
@@ -538,7 +616,7 @@
     "added_at": "2026-03-10T11:58:43.002010",
     "title_vi": "Thoát khỏi tăng 18 triệu đô la để tự động kiểm tra",
     "summary_text": "TÊN BÀI BÁO: Escape Thăng Hạng $18 Tỷ Để Tự Động Kiểm Tra Bảo Mật Tấn Công\n\nNỘI DUNG:\n\nCông ty công nghệ bảo mật tấn công (offensive cybersecurity) Escape hôm nay tuyên bố đã thu hút 18 triệu đô la trong vòng đầu tư Series A, đẩy tổng số vốn đã thu được của công ty lên trên 23 triệu đô la.\n\nCuộc đầu tư mới được lãnh đạo bởi Balderton, với sự hỗ trợ thêm từ Uncorrelated Ventures và các nhà đầu tư trước đây IRIS và Y Combinator.\n\nCông ty được thành lập năm 2020, nằm tại Paris, Pháp. Escape nhắm đến mục tiêu tự động hóa toàn bộ chu kỳ bảo mật tấn công bằng các động cơ AI có thể liên tục khám phá, kiểm tra và sửa lỗi lỗ hổng trực tiếp trong các quy trình làm việc.\n\nNền tảng của Escape tự động hóa khám phá lỗ hổng trong lãnh vực tấn công, kiểm tra bảo mật và sửa lỗi, đảm bảo hệ thống vẫn hoạt động trong khi lỗ hổng được phát hiện và sửa chữa.\n\nCông ty cho biết đã làm việc với hơn 2.000 nhóm khách hàng trên toàn thế giới.\n\nKhoản vốn mới này sẽ giúp Escape nâng cao khả năng AI của nền tảng, thêm vào đó là lý thuyết ứng dụng để tạo ra các động cơ kiểm tra tấn công (agentic pentesting). Công ty cũng định hướng mở rộng đội ngũ kỹ thuật và chiến lược bán hàng trên cả Châu Âu và Châu Mỹ.\n\n“Các nhóm bảo mật đang bị thiếu người và đang bị cạn kiệt bởi các quy trình thủ công phân tách. Trong một thế giới nơi mã nguồn được viết và bị tấn công với tốc độ của AI, điều này không thể tiếp tục. Chúng tôi xây dựng Escape là nền tảng kỹ thuật bảo mật tấn công để giải quyết vấn đề này ở quy mô lớn,” nói Tristan Kalos, cựu tổng giám đốc và tổng giám đốc của Escape.\n\nLiên quan: Cylake Nhận $45 Tỷ Để Bảo Vệ Các Tổ Chức Không Được Phép Trở Thành Đám Mây  \nLiên quan: Báo cáo M&A Bảo Mật: 42 Đơn Đăng Ký Được Đăng Ký Trong Tháng 02/2026  \nLiên quan: ArmorCode Nhận $16 Tỷ Để Quản Lý Cảnh Bảo  \nLiên quan: Công Ty Bảo Mật Dữ Liệu Evervault Nhận $25 Tỷ Trong Vòng B Đầu Tiên",
-    "tag": "Thể loại tin tức: Khám phá<|eot_id|>"
+    "tag": "Thể loại tin tức: Công nghệ<|eot_id|>"
   },
   {
     "title": "Ringmetall acquires Turkish liner maker Makplast",
@@ -798,10 +876,10 @@
     "icon": "🔓",
     "lang": "en",
     "category": "cybersecurity",
-    "audio_cached": true,
+    "audio_cached": false,
     "added_at": "2026-03-10T11:52:42.260527",
     "title_vi": "Làm thế nào để ngăn chặn rò rỉ dữ liệu AI: Hướng dẫn hội thảo trên web để kiểm toán quy trình làm việc đại lý hiện đại",
-    "summary_text": "Hướng Dẫn Dừng Trò Lỗi Rò Rỉ Dữ Liệu AI: Hướng Dẫn Kiểm Toán Các Quy Trình Công Việc Tự Động Hiện Đại\n\nArtificial Intelligence (AI) no còn chỉ là một công cụ mà chúng ta nói chuyện; nó là công cụ thực hiện các công việc cho chúng ta. Những công cụ này được gọi là AI Agents. Chúng có thể gửi email, di chuyển dữ liệu và thậm chí quản lý phần mềm một mình.\n\nNhưng có một vấn đề",
+    "summary_text": "Ngăn Chặn Rò Rỉ Dữ Liệu AI: Bảo Vệ Doanh Nghiệp Khỏi 'Nhân Viên Vô Hình'\n\nTrí tuệ nhân tạo (AI) không còn chỉ là một công cụ để chúng ta trò chuyện; nó đã trở thành một công cụ thực hiện các tác vụ cho chúng ta. Chúng được gọi là Đại lý AI (AI Agents). Chúng có thể gửi email, di chuyển dữ liệu và thậm chí tự quản lý phần mềm.\n\nTuy nhiên, có một vấn đề. Mặc dù các đại lý này giúp công việc nhanh hơn, chúng cũng mở ra một cửa hậu mới cho tin tặc.\n\nVấn đề: Nhân viên vô hình\n\nHãy hình dung một Đại l",
     "tag": "Thể loại tin tức: Khám phá<|eot_id|>"
   },
   {
@@ -1214,7 +1292,7 @@
     "added_at": "2026-03-10T10:07:35.110420",
     "title_vi": "Chiến lược mạng của Nhà Trắng ưu tiên tội phạm",
     "summary_text": "❌ Lỗi truy cập trang: Article `download()` failed with 403 Client Error:",
-    "tag": "Thứ trưởng Bộ An ninh Nội địa Mỹ,"
+    "tag": "Thể loại:<|eot_id|>"
   },
   {
     "title": "'InstallFix' Attacks Spread Fake Claude Code Sites",
@@ -1228,7 +1306,7 @@
     "audio_cached": true,
     "added_at": "2026-03-10T10:07:35.110420",
     "title_vi": "'InstallFix' Tấn công lây lan các trang web mã Claude giả",
-    "tag": "Thể loại tin tức: Khám phá<|eot_id|>",
+    "tag": "Thể loại tin tức này thuộc loại: Kh",
     "summary_text": "Tiêu đề: Tấn Công 'InstallFix' Lây Lan Trang Web Mã Claude Giả  \n\nNội dung:  \nMột biến thể mới của phương pháp ClickFix đang tận dụng sự phổ biến của công cụ mã hóa AI Claude Code và các công cụ lập trình AI khác. Nhóm nghiên cứu của Push Security phát hiện chiến dịch tấn công này kết hợp quảng cáo độc hại (malvertising) với kỹ thuật xã hội (social engineering).  \n\nNhóm nghiên cứu phát hiện các trang cài đặt giả mạo của Claude Code chỉ lan truyền qua liên kết tài trợ của Google cho các từ khóa như Claude Code, Cài đặt Claude Code và CLI của Claude Code. Các trang cài đặt giả mạo này gần như không thể phân biệt với trang thực của Anthropic, theoJacques Louw, Giám đốc sản phẩm (CPO) và thành lập viên của Push Security, trong bài đăng blog vào thứ Bảy.  \n\nTuy nhiên, khi người dùng sao chép và dán lệnh cài đặt từ các trang giả vào hệ thống, họ vô tình triển khai virus Amatera Stealer, có thể đánh cắp thông tin đăng nhập của nhà phát triển và cho phép kẻ xâm nhập truy cập môi trường phát triển doanh nghiệp.  \n\nMặc dù phương pháp này không đặc biệt mới, Push Security vẫn đặt tên cho nó là InstallFix. Louw giải thích rằng kẻ tấn công đã nhận ra xu hướng ngày càng phổ biến của người dùng chỉ sao chép-gán dán lệnh vào hệ thống và chạy chúng. Những cuộc tấn công này khẳng định một thói quen an toàn không được, trở thành thói quen phổ biến hiện nay.  \n\nĐâu là thời điểm không quá lâu trước đây khi dán lệnh từ trang web vào terminal chỉ là điều bạn thử một lần trước khi một kỹ sư giàu kinh nghiệm đuổi nó ra khỏi thói quen, Louw viết. Bởi vì bạn đang cho trang web một chèque trắng để chạy bất kỳ lệnh nào trên hệ thống của bạn.  \n\nClickFix là kỹ thuật xã hội phổ biến thường sử dụng thông báo lỗi để lừa người dùng chạy lệnh độc hại. Thông thường, thông báo giả mạo cập nhật trình duyệt, nhưng các biến thể khác đã sử dụng từ Blue Screen of Death giả mạo đến lỗi âm thanh cho cuộc phỏng vấn việc làm qua video.  \n\nTuy nhiên, InstallFix có thể là biến thể phù hợp nhất vì nó tập trung vào nhóm người dùng quen với việc sao chép-gán dán lệnh. Như nhiều trợ lý mã hóa AI, Louw giải thích, phương pháp cài đặt được khuyến nghị của Anthropic cho Claude Code là dán và chạy lệnh một dòng trong terminal. Không chỉ công cụ mã hóa AI, Louw ghi nhận hàng trăm công cụ lập trình và CLI phổ biến cũng có hướng dẫn cài đặt giống nhau.  \n\nNạn nhân biết rằng thói quen này trở thành tiêu chuẩn và đang bị tận dụng.  \n\nToàn bộ mô hình bảo mật chỉ dựa trên 'tin tưởng vào tên miền'. Với việc áp dụng AI khuyến khích người dùng không chuyên làm việc với các công cụ chỉ dành cho nhà phát triển, nhóm người dùng rộng lớn nhưng ít ý thức về an toàn này trở thành mục tiêu nguy hiểm, Louw viết.  \n\nTận dụng Claude Code  \n..."
   },
   {
@@ -1783,7 +1861,7 @@
     "added_at": "2026-03-10T10:01:39.125994",
     "title_vi": "Mối đe doạ Actors Mass-Scan Salesforce Experience Cloud thông qua Công cụ AuraInspector đã sửa đổi",
     "summary_text": "Nhà tấn công mạng tổng hợp quét Salesforce Experience Cloud bằng công cụ AuraInspector được điều chỉnh\n\nSalesforce đã cảnh báo về sự tăng trưởng của hoạt động của nhà tấn công mạng nhằm tấn công các lỗ hổng trong cấu hình quá mở rộng của các trang trực tuyến Experience Cloud bằng cách sử dụng phiên bản điều chỉnh của công cụ mở mã nguồn AuraInspector.\n\nHoạt động này, theo công ty, liên quan đến việc tấn công các cấu hình quá mở rộng của người dùng khách truy cập Experience Cloud để lấy được dữ liệu nhạy cảm.\n\nChứng từ cho thấy nhà tấn công đang sử dụng phiên bản điều chỉnh của công cụ mở mã nguồn AuraInspector [...] để thực hiện tổng hợp quét các trang trực tuyến Experience Cloud, Salesforce nói.\n\nTrong khi phiên bản AuraInspector gốc có thể chỉ giúp xác định các đối tượng có lỗ hổng bằng cách kiểm tra các điểm cuối API mà các trang trực tuyến này mở (cụ thể là /s/sfsites/aura), nhà tấn công đã phát triển phiên bản điều chỉnh của công cụ có khả năng đi xa hơn để trích xuất dữ liệu – tấn công các cấu hình quá mở rộng của người dùng khách.\n\nAuraInspector là công cụ mở mã nguồn được thiết kế để giúp nhóm bảo mật xác định và kiểm tra các lỗ hổng trong kiểm soát truy cập của nền tảng Salesforce Aura. Nó được phát hành bởi Mandiant (tài trợ của Google) vào tháng 1 năm 2026.\n\nCác trang trực tuyến Salesforce truy cập công khai sử dụng một hồ sơ người dùng khách riêng biệt cho phép người dùng không xác thực truy cập các trang bắt đầu, FAQ và bài viết kiến thức. Tuy nhiên, nếu hồ sơ này được cấu hình quá mở rộng, nó có thể cấp quyền truy cập dữ liệu nhiều hơn dự kiến.\n\nNhư kết quả, một kẻ tấn công có thể tận dụng lỗ hổng này để truy vấn trực tiếp các đối tượng CRM Salesforce mà không cần đăng nhập. Để thực hiện cuộc tấn công này, hai điều kiện phải được đáp ứng bởi khách hàng Experience Cloud: họ đang sử dụng hồ sơ người dùng khách và đã không tuân thủ hướng dẫn cấu hình khuyến nghị của Salesforce.\n\nHiện tại, chúng tôi chưa xác định ra bất kỳ lỗ hổng nào có tính chất inherent của nền tảng Salesforce liên quan đến hoạt động này, Salesforce nói. Những cố gắng này tập trung vào các cài đặt của khách hàng mà, nếu không được bảo mật đúng cách, có thể tăng cao nguy cơ.\n\nCông ty đã gán cuộc tấn công cho nhóm tấn công biết tên, nhưng không công nhận tên gọi, điều này tăng khả năng rằng nó có thể là công việc của ShinyHunters (còn được gọi là UNC6240), có lịch sử tấn công môi trường Salesforce thông qua các ứng dụng bên thứ ba từ Salesloft và Gainsight.\n\nSalesforce khuyến cáo khách hàng kiểm tra lại các cấu hình người dùng khách truy cập Experience Cloud, đảm bảo giá trị mặc định cho tất cả các đối tượng được đặt là Private, vô hiệu hóa quyền truy cập API công khai của người dùng khách, hạn chế các cài đặt hiển thị để ngăn người dùng khách khám phá thành viên tổ chức nội bộ, vô hiệu hóa tự đăng ký nếu không cần thiết và theo dõi các nhật ký cho các truy vấn không mong muốn.\n\nCác hoạt động này của nhà tấn công mạng thể hiện một xu hướng rộng rãi về 'tiêu cự dựa trên danh tính', nó thêm. Dữ liệu thu được trong các quét này, chẳng hạn như tên và số điện thoại – thường được sử dụng để xây dựng các kế hoạch tấn công hướng dẫn theo sau và 'vishing' (cuộc gọi trộm).\n\n---\n\nGiải thích các quy tắc được tuân thủ:\n\n1.  Tiêu đề: Nhà tấn công mạng tổng hợp quét Salesforce Experience Cloud bằng công cụ AuraInspector được điều chỉnh - Đáp ứng yêu cầu đầu tiên (tiêu đề dịch hấp dẫn) và bao gồm thông tin chính (nhà tấn công, công cụ, mục đích).\n2.  Nội dung: Đã giữ nguyên toàn bộ thông tin, số liệu, tên tổ chức (Mandiant, Salesforce, ShinyHunters/UNC6240), và các khuyến nghị cụ thể của Salesforce.\n3.  Loại bỏ rác: Không có menu, quảng cáo, nút bấm, sơ đồ, hoặc mã code.\n4.  Văn phong: Dùng ngôn ngữ báo chí chuẩn, dịch thuật trơn tru, mạch lạc, phù hợp với TTS (ví dụ: Salesforce đã cảnh báo, Hoạt động này, theo công ty, Chứng từ cho thấy, Không xác định ra bất kỳ lỗ hổng nào...).\n5.  Không dùng ký tự đặc biệt: Không sử dụng ``, ``, `[]`, `()`, `{}`, v.v. (chỉ sử dụng dấu ngoặc vuông trong tên ShinyHunters/UNC6240 khi cần thiết, nhưng không dùng trong văn bản chung).\n6.  Không xưng hô: Không sử dụng các từ như bạn, bà, cụ, kính, quý vị, v.v. trong đoạn dịch.",
-    "tag": "Thể loại tin tức: Khám phá<|eot_id|>"
+    "tag": "Thể loại tin tức: Lỗ hổng"
   },
   {
     "title": "CISA Flags SolarWinds, Ivanti, and Workspace One Vulnerabilities as Actively Exploited",
@@ -1798,7 +1876,7 @@
     "added_at": "2026-03-10T10:01:39.125994",
     "title_vi": "Cờ CISA SolarWinds, Ivanti và Không gian làm việc Một lỗ hổng được khai thác tích cực",
     "summary_text": "Tiêu đề bài báo đã dịch:  \nCISA Cảnh Báo: Lỗi An Toàn Cực Đa Mức Trong SolarWinds, Ivanti và Không Gian Làm Việc  \n\n---  \n\nNội dung bài báo:  \nĐơn vị An Toàn Cibernétique và Cơ Xây Cầu của Hoa Kỳ (CISA) đã thêm ba lỗ hổng bảo mật vào danh sách Known Exploited Vulnerabilities (KEV) vào thứ Hai, dựa trên bằng chứng về việc bị khai thác tích cực.  \n\nDanh sách lỗ hổng sau đây:  \n\n- CVE-2021-22054 (Điểm CVSS: 7.5): Lỗi yêu cầu từ máy chủ (SSRF) trong Omnissa Workspace One UEM (dříve là VMware Workspace One UEM) có thể cho phép một hành vi xấu có truy cập mạng vào UEM gửi yêu cầu không cần xác thực và truy cập thông tin nhạy cảm.  \n\n- CVE-2025-26399 (Điểm CVSS: 9.8): Lỗi mô phỏng dữ liệu không tin cậy trong thành phần AjaxProxy của SolarWinds Web Help Desk có thể cho phép kẻ tấn công chạy lệnh trên máy chủ.  \n\n- CVE-2026-1603 (Điểm CVSS: 8.6): Lỗi vượt qua xác thực bằng cách sử dụng đường dẫn hoặc kênh thay thế trong Ivanti Endpoint Manager có thể cho phép một kẻ tấn công từ xa, không cần xác thực,泄露 dữ liệu mật khẩu được lưu trữ cụ thể.  \n\nThêm vào danh sách CVE-2025-26399 do các báo cáo từ Microsoft và Huntress cho thấy các nhóm tấn công đang khai thác lỗi an toàn trong SolarWinds Web Help Desk để lấy quyền truy cập ban đầu. Hoạt động này được tin là do nhóm ransomware Warlock.  \n\nTương tự, CVE-2021-22054 được GreyNoise ghi nhận vào tháng 3 năm 2025 đang bị khai thác cùng nhiều lỗ hổng SSRF khác trong các sản phẩm khác như phần của chiến dịch phối hợp.  \n\nHiện chưa có thông tin chi tiết về cách CVE-2026-1603 được sử dụng trong thực tế. Theo đó,bulletin bảo mật của Ivanti chưa cập nhật về trạng thái khai thác.  \n\nĐể đối phó với rủi ro từ các mối đe dọa đang hoạt động, các cơ quan thuộc FCEB (Federal Civilian Executive Branch) được yêu cầu áp dụng补丁 cho SolarWinds Web Help Desk trước ngày 12 tháng 3 năm 2026, và hai lỗ hổng còn lại trước ngày 23 tháng 3 năm 2026.  \n\nCác loại lỗ hổng này thường là đường vào để các hành vi xấu cibernétique tấn công và gây rủi ro nghiêm trọng cho hệ thống của chính phủ, CISA đã nhấn mạnh.",
-    "tag": "Thể loại tin tức: Khám phá<|eot_id|>"
+    "tag": "Thể loại tin tức: Lỗ hổng"
   },
   {
     "title": "Cylake Raises $45 Million to Secure Organizations Barred From Cloud",

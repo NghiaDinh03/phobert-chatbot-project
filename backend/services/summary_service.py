@@ -83,8 +83,7 @@ class SummaryService:
                 raise Exception("Not enough text extracted")
             
             logger.info(f"[AI] Đã cào được {len(text)} ký tự từ: {url}")
-            # Truncate to save context window (3000 chars is enough for summary)
-            text = text[:3000] 
+            text = text[:6000]
         except Exception as e:
             logger.error(f"Failed to parse article {url}: {e}")
             err_msg = str(e)
@@ -102,27 +101,27 @@ class SummaryService:
             prompt = ""
             if lang == "en":
                 prompt = (
-                    "Bạn là một biên tập viên tin tức CNTT. "
-                    "Nhiệm vụ: Dịch TOÀN BỘ bài báo sau sang Tiếng Việt. "
-                    "Yêu cầu bắt buộc:\n"
-                    "- DÒNG ĐẦU TIÊN của file kết quả PHẢI là Tiêu đề bài báo đã được dịch sang tiếng Việt một cách hấp dẫn.\n"
-                    "- KHÔNG ĐƯỢC tóm tắt ngắn gọn. Phải GIỮ NGUYÊN TOÀN BỘ thông tin, thông số kỹ thuật, số liệu, và tên tổ chức/chuyên gia.\n"
-                    "- Chỉ lược bỏ các thành phần rác (menu, quảng cáo, nút bấm) hoặc sơ đồ/code không thể đọc bằng giọng nói.\n"
-                    "- Văn phong chuẩn báo chí, dịch thuật trơn tru mạch lạc để công cụ Text-to-Speech đọc dễ nghe.\n"
-                    "- Tuyệt đối không xưng hô, không dùng ký tự đặc biệt (*, #, ngoặc vuông).\n"
-                    f"\n\nTiêu đề gốc: {title}\nNội dung báo: {text}"
+                    "Dịch TOÀN BỘ bài báo sau sang Tiếng Việt. "
+                    "Quy tắc:\n"
+                    "- Dòng đầu tiên là tiêu đề tiếng Việt hấp dẫn.\n"
+                    "- Giữ nguyên toàn bộ thông tin, thông số kỹ thuật, số liệu, tên tổ chức.\n"
+                    "- Lược bỏ menu, quảng cáo, nút bấm, sơ đồ code.\n"
+                    "- Văn phong báo chí, mạch lạc, phù hợp đọc bằng giọng nói.\n"
+                    "- Không dùng ký tự đặc biệt (*, #, ngoặc vuông).\n"
+                    "- CHỈ VIẾT NỘI DUNG BÀI BÁO. TUYỆT ĐỐI KHÔNG thêm bất kỳ lời giải thích, ghi chú, nhận xét hay bình luận nào của bản thân.\n"
+                    f"\nTiêu đề gốc: {title}\nNội dung báo: {text}"
                 )
             else:
                 prompt = (
-                    "Bạn là một biên tập viên tin tức CNTT. "
-                    "Nhiệm vụ: Lọc lại bài báo Tiếng Việt sau đây thành một bài thuần text chuẩn báo chí. "
-                    "Yêu cầu bắt buộc:\n"
-                    "- DÒNG ĐẦU TIÊN của file kết quả PHẢI là Tiêu đề bài báo.\n"
-                    "- KHÔNG ĐƯỢC tóm tắt ngắn. Phải GIỮ NGUYÊN TOÀN BỘ thông tin, số liệu, chi tiết.\n"
-                    "- Lược bỏ thẻ HTML, sơ đồ mô hình, code dư thừa, quảng cáo, menu.\n"
-                    "- Văn phong tự nhiên, trôi chảy, phù hợp để đọc bằng giọng nói nhân tạo.\n"
-                    "- Tuyệt đối không dùng ký tự đặc biệt (*, #, ngoặc).\n"
-                    f"\n\nTiêu đề: {title}\nNội dung báo: {text}"
+                    "Lọc bài báo Tiếng Việt sau thành bài thuần text chuẩn báo chí. "
+                    "Quy tắc:\n"
+                    "- Dòng đầu tiên là tiêu đề bài báo.\n"
+                    "- Giữ nguyên toàn bộ thông tin, số liệu, chi tiết.\n"
+                    "- Lược bỏ HTML, sơ đồ, code dư thừa, quảng cáo, menu.\n"
+                    "- Văn phong tự nhiên, trôi chảy, phù hợp đọc bằng giọng nói.\n"
+                    "- Không dùng ký tự đặc biệt (*, #, ngoặc).\n"
+                    "- CHỈ VIẾT NỘI DUNG BÀI BÁO. TUYỆT ĐỐI KHÔNG thêm bất kỳ lời giải thích, ghi chú, nhận xét hay bình luận nào của bản thân.\n"
+                    f"\nTiêu đề: {title}\nNội dung báo: {text}"
                 )
 
             summary_vi = ""
@@ -158,8 +157,8 @@ class SummaryService:
                             response = model.generate_content(
                                 prompt,
                                 generation_config=genai.GenerationConfig(
-                                    temperature=0.3,
-                                    max_output_tokens=2000,
+                                    temperature=0.2,
+                                    max_output_tokens=8000,
                                 )
                             )
                             summary_vi = response.text.strip()
@@ -206,8 +205,8 @@ class SummaryService:
                                 payload = {
                                     "model": "openrouter/free",
                                     "messages": [{"role": "user", "content": prompt}],
-                                    "temperature": 0.3,
-                                    "max_tokens": 2000
+                                    "temperature": 0.2,
+                                    "max_tokens": 8000
                                 }
                                 res = httpx.post("https://openrouter.ai/api/v1/chat/completions", headers=headers, json=payload, timeout=60.0)
                                 
@@ -224,15 +223,40 @@ class SummaryService:
                                 logger.warning(f"OpenRouter Key index {idx} lỗi ({e}). Thử key tiếp theo...")
                                 time.sleep(0.5)
             
+            # Priority 3: LocalAI fallback
             if not summary_vi:
-                raise Exception("Tất cả các API Tóm tắt đang lỗi mạng hoặc cạn Quota. Xin chờ 5 phút.")
+                localai_url = os.getenv("LLM_API_URL", "http://phobert-localai:8080/v1")
+                try:
+                    logger.info("Cloud APIs đều thất bại. Dùng LocalAI dự phòng...")
+                    payload = {
+                        "model": os.getenv("MODEL_NAME", "default"),
+                        "messages": [{"role": "user", "content": prompt}],
+                        "temperature": 0.2,
+                        "max_tokens": 4000
+                    }
+                    res = httpx.post(f"{localai_url}/chat/completions", json=payload, timeout=120.0)
+                    res.raise_for_status()
+                    summary_vi = res.json()["choices"][0]["message"]["content"].strip()
+                    logger.info("Đã tóm tắt bằng LocalAI")
+                except Exception as e:
+                    logger.warning(f"LocalAI cũng thất bại ({e}). Không còn phương án nào.")
+
+            if not summary_vi:
+                raise Exception("Tất cả các API đang lỗi hoặc cạn Quota. Xin chờ 5 phút.")
             
-            # Post process summary
+            # Post process: loại bỏ ký tự đặc biệt và meta-commentary của AI
             if summary_vi:
                 summary_vi = summary_vi.replace("*", "").replace("#", "").replace('"', "")
                 summary_vi = summary_vi.replace("<|eot_id|>", "").replace("<|end_header_id|>", "").replace("assistant", "").strip()
                 if summary_vi.lower().startswith("assistant"):
                     summary_vi = summary_vi[len("assistant"):].strip()
+                
+                import re
+                summary_vi = re.sub(r'\(Đoạn văn tiếp theo.*$', '', summary_vi, flags=re.DOTALL).strip()
+                summary_vi = re.sub(r'\(Lưu ý:.*$', '', summary_vi, flags=re.DOTALL).strip()
+                summary_vi = re.sub(r'\(Ghi chú:.*$', '', summary_vi, flags=re.DOTALL).strip()
+                summary_vi = re.sub(r'\(Chú thích:.*$', '', summary_vi, flags=re.DOTALL).strip()
+                summary_vi = re.sub(r'---.*$', '', summary_vi, flags=re.DOTALL).strip()
 
                 # Tách tiêu đề (dòng đầu tiên) và nội dung tóm tắt để đồng bộ Lịch sử
                 lines = [l.strip() for l in summary_vi.split("\n") if l.strip()]
