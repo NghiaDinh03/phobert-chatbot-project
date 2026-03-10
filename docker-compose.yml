@@ -20,9 +20,6 @@ services:
       - LLM_API_URL=http://phobert-localai:8080/v1
     networks:
       - phobert-network
-    dns:
-      - 8.8.8.8
-      - 8.8.4.4
     volumes:
       - ./backend:/app
       - ./data:/data
