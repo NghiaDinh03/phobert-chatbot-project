@@ -17,7 +17,7 @@ logger = logging.getLogger(__name__)
 RSS_SOURCES = {
     "cybersecurity": [
         {"name": "The Hacker News", "url": "https://feeds.feedburner.com/TheHackersNews", "icon": "🔓", "lang": "en"},
-        {"name": "BleepingComputer", "url": "https://www.bleepingcomputer.com/feed/", "icon": "💻", "lang": "en"},
+        {"name": "Dark Reading", "url": "https://www.darkreading.com/rss.xml", "icon": "💻", "lang": "en"},
         {"name": "SecurityWeek", "url": "https://www.securityweek.com/feed/", "icon": "🛡️", "lang": "en"},
     ],
     "stocks_international": [
