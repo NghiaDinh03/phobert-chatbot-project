@@ -130,6 +130,10 @@ class NewsService:
             hist = NewsService.get_history_no_lock()
         if category and category != "all":
             hist = [a for a in hist if a.get("category") == category]
+        import hashlib
+        for item in hist:
+            if "hash" not in item and "url" in item:
+                item["hash"] = hashlib.md5(item["url"].encode()).hexdigest()
         return hist
 
     @staticmethod

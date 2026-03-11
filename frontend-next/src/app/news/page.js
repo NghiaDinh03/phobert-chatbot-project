@@ -294,7 +294,7 @@ export default function NewsPage() {
                 } else {
                     setAiStatus('Kết nối...')
                 }
-            } catch { 
+            } catch {
                 setAiStatus('Mất kết nối')
             }
         }, 2000)
@@ -433,8 +433,8 @@ export default function NewsPage() {
                                 key={i}
                                 className={styles.card}
                             >
-                                <button 
-                                    className={styles.reprocessBtnCorner} 
+                                <button
+                                    className={styles.reprocessBtnCorner}
                                     onClick={(e) => handleReprocess(e, article)}
                                     disabled={reprocessing[article.url]}
                                     title="Dịch lại bài báo này"
@@ -499,15 +499,15 @@ export default function NewsPage() {
                                             </button>
 
                                             {expandedArticles[article.url] && (
-                                                <div style={{ 
-                                                    marginTop: '8px', 
-                                                    padding: '10px', 
-                                                    background: '#1e293b', 
-                                                    borderRadius: '6px', 
-                                                    fontSize: '13px', 
-                                                    color: article.audio_cached === 'error' ? '#fca5a5' : '#cbd5e1', 
-                                                    borderLeft: article.audio_cached === 'error' ? '3px solid #ef4444' : '3px solid #3b82f6', 
-                                                    lineHeight: '1.5' 
+                                                <div style={{
+                                                    marginTop: '8px',
+                                                    padding: '10px',
+                                                    background: '#1e293b',
+                                                    borderRadius: '6px',
+                                                    fontSize: '13px',
+                                                    color: article.audio_cached === 'error' ? '#fca5a5' : '#cbd5e1',
+                                                    borderLeft: article.audio_cached === 'error' ? '3px solid #ef4444' : '3px solid #3b82f6',
+                                                    lineHeight: '1.5'
                                                 }}>
                                                     {article.audio_cached === 'error' ? (
                                                         <>⚠️ <b>Lỗi AI:</b> {article.summary_text || 'Hệ thống AI đang quá tải, vui lòng thử lại sau giây lát.'}</>
@@ -560,17 +560,35 @@ export default function NewsPage() {
                                 <a href={hItem.url} target="_blank" rel="noopener noreferrer" className={styles.historyItemTitle}>
                                     {hItem.title_vi || hItem.title}
                                 </a>
-                                {hItem.title_vi && hItem.title_vi !== hItem.title && (
-                                    <div style={{ fontSize: '11px', color: '#94a3b8', marginTop: '2px', fontStyle: 'italic' }}>
-                                        Gốc: {hItem.title}
-                                    </div>
-                                )}
                                 <div className={styles.historyItemMeta}>
                                     <span>{new Date(hItem.added_at).toLocaleString('vi-VN')}</span>
-                                    <span>
-                                        {hItem.audio_cached === true ? '✅ Có Audio' : (hItem.audio_cached === 'error' ? '❌ Lỗi' : '⏳ Chờ')}
-                                    </span>
+                                    {hItem.audio_cached === true && hItem.hash && (
+                                        <button
+                                            className={styles.historyPlayBtn}
+                                            onClick={() => {
+                                                const audioUrl = `/api/news/audio/${hItem.hash}.mp3`
+                                                const existing = document.getElementById(`history-audio-${idx}`)
+                                                if (existing) {
+                                                    if (existing.paused) existing.play()
+                                                    else existing.pause()
+                                                    return
+                                                }
+                                                const audio = new Audio(audioUrl)
+                                                audio.id = `history-audio-${idx}`
+                                                audio.play()
+                                            }}
+                                        >🔊 Nghe</button>
+                                    )}
+                                    {hItem.audio_cached !== true && (
+                                        <span style={{ fontSize: '11px', color: '#64748b' }}>⏳ Chờ</span>
+                                    )}
                                 </div>
+                                {hItem.summary_text && (
+                                    <details style={{ marginTop: '4px', fontSize: '12px', color: '#94a3b8' }}>
+                                        <summary style={{ cursor: 'pointer', color: '#60a5fa' }}>Xem tóm tắt</summary>
+                                        <p style={{ marginTop: '4px', lineHeight: '1.5' }}>{hItem.summary_text}</p>
+                                    </details>
+                                )}
                             </div>
                         ))
                     )}
