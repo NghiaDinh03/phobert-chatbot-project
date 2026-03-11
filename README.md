@@ -70,6 +70,7 @@ Dự án đi kèm bộ tài liệu phân tích kỹ thuật rất sâu, nằm tr
 - 📖 **[Tài liệu API Dữ liệu (API References)](./docs/api.md):** Danh sách các Endpoint API Backend đang hỗ trợ.
 - 📖 **[Hướng dẫn Triển khai (Deployment)](./docs/deployment.md):** Các bước để triển khai lên server thật bằng Docker.
 - 📖 **[Hướng dẫn Nạp ChromaDB (ChromaDB Guide)](./docs/chromadb_guide.md):** Cơ chế Embed file `.md` thành vector nội bộ.
+- 📖 **[Tiêu chuẩn Format Markdown RAG & PICO](./docs/markdown_rag_standard.md):** Định dạng file `.md` chuẩn nhất để giúp Llama 3 hiểu và truy xuất chính xác thông tin.
 
 ---
 
