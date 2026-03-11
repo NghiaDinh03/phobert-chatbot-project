@@ -42,6 +42,7 @@ Hệ thống API thần tốc đáp ứng mọi request từ Frontend thông qua
 
 ### 💬 AI Chat (ISO RAG)
 👉 **[Xem chi tiết Hướng dẫn Cơ chế Hoạt động RAG](./docs/chatbot_rag.md)**
+👉 *Dành cho việc train data: [Tiêu chuẩn Format Markdown RAG & PICO](./docs/markdown_rag_standard.md)*
 - Ứng dụng Retrieval-Augmented Generation (RAG). Người dùng chat, hệ thống trích xuất vector từ `vector_store` kết hợp với prompt gửi vào LocalAI Llama 3.1 để trả lời chính xác thông tin nội bộ.
 
 ### 📊 Analytics (Monitor)
