@@ -1,107 +1,94 @@
-﻿# PhoBERT AI Platform — Hệ thống RAG & Đánh giá An toàn Thông tin Toàn diện
+﻿# PhoBERT AI Platform — Hệ thống RAG, Đánh giá ISO 27001 & Tóm tắt Tin Tức Đa Tầng
 
-Nền tảng AI on-premise kết hợp đánh giá tuân thủ **ISO 27001:2022**, Tra cứu thông tin (RAG), và Tổng hợp Tin tức Tự động. Toàn bộ hệ thống chạy cục bộ bằng Docker, đảm bảo an toàn dữ liệu 100%.
-
----
-
-## Tính năng và Phân bổ theo Trang (Pages)
-
-Hệ thống được thiết kế theo dạng Single Page Application (SPA), phân chia tính năng rõ ràng qua từng Tab:
-
-### 1. 🏠 Trang chủ (Dashboard)
-- Hiển thị giới thiệu tổng quan hệ thống và các chỉ mục dẫn hướng nhanh.
-- Tích hợp Đồng hồ thời gian thực (Live Clock) chuyển đổi 4 múi giờ (VN, UTC, US, JP).
-
-### 2. 💬 AI Chat (Chatbot RAG)
-👉 **[Xem chi tiết Hướng dẫn Cơ chế Hoạt động RAG](./docs/chatbot_rag.md)**
-- Trò chuyện với AI bằng tiếng Việt, hỏi đáp sâu về ATTT, tiêu chuẩn ISO 27001.
-- Tích hợp **ChromaDB** nạp trực tiếp file `.md`. Khi người dùng hỏi, AI tự động nhúng (Embed) và trích xuất (RAG) các khoản luật liên quan vào câu trả lời.
-
-### 3. 📊 Analytics (Giám sát Hệ thống)
-👉 **[Xem chi tiết Hướng dẫn Quản trị và Analytics](./docs/analytics_monitoring.md)**
-- **Status Hub:** Xem trạng thái sống của các container (FastAPI, LocalAI) và các Model đang được nạp.
-- **Tài nguyên phần cứng:** Giám sát mức tiêu thụ CPU, RAM, Disk.
-- **Cache Controller:** Thống kê sinh cache (Dịch & Audio) tránh tràn Disk ổ cứng.
-- **ChromaDB Monitor:** Giao diện quản trị Database vector. Tích hợp nút `🔄 Nạp lại` dữ liệu và `Tìm kiếm thử`.  👉 *([Đọc thêm Guide ChromaDB](./docs/chromadb_guide.md))*
-- **Lịch sử ISO:** Quản lý xem lại Form đánh giá cũ, Nạp lại, và Xoá rác với cảnh báo Confirm Browser-side.
-
-### 4. 📝 Form ISO (Đánh giá Tuân thủ)
-👉 **[Xem chi tiết Luồng Data Form Đánh giá ISO](./docs/iso_assessment_form.md)**
-- Điền khảo sát hệ thống mạng doanh nghiệp toàn diện.
-- Gửi lên **SecurityLLM** soi lỗi phân tích bảo mật. Sau đó **Llama 3.1** đóng vai trò báo cáo sinh ra văn bản đánh giá (Action Plan).
-
-### 5. 📰 Tin tức (AI News Aggregator & TTS)
-👉 **[Xem chi tiết Cơ chế Crawl Tin & Sinh Audio TTS Nội bộ](./docs/news_aggregator.md)**
-- Thu thập bài báo mới từ RSS của các trang Cybersecurity chuyên sâu.
-- Các báo Anh ngữ được **Mô hình VinAI Translate** (135M parameters) dịch ngầm Title qua tiếng Việt hoàn tòan nội bộ.
-- Dùng **Llama 3.1** Rút gọn nội dung link gốc. Đọc văn thành tiếng Voice Việt "Quốc dân" bằng modul Python `edge-tts`. Tối ưu tự xóa Cache định kỳ bảo vệ ổ cứng.
+Nền tảng AI on-premise kết hợp đánh giá tuân thủ **ISO 27001:2022**, Tra cứu thông tin (RAG), và Tổng hợp Tin tức Tự động. Hệ thống được triển khai bằng Docker Compose, thiết kế đặc biệt với kiến trúc Fallback đa điểm để đảm bảo tính sẵn sàng (High Availability) lớn nhất.
 
 ---
 
-## Hệ thống Models & AI đang sử dụng (On-Premise)
+## 🏗️ Kiến trúc Công nghệ & Các Thành phần Chính
 
-| Model | Tham số | Nhiệm vụ chính trong Project | Engine |
-|---|---|---|---|
-| **Llama 3.1 Instruct** | 8B (Q4_K_M) | Chatbot, Sinh Report ISO 27001, Tóm tắt bài báo, Phân loại gán tự động Tag tin tức. | LocalAI |
-| **SecurityLLM** | 7B (Q4_K_M) | Soi lỗi bảo mật Form ISO, đánh giá điểm rủi ro chuyên sâu hệ thống mạng. | LocalAI |
-| **VinAI Translate (En-Vi)** | 135M | Chạy ngầm liên tục, phiên dịch Title bài báo Tiếng Anh -> Tiếng Việt theo ngữ cảnh. | HuggingFace (Transformers) |
-| **all-MiniLM-L6-v2** | - | Nhúng chữ (Embedding) các tài liệu, luật, nghị định ISO thành Vector. | ChromaDB |
-| **Edge-TTS** | - | Service tổng hợp giọng nói tiếng Việt mượt mà (Không chiếm Card, call API nội bộ thiết bị). | Python lib |
+Dự án này sử dụng mô hình Client-Server với sự hỗ trợ của đa dạng AI Models, được phân bổ vào các container trong Docker.
 
----
+### 1. 🖥️ Frontend (Next.js 15)
+- **Giao diện người dùng (UI):** Thiết kế dạng Single Page Application (SPA) siêu tốc, không cần tải lại trang. Các Module được chia thành các Tab chức năng (Analytics, Chat, Form ISO, Tin tức).
+- **Client-Side Caching:** Tích hợp bộ nhớ đệm (cache) phía client (React state/ref) cho ứng dụng Tin tức, giúp lưu trữ tạm thời các tab (An ninh mạng, Chứng khoán...) giảm tải băng thông và độ trễ khi chuyển qua lại.
+- **Audio Control:** Giao diện điều khiển audio hiện đại, cho phép nghe ngay tin tức tóm tắt trên từng bài báo hoặc thông qua Panel Lịch sử (có logic tắt chéo chống âm thanh đè lên nhau).
 
-## Kiến trúc Thư mục Kỹ thuật (Tóm tắt)
+### 2. ⚙️ Backend (FastAPI - Python)
+Hệ thống API thần tốc đáp ứng mọi request từ Frontend thông qua kiến trúc đa luồng và bảo mật:
+- **`chat_service.py`**: Quản lý trò chuyện, gọi LocalAI và kết nối CSDL Vector.
+- **`model_router.py`**: Điều phối công việc giữa 2 model LocalAI: `SecurityLLM` (soi lỗi) và `Llama 3.1` (viết báo cáo).
+- **`summary_service.py`**: Trái tim của hệ thống tóm tắt tin tức. Tích hợp cơ chế **Fallback 3 Tầng & Round-Robin**:
+  1. **Google Gemini Flash (2.5)**: Xoay vòng mảng nhiều API Keys. Nếu dính Rate Limit (429), chặn key đó trong 60s và chuyển sang key kế tiếp.
+  2. **OpenRouter**: Nếu toàn bộ mảng Gemini Keys bị lỗi, tự chuyển sang pool các OpenRouter API keys (cũng xoay vòng với Cooldown).
+  3. **LocalAI (On-premise)**: Nếu mất mạng hoặc tất cả Cloud API đều sập/hết quota, tự động dùng AI Local để tóm tắt làm phương án cuối cùng.
+- **`news_service.py`**: Quản lý việc kéo RSS từ các nguồn lớn (The Hacker News, Dark Reading, MarketWatch...). Tích hợp cơ sở dữ liệu `articles_history.json` dọn dẹp (cleanup) vòng đời tuổi thọ 7 ngày.
+- **`translation_service.py`**: Dùng Model `VinAI Translate` (135M parameters) dịch tiêu đề trực tiếp bằng CPU không cần API ngoài.
 
-```text
-phobert-chatbot-project/
-│
-├── frontend-next/                          # Next.js 15 Frontend
-│   ├── src/app/
-│   │   ├── (các tab: chatbot, analytics, form-iso, news)
-│
-├── backend/                                # FastAPI Backend
-│   ├── api/routes/
-│   │   ├── chat.py, iso27001.py, system.py, news.py
-│   ├── services/
-│   │   ├── chat_service.py                 # RAG & LocalAI interaction
-│   │   ├── model_router.py                 # Phối hợp SecurityLLM ↔ Llama 3.1
-│   │   ├── news_service.py                 # Crawl RSS, kích hoạt dịch và gán Tag ngầm
-│   │   ├── translation_service.py          # Load VinAI Transformers & Dịch Title báo
-│   │   └── summary_service.py              # Extract báo, gọi Llama tóm tắt & gTTS audio
-│   ├── repositories/
-│   │   └── vector_store.py                 # Cầu nối gọi lệnh tới ChromaDB
-│   └── requirements.txt                    # edge-tts, newspaper3k, httpx, lxml...
-│
-├── data/
-│   ├── iso_documents/                      # Chứa file .md cho RAG (Mount động)
-│   ├── summaries/                          # Cache JSON & AUDIO (.mp3) từ Tin tức Text-to-Speech
-│   ├── translations/                       # Cache title_vi JSON
-│   ├── assessments/                        # JSON report form đánh giá 
-│   ├── vector_store/                       # ChromaDB persistent data (sqlite)
-│   └── models/huggingface/                 # Nơi VinAI tải Model cache ẩn
-│
-├── models/                                 # Chứa file vật lý GGUF (Llama, SecurityLLM)
-├── docs/                                   # File hướng dẫn bổ sung (vd: chromadb_guide.md)
-└── docker-compose.yml                      # Script 1-lệnh duy nhất (Frontend + Backend + LLMs)
-```
+### 3. 💾 Data & Logic Lưu trữ (Folder `data/`)
+Đây là bộ não lưu trữ persistent (bền vững) được mount vào Docker:
+- **`data/iso_documents/`**: Thư mục bạn vứt file `.md` vào, và ChromaDB sẽ đọc nó để tạo Knowledge Base cho bot ISO.
+- **`data/vector_store/`**: Chứa CSDL SQLite Vector của ChromaDB.
+- **`data/summaries/`**: Nơi lưu Cache JSON cho chữ và đặc biệt là folder `data/summaries/audio/`.
+  - **Cơ chế Audio Caching:** Url của bài báo được băm thành **MD5 Hash**. Hệ thống dùng Edge-TTS chuyển văn bản thành giọng nói tiếng Việt và lưu thành file tĩnh bằng `hash.mp3`. Các url đã có Audio sẽ không bao giờ phải gọi TTS lại lần thứ 2, giúp lướt nhanh cho người sau. Cùng với text history, nó bị xóa sau 7 ngày để giải phóng RAM/Ổ cứng.
+- **`data/assessments/`**: Lưu lịch sử báo cáo ISO được sinh ra.
 
 ---
 
-## Cài đặt và Triển khai (Docker-based)
+## 📑 Các Tính năng Chia theo Giao diện (Tabs)
 
-Yêu cầu duy nhất để hệ thống hoạt động là máy có chạy `Docker Compose`. Dự án không phụ thuộc vào thư viện cài trực tiếp trên máy host nào cả.
+### 🏠 Trang chủ (Dashboard)
+- Đồng hồ 4 Múi giờ Thế giới trực tiếp.
+- Các nút dẫn hướng nhanh giới thiệu tính năng hệ thống.
 
-1. **Clone mã nguồn:**
+### 💬 AI Chat (ISO RAG)
+- Ứng dụng Retrieval-Augmented Generation (RAG). Người dùng chat, hệ thống trích xuất vector từ `vector_store` kết hợp với prompt gửi vào LocalAI Llama 3.1 để trả lời chính xác thông tin nội bộ.
+
+### 📊 Analytics (Monitor)
+- Dashboard tối thượng theo dõi sức khỏe phần cứng (CPU, RAM).
+- Theo dõi các Container và trạng thái Model AI rảnh hay đang bận.
+- Quản lý kho ChromaDB (Clear, Reload), Lịch sử hệ thống.
+
+### 📝 Form ISO
+- Khảo sát nhanh 20+ câu hỏi về hạ tầng Mạng doanh nghiệp.
+- Sinh báo cáo Action Plan bằng AI Llama 3.1 & SecurityLLM.
+
+### 📰 Tin tức (AI News Aggregator)
+- 3 Chuyên mục tin tức chính. Bài đăng được fetch liên tục.
+- Hiển thị bài viết, ấn **🔊 Nghe** hệ thống sẽ tóm tắt -> sinh MP3 -> và phát (Phát từ Cache nếu nghe lần 2).
+- **Panel Lịch Sử 7 Ngày Sidebar:** Hiển thị bài báo cũ của tuần, cho phép người dùng click Nghe lại Audio tĩnh đã được tạo trong lịch sử mà không tốn token.
+
+---
+
+## 🤖 Hệ thống Mô hình AI (Trí tuệ Nhân tạo)
+
+1. **Llama 3.1 Instruct (8B)** `[LocalAI]`: "Bộ não não đa năng" viết lách, gán nhãn, tóm tắt fallback.
+2. **SecurityLLM (7B)** `[LocalAI]`: Chuyên gia bảo mật dò lỗi mạng nội bộ.
+3. **Gemini 2.5 Flash / OpenRouter** `[Cloud API]`: "Lính đánh thuê" tóm tắt tốc độ cao, hỗ trợ đa thread.
+4. **VinAI Translate (135M)** `[HuggingFace Transformers]`: Biên dịch viên tiếng Việt 100% On-server.
+5. **all-MiniLM-L6-v2** `[ChromaDB]`: Phân mảnh text thành Vector toán học.
+6. **Edge-TTS** `[Microsoft Service]`: Text-to-Speech tự nhiên, mượt mà.
+
+---
+
+## 🚀 Cài đặt và Khởi chạy
+
+Kiến trúc chuẩn bị vô cùng đơn giản, tất cả được đóng gói qua `docker-compose`. Mọi vấn đề về DNS hoặc Network Docker đã được tuỳ biến dọn dẹp.
+
+1. **Clone project và thiết lập biến môi trường**
    ```bash
    git clone https://github.com/NghiaDinh03/phobert-chatbot-project.git
    cd phobert-chatbot-project
    cp .env.example .env
    ```
-2. **Khởi chạy toán hệ thống:**
+   > ⚠️ **Lưu ý:** Hãy mở file `.env` lên và điền nhiều API Keys vào `GEMINI_API_KEYS` và `OPENROUTER_API_KEYS` theo định dạng `key1,key2,key3`. Hệ thống sẽ tự dùng Round-Robin để cân bằng tải!
+
+2. **Chạy Project bằng 1 lệnh**
    ```bash
    docker-compose up --build -d
    ```
-3. Lệnh này sẽ tự kéo các image, tải GGUF model vào `/models`, nạp thư viện `transformers` và chạy 3 container `phobert-frontend`, `phobert-backend`, `phobert-localai`.
-4. Truy cập giao diện tại: **http://localhost:3000**
+   *Lệnh này sẽ tự kéo các image, tải GGUF model vào `/models`, nạp thư viện và chạy 3 container `phobert-frontend`, `phobert-backend`, `phobert-localai`.*
 
-👉 _Tham khảo Hướng dẫn nạp file tự động vào ChromaDB tại: **[Hướng dẫn ChromaDB](./docs/chromadb_guide.md)**._
+3. **Truy cập:** Mở trình duyệt và vào **http://localhost:3000**
+
+---
+*Dự án tập trung vào trải nghiệm Người dùng cuối (End-User) cao cấp, an toàn dữ liệu, chống tràn bộ nhớ, và Backup lỗi hệ thống nhiều tầng vững chắc.*
