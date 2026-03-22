@@ -275,7 +275,7 @@ class NewsService:
                 NewsService._apply_translations(articles, category)
 
                 from services.summary_service import SummaryService
-                to_process = [a for a in articles if not a.get("audio_cached") and a.get("audio_cached") != "error"][:3]
+                to_process = [a for a in articles if not a.get("audio_cached") and a.get("audio_cached") != "error"]
                 for idx, a in enumerate(to_process):
                     title = a.get("title_vi") or a.get("title")
                     set_ai_status(f"AI tóm tắt & đọc bài ({idx+1}/{len(to_process)}): {title[:40]}...")
@@ -296,7 +296,7 @@ class NewsService:
                         del _cache[k]
 
                     logger.info(f"Bài {idx+1}/{len(to_process)} xong - đã cập nhật cache")
-                    time.sleep(2)
+                    time.sleep(3)
 
                 # Tag articles using CloudLLMService
                 from services.cloud_llm_service import CloudLLMService

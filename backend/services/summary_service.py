@@ -1,4 +1,4 @@
-"""Summary Service — Full-content article processing with Cloud LLM translation & Edge-TTS."""
+toàn bộ """Summary Service — Full-content article processing with Cloud LLM translation & Edge-TTS."""
 
 import os
 import json
