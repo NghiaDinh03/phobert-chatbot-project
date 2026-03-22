@@ -274,12 +274,12 @@ class NewsService:
 
                 NewsService._apply_translations(articles, category)
 
-                # Summarize & Voice (Edge-TTS)
                 from services.summary_service import SummaryService
                 to_process = [a for a in articles if not a.get("audio_cached") and a.get("audio_cached") != "error"][:3]
                 for idx, a in enumerate(to_process):
                     title = a.get("title_vi") or a.get("title")
                     set_ai_status(f"AI tóm tắt & đọc bài ({idx+1}/{len(to_process)}): {title[:40]}...")
+                    SummaryService._get_cache(a["url"], skip_retryable=True)
                     SummaryService.process_article(a["url"], a.get("lang", "en"), title)
                     cached_sum = SummaryService._get_cache(a["url"])
                     if cached_sum:

@@ -29,13 +29,18 @@ class SummaryService:
         return hashlib.md5(url.encode()).hexdigest()
 
     @staticmethod
-    def _get_cache(url: str) -> Optional[Dict]:
+    def _get_cache(url: str, skip_retryable: bool = False) -> Optional[Dict]:
         url_hash = SummaryService._generate_hash(url)
         cache_path = os.path.join(CACHE_DIR, f"{url_hash}.json")
         if os.path.exists(cache_path):
             try:
                 with open(cache_path, "r", encoding="utf-8") as f:
-                    return json.load(f)
+                    data = json.load(f)
+                if skip_retryable and data.get("retryable"):
+                    os.remove(cache_path)
+                    logger.info(f"Removed retryable error cache for: {url}")
+                    return None
+                return data
             except Exception as e:
                 logger.warning(f"Cache read failed {cache_path}: {e}")
         return None
@@ -69,30 +74,44 @@ class SummaryService:
         audio_filename = f"{url_hash}.mp3"
         audio_path = os.path.join(AUDIO_DIR, audio_filename)
 
-        # Step 1: Crawl full article text
-        try:
-            from newspaper import Article
-            article_scraper = Article(url)
-            article_scraper.download()
-            article_scraper.parse()
-            text = article_scraper.text
+        # Step 1: Crawl full article text with retry
+        text = None
+        max_retries = 3
+        for attempt in range(max_retries):
+            try:
+                from newspaper import Article
+                article_scraper = Article(url, browser_user_agent=(
+                    "Mozilla/5.0 (Windows NT 10.0; Win64; x64) "
+                    "AppleWebKit/537.36 (KHTML, like Gecko) "
+                    "Chrome/120.0.0.0 Safari/537.36"
+                ))
+                article_scraper.download()
+                article_scraper.parse()
+                text = article_scraper.text
 
-            if not text or len(text) < 300:
-                logger.warning(f"Article too short ({len(text) if text else 0} chars): {url}")
-                raise Exception("Not enough text extracted")
+                if not text or len(text) < 300:
+                    logger.warning(f"Article too short ({len(text) if text else 0} chars), attempt {attempt+1}: {url}")
+                    if attempt < max_retries - 1:
+                        time.sleep(3 * (attempt + 1))
+                        continue
+                    raise Exception("Not enough text extracted")
 
-            logger.info(f"Crawled {len(text)} chars from: {url}")
-            # No hard truncation — send full text to Cloud API for maximum accuracy
-            # Only soft limit at 12000 chars to stay within token limits
-            if len(text) > 12000:
-                text = text[:12000]
+                logger.info(f"Crawled {len(text)} chars from: {url}")
+                if len(text) > 12000:
+                    text = text[:12000]
+                break
 
-        except Exception as e:
-            logger.error(f"Failed to parse article {url}: {e}")
-            err_msg = "Nội dung bài báo quá ngắn hoặc bị chặn bot." if "Not enough text" in str(e) else f"Lỗi truy cập: {str(e)[:80]}"
-            res = {"error": f"❌ {err_msg}", "url": url, "hash": url_hash}
-            SummaryService._save_cache(url, res)
-            return res
+            except Exception as e:
+                logger.warning(f"Scrape attempt {attempt+1}/{max_retries} failed for {url}: {e}")
+                if attempt < max_retries - 1:
+                    time.sleep(3 * (attempt + 1))
+                else:
+                    err_str = str(e)
+                    is_blocked = any(k in err_str for k in ["401", "403", "429", "blocked", "Not enough text"])
+                    err_msg = "Bài báo bị chặn bot hoặc quá ngắn." if is_blocked else f"Lỗi truy cập: {err_str[:80]}"
+                    res = {"error": f"❌ {err_msg}", "url": url, "hash": url_hash, "retryable": True}
+                    SummaryService._save_cache(url, res)
+                    return res
 
         # Step 2: Cloud LLM — Translate (if EN) + Rewrite to broadcast-quality Vietnamese
         try:
