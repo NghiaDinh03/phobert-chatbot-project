@@ -189,7 +189,7 @@ class ChatService:
                     web_sources = [{"title": r["title"], "url": r["url"]} for r in search_results]
                     yield {"step": "search_done", "message": f"✅ Tìm thấy {len(search_results)} kết quả, đang phân tích..."}
 
-            yield {"step": "thinking", "message": "🤖 Đang tạo câu trả lời (gemini-3-pro-preview)..."}
+            yield {"step": "thinking", "message": f"🤖 Đang tạo câu trả lời ({settings.CLOUD_MODEL_NAME})..."}
 
             ss = ChatService.get_session_store()
             history = ss.get_context_messages(session_id, max_messages=10)

@@ -25,7 +25,7 @@ except ImportError:
 
 app = FastAPI(
     title=settings.APP_NAME,
-    description="AI-powered ISO 27001 compliance chatbot with gemini-3-pro-preview",
+    description=f"AI-powered ISO 27001 compliance chatbot with {settings.CLOUD_MODEL_NAME} via Open Claude",
     version=settings.APP_VERSION,
     docs_url="/docs", redoc_url="/redoc",
 )
