@@ -1,5 +1,5 @@
 {
-  "timestamp": 1774293145.2344065,
+  "timestamp": 1774303893.669779,
   "translations": {
     "220ed4d967f5": "Chúng tôi đã tìm thấy tám vectơ tấn công bên trong nền tảng AWS. Đây là những gì kẻ tấn công có thể làm với chúng",
     "0225e7355a19": "Microsoft Cảnh báo Lừa đảo IRS Lượt truy cập 29.000 Người dùng, Triển khai Phần mềm độc hại RMM",
@@ -23,6 +23,10 @@
     "4ec66d3588db": "Tóm tắt thông báo hội nghị RSAC 2026 (Trước sự kiện)",
     "fad48c1fb8ce": "Kẻ tấn công ẩn Infostealer trong thông báo vi phạm bản quyền",
     "d2f9626b388e": "M-Xu hướng 2026: Thoát khỏi truy cập ban đầu co lại từ giờ đến 22 giây",
-    "a10ff61318df": "Công ty dịch vụ chip Trio-Tech cho biết công ty con bị tấn công bởi Ransomware"
+    "a10ff61318df": "Công ty dịch vụ chip Trio-Tech cho biết công ty con bị tấn công bởi Ransomware",
+    "e0d1cdcdf003": "Tin tặc Bắc Triều Tiên lạm dụng VS Code Auto-Run Tasks để triển khai phần mềm độc hại StoatWaffle",
+    "ff0a6bbe6815": "Trivy Chuỗi cung ứng tấn công mục tiêu bí mật CI / CD",
+    "69ec3c2debbf": "CISO tranh luận về vai trò của con người trong an ninh AI-Powered",
+    "2761d7bbf4a2": "AI trong SOC: Điều gì có thể sai?"
   }
 }
