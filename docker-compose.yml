@@ -14,14 +14,8 @@ services:
       - MAX_TOKENS=-1
       # Cloud LLM (Open Claude)
       - CLOUD_LLM_API_URL=${CLOUD_LLM_API_URL:-https://open-claude.com/v1}
-      - CLOUD_MODEL_NAME=${CLOUD_MODEL_NAME:-claude-opus-4.6}
+      - CLOUD_MODEL_NAME=${CLOUD_MODEL_NAME:-gemini-3-pro-preview}
       - CLOUD_API_KEYS=${CLOUD_API_KEYS}
-      # OpenRouter (Fallback)
-      - OPENROUTER_API_KEYS=${OPENROUTER_API_KEYS}
-      - OPENROUTER_MODEL=${OPENROUTER_MODEL:-meta-llama/llama-3.1-8b-instruct:free}
-      - OPENROUTER_API_URL=${OPENROUTER_API_URL:-https://openrouter.ai/api/v1}
-      # Legacy Gemini
-      - GEMINI_API_KEYS=${GEMINI_API_KEYS}
       # Data paths
       - ISO_DOCS_PATH=/data/iso_documents
       - VECTOR_STORE_PATH=/data/vector_store
@@ -42,7 +36,6 @@ services:
       - CLOUD_TIMEOUT=${CLOUD_TIMEOUT:-60}
       # Legacy compatibility
       - LLM_API_URL=http://phobert-localai:8080/v1
-      - OPENROUTER_API_KEY=${OPENROUTER_API_KEY:-${OPENROUTER_API_KEYS}}
     networks:
       - phobert-network
     volumes:

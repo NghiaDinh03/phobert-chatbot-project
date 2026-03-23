@@ -1,4 +1,14 @@
-"""Cloud LLM Service — Open Claude (primary) with LocalAI fallback."""
+"""Cloud LLM Service — Open Claude (primary) with LocalAI fallback.
+
+Model routing:
+  news_translate  → gemini-2.5-pro       (best translation quality)
+  news_summary    → gemini-3-flash-preview (fast, cheap for summaries)
+  chat            → gemini-3-pro-preview  (balanced chat)
+  iso_local       → LocalAI only          (ISO assessment pre-processing)
+  iso_analysis    → gemini-2.5-pro        (deep ISO analysis)
+  complex         → gemini-2.5-pro        (any heavy task)
+  default         → gemini-3-pro-preview
+"""
 
 import time
 import logging
@@ -10,6 +20,19 @@ from core.config import settings
 logger = logging.getLogger(__name__)
 
 MIN_MAX_TOKENS = 10000
+
+# Task-type → preferred model on Open Claude
+TASK_MODEL_MAP: Dict[str, str] = {
+    "news_translate": "gemini-2.5-pro",
+    "news_summary":   "gemini-3-flash-preview",
+    "iso_analysis":   "gemini-2.5-pro",
+    "complex":        "gemini-2.5-pro",
+    "chat":           "gemini-3-pro-preview",
+    "default":        "gemini-3-pro-preview",
+}
+
+# Tasks that must go to LocalAI only (never Cloud)
+LOCAL_ONLY_TASKS = {"iso_local"}
 
 
 class CloudLLMService:
@@ -28,15 +51,26 @@ class CloudLLMService:
         logger.warning(f"[OpenClaude] Key {key_idx} rate limited (429) — cooldown {cls.RATE_LIMIT_COOLDOWN}s")
 
     @classmethod
+    def _resolve_model(cls, task_type: str = None, model_override: str = None) -> str:
+        """Return the best model for a given task_type."""
+        if model_override:
+            return model_override
+        if task_type and task_type in TASK_MODEL_MAP:
+            return TASK_MODEL_MAP[task_type]
+        return settings.CLOUD_MODEL_NAME or TASK_MODEL_MAP["default"]
+
+    @classmethod
     def _call_open_claude(cls, messages: List[Dict], temperature: float = 0.7,
-                          max_tokens: int = 8192, model: str = None) -> Dict[str, Any]:
-        model = model or settings.CLOUD_MODEL_NAME
+                          max_tokens: int = 8192, model: str = None,
+                          task_type: str = None) -> Dict[str, Any]:
+        model = model or cls._resolve_model(task_type)
         keys = settings.cloud_api_key_list
         if not keys:
             raise Exception("[OpenClaude] No API key configured")
 
         effective_max_tokens = max(max_tokens, MIN_MAX_TOKENS)
-        logger.info(f"[OpenClaude] Requesting model={model}, max_tokens={effective_max_tokens}, messages={len(messages)}")
+        logger.info(f"[OpenClaude] Requesting model={model}, task={task_type or 'auto'}, "
+                    f"max_tokens={effective_max_tokens}, messages={len(messages)}")
 
         last_error = None
         for attempt in range(len(keys)):
@@ -76,8 +110,19 @@ class CloudLLMService:
                     continue
 
                 if response.status_code == 401:
-                    logger.error(f"[OpenClaude] 401 Unauthorized for key {idx} — check API key validity. Response: {response.text[:200]}")
+                    logger.error(f"[OpenClaude] 401 Unauthorized for key {idx} — "
+                                 f"check API key validity. Response: {response.text[:200]}")
                     last_error = "Auth failed (401) — invalid API key"
+                    continue  # NO cooldown — 401 is a config issue, not rate limit
+
+                if response.status_code == 404:
+                    logger.error(f"[OpenClaude] 404 — model '{model}' not found. "
+                                 f"Response: {response.text[:200]}")
+                    last_error = f"Model not found (404): {model}"
+                    # Try fallback to default model
+                    if model != settings.CLOUD_MODEL_NAME:
+                        model = settings.CLOUD_MODEL_NAME
+                        logger.warning(f"[OpenClaude] Retrying with default model: {model}")
                     continue
 
                 if response.status_code != 200:
@@ -89,12 +134,18 @@ class CloudLLMService:
                 content = data.get("choices", [{}])[0].get("message", {}).get("content", "")
 
                 if not content:
-                    logger.error(f"[OpenClaude] 200 OK but empty content — model={model}, max_tokens={effective_max_tokens}, response={str(data)[:300]}")
+                    logger.error(f"[OpenClaude] 200 OK but empty content — model={model}, "
+                                 f"response={str(data)[:300]}")
                     last_error = "Empty content in response"
                     continue
 
                 usage = data.get("usage", {})
-                logger.info(f"[OpenClaude] OK — model={model}, prompt_tokens={usage.get('prompt_tokens','?')}, completion_tokens={usage.get('completion_tokens','?')}, total={usage.get('total_tokens','?')}")
+                logger.info(
+                    f"[OpenClaude] OK — model={model}, "
+                    f"prompt_tokens={usage.get('prompt_tokens','?')}, "
+                    f"completion_tokens={usage.get('completion_tokens','?')}, "
+                    f"total={usage.get('total_tokens','?')}"
+                )
                 return {
                     "content": content.strip(),
                     "usage": {
@@ -168,15 +219,31 @@ class CloudLLMService:
     def chat_completion(cls, messages: List[Dict], temperature: float = 0.7,
                         max_tokens: int = 8192, prefer_cloud: bool = True,
                         local_model: str = None, task_type: str = None) -> Dict[str, Any]:
-        """Fallback chain: Open Claude → LocalAI."""
+        """Route to the best model based on task_type, then fallback LocalAI → Open Claude."""
         local_model = local_model or settings.MODEL_NAME
         errors = []
 
-        logger.info(f"[ChatCompletion] task_type={task_type or 'auto'}, max_tokens={max_tokens}, prefer_cloud={prefer_cloud}")
+        # ISO local pre-processing: LocalAI only, skip cloud
+        if task_type in LOCAL_ONLY_TASKS:
+            logger.info(f"[ChatCompletion] task_type={task_type} → LocalAI only")
+            try:
+                result = cls._call_localai(local_model, messages, temperature)
+                if result["content"]:
+                    return result
+                errors.append("LocalAI: empty content")
+            except Exception as e:
+                errors.append(f"LocalAI: {e}")
+                logger.warning(f"[ChatCompletion] LocalAI failed: {e}")
+            raise Exception(f"LocalAI failed for local-only task: {' | '.join(errors)}")
+
+        model = cls._resolve_model(task_type)
+        logger.info(f"[ChatCompletion] task_type={task_type or 'auto'}, model={model}, "
+                    f"max_tokens={max_tokens}, prefer_cloud={prefer_cloud}")
 
         if prefer_cloud and settings.cloud_api_key_list:
             try:
-                result = cls._call_open_claude(messages, temperature, max_tokens)
+                result = cls._call_open_claude(messages, temperature, max_tokens,
+                                               model=model, task_type=task_type)
                 if result["content"]:
                     return result
                 logger.warning("[ChatCompletion] Open Claude returned empty content, falling back to LocalAI")
@@ -199,13 +266,15 @@ class CloudLLMService:
 
     @classmethod
     def quick_completion(cls, prompt: str, system_prompt: str = None,
-                         temperature: float = 0.3, max_tokens: int = 500) -> str:
+                         temperature: float = 0.3, max_tokens: int = 500,
+                         task_type: str = None) -> str:
         messages = []
         if system_prompt:
             messages.append({"role": "system", "content": system_prompt})
         messages.append({"role": "user", "content": prompt})
         try:
-            result = cls.chat_completion(messages=messages, temperature=temperature, max_tokens=max_tokens)
+            result = cls.chat_completion(messages=messages, temperature=temperature,
+                                         max_tokens=max_tokens, task_type=task_type)
             return result.get("content", "").strip()
         except Exception as e:
             logger.warning(f"[QuickCompletion] Failed: {e}")
@@ -221,7 +290,8 @@ class CloudLLMService:
             "open_claude": {
                 "configured": bool(settings.cloud_api_key_list),
                 "url": settings.CLOUD_LLM_API_URL,
-                "model": settings.CLOUD_MODEL_NAME,
+                "default_model": settings.CLOUD_MODEL_NAME,
+                "task_routing": TASK_MODEL_MAP,
                 "keys_count": len(settings.cloud_api_key_list),
             },
             "localai": {

@@ -529,7 +529,7 @@ def _auto_translate_worker():
         except Exception as e:
             logger.warning(f"[AutoWorker] Cache cleanup failed: {e}")
 
-        time.sleep(18000)
+        time.sleep(18000)  # 5 hours between full auto-refresh cycles
 
 
 def start_bg_worker():

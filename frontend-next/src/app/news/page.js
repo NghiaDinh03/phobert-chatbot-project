@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect, useCallback, useRef } from 'react'
+import { useState, useEffect, useCallback, useRef, useMemo } from 'react'
 import styles from './page.module.css'
 
 const CATEGORIES = [
@@ -219,11 +219,20 @@ export default function NewsPage() {
     }, [togglePlay])
 
     const [categoryCache, setCategoryCache] = useState({}) // { [cat]: { articles, cached_at } }
+    // Keep a ref to categoryCache so fetchNews always reads latest without being in deps
+    const categoryCacheRef = useRef(categoryCache)
+    useEffect(() => { categoryCacheRef.current = categoryCache }, [categoryCache])
+
+    // Keep a ref to the latest activeTab so polling interval never has stale closure
+    const activeTabRef = useRef(activeTab)
+    useEffect(() => { activeTabRef.current = activeTab }, [activeTab])
+
     const fetchNews = useCallback(async (category, isBackground = false) => {
+        const cache = categoryCacheRef.current
         if (!isBackground) {
-            if (categoryCache[category]) {
-                setArticles(categoryCache[category].articles)
-                setLastUpdate(categoryCache[category].cached_at)
+            if (cache[category]) {
+                setArticles(cache[category].articles)
+                setLastUpdate(cache[category].cached_at)
                 setLoading(false) // Show cached data immediately
             } else {
                 setLoading(true)
@@ -246,8 +255,11 @@ export default function NewsPage() {
                 }
             } else {
                 const newArticles = data.articles || []
-                setArticles(newArticles)
-                setLastUpdate(data.cached_at || '')
+                // Only update displayed articles if this category is still the active one
+                if (category === activeTabRef.current) {
+                    setArticles(newArticles)
+                    setLastUpdate(data.cached_at || '')
+                }
                 setCategoryCache(prev => ({
                     ...prev,
                     [category]: { articles: newArticles, cached_at: data.cached_at }
@@ -255,11 +267,11 @@ export default function NewsPage() {
             }
         } catch (err) {
             console.warn('Silent news update failure:', err)
-            if (!isBackground && !categoryCache[category]) setError('Không thể tải tin tức lúc này')
+            if (!isBackground && !categoryCacheRef.current[category]) setError('Không thể tải tin tức lúc này')
         } finally {
-            setLoading(false)
+            if (!isBackground || category === activeTabRef.current) setLoading(false)
         }
-    }, [categoryCache])
+    }, []) // No deps — reads latest values via refs
 
     const searchNews = useCallback(async (query) => {
         if (!query.trim()) {
@@ -281,7 +293,8 @@ export default function NewsPage() {
 
     useEffect(() => {
         fetchNews(activeTab)
-    }, [activeTab]) // Removed fetchNews from deps to avoid loop with categoryCache
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [activeTab]) // fetchNews is stable (no deps); activeTab change triggers fresh load
 
     const displayArticles = searchResults ? searchResults.articles : articles
     const isSearchMode = searchResults !== null
@@ -313,19 +326,25 @@ export default function NewsPage() {
         return () => clearInterval(interval)
     }, [])
 
+    // Polling: use activeTabRef so this interval never becomes stale regardless of tab switches
+    const fetchNewsRef = useRef(fetchNews)
+    useEffect(() => { fetchNewsRef.current = fetchNews }, [fetchNews])
+
     useEffect(() => {
         let tick = 0;
         const interval = setInterval(() => {
             tick += 5;
-            const hasPending = articlesRef.current.some(a => (a.lang === 'en' && !a.title_vi) || !a.audio_cached)
-
+            const currentTab = activeTabRef.current
+            const hasPending = articlesRef.current.some(
+                a => (a.lang === 'en' && !a.title_vi) || !a.audio_cached
+            )
             if (hasPending || tick >= 300) {
-                fetchNews(activeTab, true)
+                fetchNewsRef.current(currentTab, true)
                 if (tick >= 300) tick = 0;
             }
         }, 5000)
         return () => clearInterval(interval)
-    }, [activeTab, fetchNews])
+    }, []) // Stable — all mutable state accessed via refs
 
     const handleSearchInput = (e) => {
         const val = e.target.value

@@ -31,6 +31,7 @@ USER_AGENTS = [
     "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36 Edg/131.0.0.0",
 ]
 
+# Domains with known bot-blocking or specific scrape strategies
 BOT_BLOCKING_DOMAINS = {
     "darkreading.com": "requests_bs4",
     "marketwatch.com": "requests_bs4",
@@ -38,7 +39,75 @@ BOT_BLOCKING_DOMAINS = {
     "securityweek.com": "newspaper",
     "cnbc.com": "requests_bs4",
     "yahoo.com": "requests_bs4",
+    "znews.vn": "requests_bs4",
+    "vnexpress.net": "requests_bs4",
+    "vneconomy.vn": "requests_bs4",
+    "cafef.vn": "requests_bs4",
+    "vietstock.vn": "requests_bs4",
+    "tinnhanhchungkhoan.vn": "requests_bs4",
+    "baodautu.vn": "requests_bs4",
 }
+
+# CSS selectors for article body — ordered from most-specific to fallback
+ARTICLE_SELECTORS = [
+    # Standard semantic
+    "article",
+    '[role="article"]',
+    '[itemtype*="Article"]',
+    '[itemtype*="NewsArticle"]',
+    # Named content zones
+    ".article-body",
+    ".article-content",
+    ".article__body",
+    ".article__content",
+    ".article-text",
+    ".article__text",
+    ".post-content",
+    ".post-body",
+    ".entry-content",
+    ".entry-body",
+    ".story-body",
+    ".story-content",
+    # IDs
+    "#article-body",
+    "#article-content",
+    "#js-article-text",
+    "#main-article",
+    "#news-content",
+    # Vietnamese news sites
+    ".detail-content",          # VnExpress, Znews
+    ".detail__content",
+    ".article-detail",
+    ".article__detail",
+    ".fck_detail",              # Znews, CafeF
+    ".post-detail",
+    ".news-detail",
+    ".content-detail",
+    ".article-body-content",
+    ".articleBody",
+    ".caas-body",               # Yahoo Finance
+    ".ContentModule",
+    "#main-content article",
+    ".main-content article",
+]
+
+# Junk selectors to strip before extraction
+JUNK_SELECTORS = [
+    "script", "style", "nav", "footer", "header", "aside",
+    "form", "iframe", "noscript", "button", "input", "select",
+    ".related", ".related-news", ".related-articles",
+    ".advertisement", ".ads", ".ad-container", ".banner",
+    ".social-share", ".share-buttons", ".share",
+    ".comment", ".comments", "#comments",
+    ".sidebar", ".widget", ".newsletter",
+    ".promotion", ".promo", ".sponsored",
+    ".tag-list", ".tags", ".breadcrumb",
+    ".author-box", ".author-info",
+    ".read-more", ".more-news",
+    '[class*="advert"]', '[class*="banner"]',
+    '[class*="popup"]', '[class*="subscribe"]',
+    '[id*="comment"]', '[id*="sidebar"]',
+]
 
 
 def _get_random_headers() -> Dict[str, str]:
@@ -66,6 +135,26 @@ def _get_domain(url: str) -> str:
         return ""
 
 
+def _is_noise_paragraph(text: str) -> bool:
+    """Return True if paragraph is likely navigation/promo noise rather than article content."""
+    noise_patterns = [
+        r"^(đọc thêm|xem thêm|see also|read more|related|related:)",
+        r"^(share|chia sẻ|theo dõi|follow us|subscribe)",
+        r"^(quảng cáo|advertisement|sponsored)",
+        r"(click here|nhấn vào đây|đăng ký ngay|tải app)",
+        r"^copyright\s*©",
+        r"all rights reserved",
+    ]
+    low = text.lower().strip()
+    for pat in noise_patterns:
+        if re.search(pat, low):
+            return True
+    # Very short lines that look like menu items
+    if len(text) < 25 and not re.search(r"\d", text):
+        return True
+    return False
+
+
 def _scrape_with_requests_bs4(url: str) -> Optional[str]:
     try:
         import requests
@@ -83,7 +172,7 @@ def _scrape_with_requests_bs4(url: str) -> Optional[str]:
 
         if resp.status_code == 401:
             logger.debug(f"[Scrape/BS4] 401 for {url} — adding Referer and retrying")
-            headers["Referer"] = f"https://www.google.com/search?q={url}"
+            headers["Referer"] = "https://www.google.com/"
             time.sleep(1)
             resp = session.get(url, headers=headers, timeout=20, allow_redirects=True)
 
@@ -92,40 +181,43 @@ def _scrape_with_requests_bs4(url: str) -> Optional[str]:
             return None
 
         soup = BeautifulSoup(resp.content, "html.parser")
-        for tag in soup.find_all(["script", "style", "nav", "footer", "header",
-                                   "aside", "form", "iframe", "noscript", "button", "input", "select"]):
-            tag.decompose()
 
-        article_selectors = [
-            "article", '[role="article"]', ".article-body", ".article-content",
-            ".post-content", ".entry-content", ".story-body", "#article-body",
-            ".article__body", ".article-text", ".caas-body", ".articleBody",
-            "#js-article-text", ".ContentModule", "#main-content", ".article__content",
-        ]
+        # Strip all junk elements first
+        for selector in JUNK_SELECTORS:
+            for tag in soup.select(selector):
+                tag.decompose()
 
         text = None
-        for selector in article_selectors:
-            elements = soup.select(selector)
-            if elements:
-                paragraphs = [
-                    p.get_text(strip=True)
-                    for el in elements
-                    for p in el.find_all(["p", "li", "h2", "h3", "blockquote"])
-                    if p.get_text(strip=True) and len(p.get_text(strip=True)) > 20
-                ]
-                if paragraphs:
-                    text = "\n\n".join(paragraphs)
-                    if len(text) > 300:
-                        break
 
-        if not text or len(text) < 300:
-            paragraphs = [
-                p.get_text(strip=True)
-                for p in soup.find_all("p")
-                if p.get_text(strip=True) and len(p.get_text(strip=True)) > 30
-            ]
+        # Try known article selectors in priority order
+        for selector in ARTICLE_SELECTORS:
+            elements = soup.select(selector)
+            if not elements:
+                continue
+            paragraphs = []
+            for el in elements:
+                for p in el.find_all(["p", "li", "h2", "h3", "h4", "blockquote"]):
+                    t = p.get_text(separator=" ", strip=True)
+                    if t and len(t) > 30 and not _is_noise_paragraph(t):
+                        paragraphs.append(t)
             if paragraphs:
-                text = "\n\n".join(paragraphs)
+                candidate = "\n\n".join(paragraphs)
+                if len(candidate) > 400:
+                    text = candidate
+                    logger.debug(f"[Scrape/BS4] Used selector '{selector}' → {len(text)} chars")
+                    break
+
+        # Fallback: all <p> tags
+        if not text or len(text) < 400:
+            paragraphs = []
+            for p in soup.find_all("p"):
+                t = p.get_text(separator=" ", strip=True)
+                if t and len(t) > 40 and not _is_noise_paragraph(t):
+                    paragraphs.append(t)
+            if paragraphs:
+                candidate = "\n\n".join(paragraphs)
+                if len(candidate) > len(text or ""):
+                    text = candidate
 
         if text and len(text) > 300:
             logger.info(f"[Scrape/BS4] Extracted {len(text)} chars from {url}")
@@ -145,8 +237,13 @@ def _scrape_with_trafilatura(url: str) -> Optional[str]:
         if not downloaded:
             logger.warning(f"[Scrape/Trafilatura] fetch_url returned nothing for {url}")
             return None
-        text = trafilatura.extract(downloaded, include_comments=False,
-                                    include_tables=False, favor_recall=True)
+        text = trafilatura.extract(
+            downloaded,
+            include_comments=False,
+            include_tables=False,
+            favor_recall=True,
+            no_fallback=False,
+        )
         if text and len(text) > 300:
             logger.info(f"[Scrape/Trafilatura] Extracted {len(text)} chars from {url}")
             return text
@@ -184,7 +281,7 @@ def _scrape_with_newspaper(url: str) -> Optional[str]:
 
 
 def scrape_article(url: str) -> Optional[str]:
-    """Multi-strategy scraper: tries each method in order until content is obtained."""
+    """Multi-strategy scraper: tries each method in order until article content is obtained."""
     domain = _get_domain(url)
     primary_strategy = None
     for blocked_domain, strategy in BOT_BLOCKING_DOMAINS.items():
@@ -197,20 +294,30 @@ def scrape_article(url: str) -> Optional[str]:
     elif primary_strategy == "newspaper":
         strategies = [_scrape_with_newspaper, _scrape_with_requests_bs4, _scrape_with_trafilatura]
     else:
-        strategies = [_scrape_with_newspaper, _scrape_with_requests_bs4, _scrape_with_trafilatura]
+        strategies = [_scrape_with_trafilatura, _scrape_with_requests_bs4, _scrape_with_newspaper]
 
     logger.info(f"[Scrape] Starting for {url} (domain={domain}, primary_strategy={primary_strategy or 'default'})")
 
+    best_text = None
     for i, strategy in enumerate(strategies):
         try:
             text = strategy(url)
             if text and len(text) > 300:
-                return text
+                # Keep the longest result as best
+                if best_text is None or len(text) > len(best_text):
+                    best_text = text
+                # Good enough if > 1000 chars — stop early
+                if len(text) >= 1000:
+                    return text
             if i < len(strategies) - 1:
                 logger.debug(f"[Scrape] Strategy {strategy.__name__} insufficient, trying next")
                 time.sleep(1)
         except Exception as e:
             logger.warning(f"[Scrape] Strategy {strategy.__name__} raised exception for {url}: {e}")
+
+    if best_text:
+        logger.info(f"[Scrape] Best result: {len(best_text)} chars from {url}")
+        return best_text
 
     logger.error(f"[Scrape] All strategies failed for {url}")
     return None
@@ -326,51 +433,57 @@ class SummaryService:
             from services.cloud_llm_service import CloudLLMService
 
             if lang == "en":
-                prompt = (
+                system_prompt = (
                     "Bạn là biên dịch viên báo chí chuyên nghiệp. "
-                    "Hãy dịch TOÀN BỘ bài báo tiếng Anh sau sang Tiếng Việt hoàn chỉnh.\n\n"
-                    "QUY TẮC BẮT BUỘC:\n"
-                    "1. Dòng đầu tiên là tiêu đề tiếng Việt hấp dẫn, sát nghĩa gốc.\n"
-                    "2. GIỮ NGUYÊN 100% mọi thông tin: tên người, tên tổ chức, số liệu thống kê, "
-                    "thông số kỹ thuật, ngày tháng, mã CVE, địa chỉ IP, tên phần mềm, tên quốc gia. "
-                    "KHÔNG được bỏ sót hay thay đổi bất kỳ dữ kiện nào.\n"
-                    "3. KHÔNG rút gọn, KHÔNG tóm tắt, KHÔNG lược bỏ đoạn nào. Dịch ĐẦY ĐỦ từ đầu đến cuối.\n"
-                    "4. Lược bỏ: menu điều hướng, quảng cáo, nút bấm, link đăng ký, footer website.\n"
-                    "5. Văn phong báo chí chuyên nghiệp, mạch lạc, phù hợp đọc bằng giọng nói trên radio.\n"
-                    "6. KHÔNG dùng ký tự đặc biệt: *, #, [], (), **. Chỉ dùng văn bản thuần.\n"
-                    "7. TUYỆT ĐỐI KHÔNG thêm bình luận, ghi chú, lời giải thích nào của bạn.\n\n"
-                    f"TIÊU ĐỀ GỐC: {title}\n\n"
-                    f"NỘI DUNG BÀI BÁO:\n{text}"
+                    "Nhiệm vụ duy nhất: dịch TOÀN BỘ nội dung bài báo sang Tiếng Việt. "
+                    "KHÔNG giải thích, KHÔNG bình luận, KHÔNG thêm nội dung ngoài bài báo."
+                )
+                user_prompt = (
+                    f"TIÊU ĐỀ GỐC: {title}\n"
+                    f"URL: {url}\n\n"
+                    "====== NỘI DUNG BÀI BÁO CẦN DỊCH ======\n"
+                    f"{text}\n"
+                    "====== KẾT THÚC NỘI DUNG ======\n\n"
+                    "YÊU CẦU DỊCH THUẬT:\n"
+                    "1. Dòng đầu tiên: tiêu đề Tiếng Việt hấp dẫn, sát nghĩa gốc.\n"
+                    "2. GIỮ NGUYÊN 100%: tên người, tổ chức, số liệu, ngày tháng, mã CVE, "
+                    "địa chỉ IP, tên phần mềm, tên sản phẩm, tên quốc gia.\n"
+                    "3. KHÔNG rút gọn, KHÔNG tóm tắt — dịch ĐẦY ĐỦ từng đoạn.\n"
+                    "4. Bỏ qua: menu điều hướng, quảng cáo, nút bấm, footer, link đăng ký.\n"
+                    "5. Văn phong báo chí chuyên nghiệp, phù hợp đọc radio.\n"
+                    "6. CHỈ dùng văn bản thuần — KHÔNG dùng ký tự: *, #, [], (), **.\n"
+                    "7. CHỈ trả về bản dịch — KHÔNG thêm bất kỳ ghi chú hay giải thích nào.\n"
                 )
             else:
-                prompt = (
+                system_prompt = (
                     "Bạn là biên tập viên báo chí chuyên nghiệp. "
-                    "Hãy biên tập lại bài báo Tiếng Việt sau thành bài viết hoàn chỉnh, chuẩn phát thanh.\n\n"
-                    "QUY TẮC BẮT BUỘC:\n"
-                    "1. Dòng đầu tiên là tiêu đề bài báo.\n"
-                    "2. GIỮ NGUYÊN 100% mọi thông tin: tên người, tổ chức, số liệu, ngày tháng, "
-                    "thông số kỹ thuật, dẫn chứng. KHÔNG được bỏ sót hay thay đổi bất kỳ dữ kiện nào.\n"
-                    "3. KHÔNG rút gọn, KHÔNG tóm tắt. Giữ ĐẦY ĐỦ nội dung từ đầu đến cuối.\n"
-                    "4. Lược bỏ: HTML, sơ đồ code, quảng cáo, menu, footer, link rác.\n"
-                    "5. Văn phong tự nhiên, trôi chảy, phù hợp đọc bằng giọng nói trên radio.\n"
-                    "6. KHÔNG dùng ký tự đặc biệt: *, #, [], (), **. Chỉ văn bản thuần.\n"
-                    "7. TUYỆT ĐỐI KHÔNG thêm bình luận, ghi chú, lời giải thích nào của bạn.\n\n"
-                    f"TIÊU ĐỀ: {title}\n\n"
-                    f"NỘI DUNG BÀI BÁO:\n{text}"
+                    "Nhiệm vụ duy nhất: biên tập lại bài báo Tiếng Việt thành bài hoàn chỉnh, chuẩn phát thanh. "
+                    "KHÔNG giải thích, KHÔNG bình luận, KHÔNG thêm nội dung ngoài bài báo."
+                )
+                user_prompt = (
+                    f"TIÊU ĐỀ: {title}\n"
+                    f"URL: {url}\n\n"
+                    "====== NỘI DUNG BÀI BÁO CẦN BIÊN TẬP ======\n"
+                    f"{text}\n"
+                    "====== KẾT THÚC NỘI DUNG ======\n\n"
+                    "YÊU CẦU BIÊN TẬP:\n"
+                    "1. Dòng đầu tiên: tiêu đề bài báo.\n"
+                    "2. GIỮ NGUYÊN 100%: tên người, tổ chức, số liệu, ngày tháng, dẫn chứng.\n"
+                    "3. KHÔNG rút gọn, KHÔNG tóm tắt — giữ ĐẦY ĐỦ nội dung.\n"
+                    "4. Bỏ qua: HTML, code, quảng cáo, menu, footer, link rác.\n"
+                    "5. Văn phong tự nhiên, phù hợp đọc radio.\n"
+                    "6. CHỈ dùng văn bản thuần — KHÔNG dùng ký tự: *, #, [], (), **.\n"
+                    "7. CHỈ trả về bài biên tập — KHÔNG thêm bất kỳ ghi chú hay giải thích nào.\n"
                 )
 
             ai_result = CloudLLMService.chat_completion(
                 messages=[
-                    {
-                        "role": "system",
-                        "content": "Bạn là biên dịch viên/biên tập viên báo chí chuyên nghiệp. "
-                                   "Nhiệm vụ duy nhất: dịch/biên tập bài báo. Không giải thích, không bình luận.",
-                    },
-                    {"role": "user", "content": prompt},
+                    {"role": "system", "content": system_prompt},
+                    {"role": "user", "content": user_prompt},
                 ],
-                temperature=0.15,
+                temperature=0.1,
                 max_tokens=32000,
-                task_type="complex",
+                task_type="news_translate",
             )
 
             summary_vi = ai_result.get("content", "").strip()
@@ -388,14 +501,17 @@ class SummaryService:
             if not summary_vi:
                 raise Exception("AI returned empty content")
 
+            # Strip AI artifacts
             summary_vi = summary_vi.replace("*", "").replace("#", "").replace('"', "")
             summary_vi = summary_vi.replace("<|eot_id|>", "").replace("<|end_header_id|>", "")
             if summary_vi.lower().startswith("assistant"):
                 summary_vi = summary_vi[len("assistant"):].strip()
 
+            # Remove trailing AI notes/disclaimers
             for pattern in [
                 r"\(Đoạn văn tiếp theo.*$", r"\(Lưu ý:.*$", r"\(Ghi chú:.*$",
-                r"\(Chú thích:.*$", r"\(Dịch giả:.*$", r"\(Biên tập:.*$", r"---.*$",
+                r"\(Chú thích:.*$", r"\(Dịch giả:.*$", r"\(Biên tập:.*$",
+                r"---.*$", r"Lưu ý:.*$", r"Note:.*$",
             ]:
                 summary_vi = re.sub(pattern, "", summary_vi, flags=re.DOTALL).strip()
 
