@@ -1,112 +1,126 @@
 'use client'
 
 import { useState, useEffect } from 'react'
-import { usePathname } from 'next/navigation'
 import Link from 'next/link'
+import { usePathname } from 'next/navigation'
 import { useTheme } from './ThemeProvider'
 import styles from './Navbar.module.css'
 
 const NAV_ITEMS = [
     { href: '/', label: 'Trang chủ', icon: '🏠' },
     { href: '/chatbot', label: 'AI Chat', icon: '💬' },
+    { href: '/form-iso', label: 'Đánh giá', icon: '📋' },
+    { href: '/news', label: 'Tin tức', icon: '📰' },
+    { href: '/templates', label: 'Mẫu', icon: '📂' },
     { href: '/analytics', label: 'Analytics', icon: '📊' },
-    { href: '/form-iso', label: 'Form ISO', icon: '📋' },
-    { href: '/templates', label: 'Kho Mẫu', icon: '📂' },
-    { href: '/news', label: 'Tin tức', icon: '📰' }
 ]
 
 const TIMEZONES = [
-    { label: 'VN', zone: 'Asia/Ho_Chi_Minh' },
-    { label: 'UTC', zone: 'UTC' },
-    { label: 'US', zone: 'America/New_York' },
-    { label: 'JP', zone: 'Asia/Tokyo' }
+    { label: 'VN', value: 'Asia/Ho_Chi_Minh' },
+    { label: 'US', value: 'America/Los_Angeles' },
+    { label: 'UTC', value: 'UTC' },
 ]
 
 export default function Navbar() {
     const pathname = usePathname()
     const { theme, toggle } = useTheme()
-    const [time, setTime] = useState(null)
-    const [tzIndex, setTzIndex] = useState(0)
+    const [time, setTime] = useState('')
+    const [date, setDate] = useState('')
+    const [tzIdx, setTzIdx] = useState(0)
+    const [mounted, setMounted] = useState(false)
+    const [mobileOpen, setMobileOpen] = useState(false)
 
-    useEffect(() => {
-        const savedTz = localStorage.getItem('phobert_timezone_idx')
-        if (savedTz !== null) {
-            setTzIndex(parseInt(savedTz, 10))
-        }
-
-        const tick = () => setTime(new Date())
-        tick()
-        const timerId = setInterval(tick, 1000)
-        return () => clearInterval(timerId)
-    }, [])
+    useEffect(() => { setMounted(true) }, [])
 
     const handleTzClick = () => {
-        const nextIdx = (tzIndex + 1) % TIMEZONES.length
-        setTzIndex(nextIdx)
-        localStorage.setItem('phobert_timezone_idx', nextIdx.toString())
+        setTzIdx(prev => (prev + 1) % TIMEZONES.length)
     }
 
     const formatTime = (date, timezone) => {
-        if (!date) return { time: '--:--:--', date: '--/--/----' }
         const timeStr = date.toLocaleTimeString('vi-VN', {
-            timeZone: timezone.zone,
-            hour12: false,
             hour: '2-digit',
             minute: '2-digit',
-            second: '2-digit'
+            second: '2-digit',
+            timeZone: timezone,
+            hour12: false
         })
         const dateStr = date.toLocaleDateString('vi-VN', {
-            timeZone: timezone.zone,
             day: '2-digit',
             month: '2-digit',
-            year: 'numeric'
+            year: 'numeric',
+            timeZone: timezone
         })
-        return { time: timeStr, date: dateStr }
+        return { timeStr, dateStr }
     }
 
-    const timeData = time ? formatTime(time, TIMEZONES[tzIndex]) : { time: '--:--:--', date: '--/--/----' }
+    useEffect(() => {
+        const update = () => {
+            const { timeStr, dateStr } = formatTime(new Date(), TIMEZONES[tzIdx].value)
+            setTime(timeStr)
+            setDate(dateStr)
+        }
+        update()
+        const id = setInterval(update, 1000)
+        return () => clearInterval(id)
+    }, [tzIdx])
+
+    useEffect(() => {
+        setMobileOpen(false)
+    }, [pathname])
 
     return (
         <nav className={styles.navbar}>
             <div className={styles.inner}>
                 <Link href="/" className={styles.brand}>
-                    <div className={styles.brandIcon}>⚡</div>
-                    <span className={styles.brandName}>CyberAI Assessment</span>
+                    <span className={styles.logo}>🛡️</span>
+                    <span className={styles.brandText}>CyberAI</span>
                 </Link>
 
-                <div className={styles.nav}>
+                <button
+                    className={styles.hamburger}
+                    onClick={() => setMobileOpen(!mobileOpen)}
+                    aria-label="Toggle menu"
+                >
+                    <span className={`${styles.hamburgerLine} ${mobileOpen ? styles.hamburgerOpen : ''}`} />
+                </button>
+
+                <div className={`${styles.navLinks} ${mobileOpen ? styles.navLinksOpen : ''}`}>
                     {NAV_ITEMS.map(item => (
                         <Link
                             key={item.href}
                             href={item.href}
-                            className={`${styles.link} ${pathname === item.href ? styles.linkActive : ''}`}
+                            className={`${styles.navLink} ${pathname === item.href ? styles.navLinkActive : ''}`}
                         >
-                            <span>{item.icon}</span>
-                            <span>{item.label}</span>
+                            <span className={styles.navIcon}>{item.icon}</span>
+                            {item.label}
                         </Link>
                     ))}
                 </div>
 
-                <div className={styles.rightSection}>
-                    <button
-                        className={styles.themeToggle}
-                        onClick={toggle}
-                        title={theme === 'dark' ? 'Chuyển sang Light Mode' : 'Chuyển sang Dark Mode'}
-                    >
-                        {theme === 'dark' ? '☀️' : '🌙'}
-                    </button>
-                    <div className={styles.status}>
+                <div className={styles.controls}>
+                    <div className={styles.clock} onClick={handleTzClick} title="Click để đổi múi giờ">
+                        <span className={styles.clockTime}>{mounted ? time : '--:--:--'}</span>
+                        <span className={styles.clockMeta}>
+                            {mounted ? date : '--/--/----'} · {TIMEZONES[tzIdx].label}
+                        </span>
+                    </div>
+
+                    <div className={styles.statusDot} title="Backend Online">
                         <span className={styles.dot} />
-                        <span>Online</span>
                     </div>
-                    <div className={styles.clock} onClick={handleTzClick} title="Nhấn để đổi Múi giờ">
-                        <span className={styles.clockIcon}>🕒</span>
-                        <div className={styles.timeWrapper} suppressHydrationWarning>
-                            <span className={styles.timeText}>{timeData.time}</span>
-                            <span className={styles.dateText}>{timeData.date}</span>
-                        </div>
-                        <span className={styles.tzLabel}>{TIMEZONES[tzIndex].label}</span>
-                    </div>
+
+                    {mounted && (
+                        <button
+                            className={styles.themeToggle}
+                            onClick={toggle}
+                            aria-label="Toggle theme"
+                            title={theme === 'dark' ? 'Chuyển sang Light Mode' : 'Chuyển sang Dark Mode'}
+                        >
+                            <span className={`${styles.themeIcon} ${theme === 'dark' ? styles.themeDark : styles.themeLight}`}>
+                                {theme === 'dark' ? '🌙' : '☀️'}
+                            </span>
+                        </button>
+                    )}
                 </div>
             </div>
         </nav>

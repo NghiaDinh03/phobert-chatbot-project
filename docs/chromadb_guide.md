@@ -1,45 +1,160 @@
-# Hướng dẫn Lưu trữ & Quản lý Vector Tài liệu (ChromaDB)
+# ChromaDB Vector Store — Guide & Operations
 
-Hệ thống **PhoBERT AI Platform** sử dụng **ChromaDB** làm Vector Database cục bộ (On-premise) nhằm cung cấp trải nghiệm truy xuất thông tin (RAG - Retrieval-Augmented Generation) nhanh chóng và chính xác cho các Model AI. Dưới đây là cách hoạt động và hướng dẫn sử dụng.
-
----
-
-## 1. Vai trò của ChromaDB trong dự án
-Thay vì phải gửi hàng nghìn trang luât, tiêu chuẩn ISO vào trong Prompt của LLM (gây tràn context và suy giảm tốc độ phản hồi), hệ thống sẽ:
-1. Đọc tất cả các file tài liệu định dạng Markdown (`.md`).
-2. Chia nhỏ thành từng đoạn (chunk) với kích thước tĩnh (ví dụ 1000 ký tự).
-3. Sử dụng mô hình `all-MiniLM-L6-v2` để mã hóa (Embedding) từng chunk thành vector số học và lưu vào ổ cứng thông qua **ChromaDB**.
-4. Khi người dùng đánh giá dự án hoặc hỏi Chatbot, câu hỏi sẽ được nhúng thành Vector và tìm kiếm những chunk có "độ tương đồng" (Cosine Similarity) cao nhất để nhồi vào Prompt cho Llama 3.1 8B và SecurityLLM.
+ChromaDB is the on-premise vector database that powers the RAG (Retrieval-Augmented Generation) system. It stores mathematical representations (embeddings) of all ISO/law documents so the AI can retrieve the most relevant paragraphs for any given question.
 
 ---
 
-## 2. Cách thêm Data mới vào Hệ thống (Dynamic Mount Mode)
+## 1. How ChromaDB Works in This Project
 
-ChromaDB được cấu hình để quét một thư mục cục bộ của dự án. Thực hiện theo các bước sau để thêm Luật, Quy định, File mô tả mới:
+```
+data/iso_documents/*.md  (your knowledge base)
+        │
+        ▼
+[vector_store.py: load_documents()]
 
-### Bước 2.1: Chuẩn bị tài liệu
-Dự án ưu tiên nạp các file Markdown (`.md`). Hãy copy nội dung văn bản (Word, PDF) và chuyển nó thành Markdown sạch sẽ (có thẻ Heading như `#`, `##` rõ ràng).
+  For each .md file:
+  ├── Read full file text
+  ├── Split by ## headers (header-aware chunking)
+  │   ├── chunk_size: 500 characters
+  │   ├── overlap: 150 characters
+  │   └── Parent ## header prepended to each split chunk
+  │       (so LLM always knows which section a chunk belongs to)
+  └── Generate embedding: all-MiniLM-L6-v2 → 384-dim vector
 
-### Bước 2.2: Kéo thả file vào thư mục Mounted
-Chép file Markdown của bạn và thả vào thư mục `data/iso_documents/` tại folder gốc của dự án.
-> **Lưu ý**: Nhờ cơ chế Volumes Docker (`- ./data:/data`), thư mục tĩnh này được liên kết động (Dynamic Mount) trực tiếp vào Container Backend. File vừa thả ở host Windows sẽ lập tức xuất hiện bên trong Docker.
+        │
+        ▼
+ChromaDB collection: "iso_knowledge"
+  Storage: data/vector_store/chroma.sqlite3
+  Metric: Cosine Similarity
+  Each entry: { id, embedding, document_text, metadata: { source } }
 
-### Bước 2.3: Nạp (Reindex) Tài liệu vào Database
-1. Truy cập giao diện Web Dashboard của dự án.
-2. Điều hướng tới trang **Analytics** (Giám sát).
-3. Kéo xuống mục **🗄️ Kho Tài liệu AI — ChromaDB**.
-4. Nhấn nút **"🔄 Nạp lại"** (ở cột bên phải, dưới ô Test tìm kiếm).
-5. Hệ thống sẽ tự động dọn dẹp Database cũ và quét lại toàn bộ file trong thư mục `iso_documents`, tiến hành nhúng mã (Embedding) và trả về thông báo số `Chunks` đã nạp thành công.
+        │
+        ▼
+[At query time: rag_service.py]
+  User question → embed → 384-dim vector
+  collection.query(n_results=3)
+  Returns: top-3 chunks ranked by cosine similarity score
+  Injected into LLM prompt as RAG context
+```
+
+### Why header-aware chunking matters
+
+If a chunk is split in the middle of section `## A.8.1 — User endpoint devices`, the child chunk would lose its section context. The chunker prepends the parent `##` header to every split, so the LLM always receives:
+
+```
+## A.8.1 — User endpoint devices
+...Tổ chức phải áp dụng các biện pháp kiểm soát...
+```
+
+This dramatically reduces hallucination by keeping chunks semantically anchored.
 
 ---
 
-## 3. Quản trị & Tìm lỗi (Troubleshooting)
+## 2. Adding New Documents to the Knowledge Base
 
-### Kiểm tra bằng Test tìm kiếm
-Ngay trên giao diện ChromaDB Monitor, bạn có thể gõ nội dung vào ô **"Thử tìm kiếm tài liệu..."** và nhấn `Enter`. Tính năng này sẽ mô phỏng chức năng nhúng Vector để kiểm tra xem hệ thống có trả về chính xác đoạn Text trong file bạn vừa nạp hay không (hiển thị % điểm Cosine).
+### Step 1: Prepare your document as Markdown
 
-### Lỗi Database Corrupted / Duplicate
-Nếu quá trình Nạp lại xảy ra lỗi "Duplicate column" hoặc Database bị kẹt cứng:
-1. Tắt hệ thống (`docker-compose down`).
-2. Vào thư mục `data/` xoá luôn thư mục `vector_store/` đi (Đây là nơi ChromaDB ghi File SQLite).
-3. Chạy lại dự án (`docker-compose up -d`). Database sẽ tạo lại mới và tự nạp file ở lẩn khởi chạy đầu tiên.
+Convert Word/PDF documents to clean Markdown. Follow the structure:
+```markdown
+# Title of the document
+
+## Section name (H2 = chunking boundary)
+Content of this section...
+
+## Another section
+More content...
+```
+
+**Do:** Use `##` headers to separate major topics — each `##` section becomes one or more vector chunks.  
+**Don't:** Use walls of text with no headers — this creates poor-quality oversized chunks.
+
+See [Markdown RAG Standard](./markdown_rag_standard.md) for the full formatting guide and PICO method.
+
+### Step 2: Drop file into the knowledge base folder
+
+Copy your `.md` file to:
+```
+data/iso_documents/your-document.md
+```
+
+Thanks to the Docker volume mount (`./data:/data`), files placed here are immediately accessible inside the `phobert-backend` container — no restart needed.
+
+### Step 3: Trigger reindex
+
+1. Open **http://localhost:3000/analytics**
+2. Scroll to the **🗄️ ChromaDB Vector Hub** panel
+3. Click **🔄 Reload / Reindex**
+4. Wait for the response showing `chunks_loaded: N`
+
+The backend will:
+- Drop the existing `iso_knowledge` collection
+- Scan all `*.md` files in `data/iso_documents/`
+- Chunk and embed all documents
+- Rebuild the collection
+
+### Step 4: Verify with Test Search
+
+In the same panel, type a phrase from your new document into the search box and press Enter. You should see your document appear in the results with a high cosine similarity score (> 0.7).
+
+---
+
+## 3. Current Knowledge Base Files
+
+| File | Description |
+|------|-------------|
+| `iso27001_annex_a.md` | ISO 27001:2022 Annex A — all 93 controls |
+| `tcvn_11930_2017.md` | TCVN 11930:2017 — Vietnamese security level standard |
+| `luat_an_ninh_mang_2018.md` | Cybersecurity Law 2018 (Vietnam) |
+| `nghi_dinh_13_2023_bvdlcn.md` | Personal Data Protection Decree 13/2023 |
+| `network_infrastructure.md` | Network security architecture guidance |
+| `assessment_criteria.md` | Assessment scoring and criteria definitions |
+| `checklist_danh_gia_he_thong.md` | System evaluation checklist |
+
+---
+
+## 4. Troubleshooting
+
+### Problem: Reindex fails with "duplicate" or "collection error"
+
+**Solution:**
+1. Stop the system: `docker-compose down`
+2. Delete the corrupted database: remove `data/vector_store/` directory entirely
+3. Restart: `docker-compose up -d`
+4. The backend auto-rebuilds ChromaDB from scratch on startup
+
+### Problem: Search returns irrelevant results
+
+**Cause:** Document is poorly structured (no `##` headers, large blocks of text)  
+**Solution:** Restructure the document with clear `##` section headers and re-reindex
+
+### Problem: Chatbot gives wrong or hallucinated answers
+
+**Diagnosis steps:**
+1. Go to Analytics → ChromaDB panel → test search with the same phrase the user asked
+2. Check the returned chunks — are they from the correct document and section?
+3. If chunks are wrong: improve document structure and reindex
+4. If chunks are correct but LLM ignores them: the system prompt may need adjustment
+
+### Problem: Vector store takes too much disk space
+
+**Each chunk stores:** ~1.5 KB (embedding 384 floats × 4 bytes + metadata)  
+**For 342 chunks:** ~512 KB — this is negligible.  
+If the database grows unexpectedly, delete and rebuild from scratch (see above).
+
+---
+
+## 5. ChromaDB Technical Details
+
+| Parameter | Value |
+|-----------|-------|
+| Library | `chromadb` (Python) |
+| Storage backend | SQLite (file-based) |
+| Storage path | `data/vector_store/chroma.sqlite3` |
+| Embedding model | `all-MiniLM-L6-v2` (sentence-transformers) |
+| Embedding dimension | 384 |
+| Distance metric | Cosine similarity |
+| Collection name | `iso_knowledge` |
+| Default chunk size | 500 characters |
+| Chunk overlap | 150 characters |
+| Results per query | 3 (configurable in `rag_service.py`) |
+| Chunking strategy | Header-aware (`##` boundary detection) |

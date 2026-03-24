@@ -3,236 +3,267 @@
     top: 0;
     z-index: 100;
     background: var(--navbar-bg);
-    backdrop-filter: blur(20px);
+    backdrop-filter: blur(16px);
+    -webkit-backdrop-filter: blur(16px);
     border-bottom: 1px solid var(--border);
     height: 56px;
 }
 
 .inner {
-    max-width: 1400px;
+    max-width: 1280px;
     margin: 0 auto;
-    padding: 0 2rem;
-    height: 100%;
     display: flex;
     align-items: center;
     justify-content: space-between;
+    height: 100%;
+    padding: 0 1.5rem;
+    gap: 1rem;
 }
 
 .brand {
     display: flex;
     align-items: center;
-    gap: 10px;
+    gap: 8px;
     text-decoration: none;
     flex-shrink: 0;
 }
 
-.brandIcon {
-    width: 32px;
-    height: 32px;
-    border-radius: 8px;
-    background: linear-gradient(135deg, var(--accent-blue), var(--accent-purple));
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    font-size: 0.95rem;
-    box-shadow: 0 2px 12px rgba(59, 130, 246, 0.3);
+.logo {
+    font-size: 1.25rem;
+    line-height: 1;
 }
 
-.brandName {
-    font-size: 1.05rem;
-    font-weight: 700;
-    color: var(--text-primary);
-    letter-spacing: -0.3px;
-}
-
-.nav {
-    display: flex;
-    align-items: center;
-    gap: 4px;
-    background: var(--bg-subtle);
-    border: 1px solid var(--border);
-    border-radius: 12px;
-    padding: 3px;
-}
-
-.link {
-    display: flex;
-    align-items: center;
-    gap: 6px;
-    padding: 7px 14px;
-    border-radius: 9px;
-    font-size: 0.82rem;
-    font-weight: 500;
-    color: var(--text-dim);
-    text-decoration: none;
-    transition: color 0.15s, background 0.15s;
-}
-
-.link:hover {
-    color: var(--text-secondary);
-    background: var(--bg-muted);
-}
-
-.linkActive {
-    color: var(--text-primary) !important;
-    background: var(--blue-subtle) !important;
-    font-weight: 600;
-}
-
-.status {
-    display: flex;
-    align-items: center;
-    gap: 6px;
-    font-size: 0.72rem;
-    font-weight: 600;
-    color: var(--accent-green);
-    padding: 4px 10px;
-    border-radius: 16px;
-    background: var(--green-subtle);
-    border: 1px solid rgba(16, 185, 129, 0.15);
-    flex-shrink: 0;
-    height: 28px;
-    box-sizing: border-box;
-}
-
-.dot {
-    width: 6px;
-    height: 6px;
-    border-radius: 50%;
-    background: var(--accent-green);
-    box-shadow: 0 0 6px rgba(16, 185, 129, 0.6);
-    animation: blink 2s ease-in-out infinite;
-}
-
-@keyframes blink {
-
-    0%,
-    100% {
-        opacity: 1;
-    }
-
-    50% {
-        opacity: 0.4;
-    }
-}
-
-.themeToggle {
-    width: 32px;
-    height: 32px;
-    border-radius: 10px;
-    border: 1px solid var(--border-light);
-    background: var(--bg-muted);
-    cursor: pointer;
-    display: flex;
-    align-items: center;
-    justify-content: center;
+.brandText {
     font-size: 1rem;
-    transition: all 0.2s ease;
-    flex-shrink: 0;
+    font-weight: 800;
+    color: var(--text-primary);
+    letter-spacing: -0.5px;
 }
 
-.themeToggle:hover {
+.hamburger {
+    display: none;
+    background: none;
+    border: none;
+    cursor: pointer;
+    padding: 6px;
+    width: 32px;
+    height: 32px;
+    align-items: center;
+    justify-content: center;
+}
+
+.hamburgerLine {
+    display: block;
+    width: 18px;
+    height: 2px;
+    background: var(--text-muted);
+    border-radius: 1px;
+    position: relative;
+    transition: background 0.2s;
+}
+
+.hamburgerLine::before,
+.hamburgerLine::after {
+    content: '';
+    position: absolute;
+    width: 18px;
+    height: 2px;
+    background: var(--text-muted);
+    border-radius: 1px;
+    left: 0;
+    transition: transform 0.25s ease;
+}
+
+.hamburgerLine::before {
+    top: -6px;
+}
+
+.hamburgerLine::after {
+    top: 6px;
+}
+
+.hamburgerOpen {
+    background: transparent;
+}
+
+.hamburgerOpen::before {
+    transform: translateY(6px) rotate(45deg);
+}
+
+.hamburgerOpen::after {
+    transform: translateY(-6px) rotate(-45deg);
+}
+
+.navLinks {
+    display: flex;
+    align-items: center;
+    gap: 2px;
+}
+
+.navLink {
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    padding: 6px 12px;
+    border-radius: 8px;
+    font-size: 0.8rem;
+    font-weight: 500;
+    color: var(--text-muted);
+    text-decoration: none;
+    transition: all 0.15s;
+    white-space: nowrap;
+}
+
+.navLink:hover {
+    color: var(--text-primary);
+    background: var(--bg-muted);
+}
+
+.navLinkActive {
+    color: var(--accent-blue);
     background: var(--blue-subtle);
-    border-color: var(--border-active);
-    transform: scale(1.05);
+    font-weight: 600;
 }
 
-.rightSection {
+.navIcon {
+    font-size: 0.85rem;
+    line-height: 1;
+}
+
+.controls {
     display: flex;
     align-items: center;
     gap: 10px;
-    height: 100%;
+    flex-shrink: 0;
 }
 
 .clock {
     display: flex;
-    align-items: center;
-    gap: 8px;
-    font-size: 0.85rem;
-    font-weight: 600;
-    color: var(--text-secondary);
-    padding: 4px 10px;
-    border-radius: 16px;
-    background: var(--bg-muted);
-    border: 1px solid var(--border-light);
+    flex-direction: column;
+    align-items: flex-end;
     cursor: pointer;
-    transition: all 0.2s ease;
     user-select: none;
-    height: 28px;
-    box-sizing: border-box;
+    line-height: 1;
+    padding: 4px 8px;
+    border-radius: 8px;
+    transition: background 0.15s;
 }
 
 .clock:hover {
-    background: var(--blue-subtle);
-    border-color: var(--border-active);
-    color: var(--text-primary);
+    background: var(--bg-muted);
 }
 
-.clockIcon {
-    font-size: 0.9rem;
-    display: flex;
-    align-items: center;
-}
-
-.timeWrapper {
-    display: flex;
-    align-items: baseline;
-    gap: 6px;
-}
-
-.timeText {
-    font-family: monospace;
-    font-size: 0.85rem;
-    font-weight: 600;
-    color: var(--text-primary);
-    letter-spacing: 0.5px;
-}
-
-.dateText {
-    font-size: 0.75rem;
-    color: var(--text-muted);
-    font-weight: 500;
-}
-
-.tzLabel {
-    font-size: 0.65rem;
-    padding: 2px 6px;
-    border-radius: 10px;
-    background: var(--blue-subtle);
-    border: 1px solid rgba(59, 130, 246, 0.3);
-    color: var(--accent-blue);
+.clockTime {
+    font-size: 0.82rem;
     font-weight: 700;
+    color: var(--text-primary);
+    font-variant-numeric: tabular-nums;
     letter-spacing: 0.5px;
-    display: flex;
-    align-items: center;
 }
 
-@media (max-width: 768px) {
+.clockMeta {
+    font-size: 0.62rem;
+    color: var(--text-dim);
+    margin-top: 1px;
+}
+
+.statusDot {
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    padding: 4px;
+}
+
+.dot {
+    width: 7px;
+    height: 7px;
+    border-radius: 50%;
+    background: var(--accent-green);
+    box-shadow: 0 0 6px rgba(16, 185, 129, 0.5);
+    animation: blink 2s infinite;
+}
+
+@keyframes blink {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.4; }
+}
+
+.themeToggle {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 34px;
+    height: 34px;
+    border-radius: 10px;
+    background: var(--bg-muted);
+    border: 1px solid var(--border);
+    cursor: pointer;
+    transition: all 0.2s;
+    position: relative;
+    overflow: hidden;
+}
+
+.themeToggle:hover {
+    background: var(--bg-subtle);
+    border-color: var(--border-active);
+    transform: scale(1.05);
+}
+
+.themeIcon {
+    font-size: 1rem;
+    line-height: 1;
+    transition: transform 0.3s ease;
+}
+
+.themeDark {
+    transform: rotate(0deg);
+}
+
+.themeLight {
+    transform: rotate(180deg);
+}
+
+@media (max-width: 900px) {
+    .hamburger {
+        display: flex;
+    }
+
+    .navLinks {
+        display: none;
+        position: absolute;
+        top: 56px;
+        left: 0;
+        right: 0;
+        background: var(--navbar-bg);
+        backdrop-filter: blur(16px);
+        -webkit-backdrop-filter: blur(16px);
+        border-bottom: 1px solid var(--border);
+        flex-direction: column;
+        padding: 0.5rem;
+        gap: 2px;
+    }
+
+    .navLinksOpen {
+        display: flex;
+    }
+
+    .navLink {
+        width: 100%;
+        padding: 10px 16px;
+        border-radius: 10px;
+    }
+
+    .clock {
+        display: none;
+    }
+}
+
+@media (max-width: 640px) {
     .inner {
         padding: 0 1rem;
     }
 
-    .link span:last-child {
-        display: none;
-    }
-
-    .link {
-        padding: 7px 10px;
-    }
-
-    .status {
-        display: none;
-    }
-
-    .brandName {
-        display: none;
-    }
-
-    .clock {
-        padding: 4px 8px;
-    }
-
-    .tzLabel {
-        display: none;
+    .brandText {
+        font-size: 0.9rem;
     }
 }

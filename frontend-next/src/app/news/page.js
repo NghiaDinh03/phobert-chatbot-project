@@ -131,7 +131,6 @@ export default function NewsPage() {
     const togglePlay = async (e, article, forcePlay = false) => {
         if (e) e.preventDefault()
 
-        // PAUSE HISTORY AUDIO IF PLAYING
         if (historyAudioRef.current && !historyAudioRef.current.paused) {
             historyAudioRef.current.pause()
             setPlayingHistoryId(null)
@@ -149,7 +148,6 @@ export default function NewsPage() {
         playStateRef.current.currentUrl = article.url
 
         if (data?.status === 'ready' || article.audio_cached) {
-            // Check if we need to fetch the audio url (if cached but not in audioData)
             let finalUrl = data?.audioUrl
             let finalText = data?.text || article.summary_text
 
@@ -161,13 +159,17 @@ export default function NewsPage() {
                         headers: { 'Content-Type': 'application/json' },
                         body: JSON.stringify({ url: article.url, lang: article.lang, title: article.title_vi || article.title })
                     })
-                    if (!res.ok) throw new Error('Summarize unstable')
+                    if (!res.ok) {
+                        const errText = await res.text().catch(() => `HTTP ${res.status}`)
+                        throw new Error(errText || `Server error ${res.status}`)
+                    }
                     const result = await res.json()
+                    if (result.error) throw new Error(result.error)
                     finalUrl = result.audio_url
                     finalText = result.summary_vi
                 } catch (err) {
                     console.error("Audio cache fetch error:", err)
-                    setAudioData(prev => ({ ...prev, [article.url]: { status: 'error' } }))
+                    setAudioData(prev => ({ ...prev, [article.url]: { status: 'error', errorMsg: err.message } }))
                     return
                 }
             }
@@ -218,12 +220,10 @@ export default function NewsPage() {
         forcePlayRef.current = (article) => togglePlay(null, article, true)
     }, [togglePlay])
 
-    const [categoryCache, setCategoryCache] = useState({}) // { [cat]: { articles, cached_at } }
-    // Keep a ref to categoryCache so fetchNews always reads latest without being in deps
+    const [categoryCache, setCategoryCache] = useState({})
     const categoryCacheRef = useRef(categoryCache)
     useEffect(() => { categoryCacheRef.current = categoryCache }, [categoryCache])
 
-    // Keep a ref to the latest activeTab so polling interval never has stale closure
     const activeTabRef = useRef(activeTab)
     useEffect(() => { activeTabRef.current = activeTab }, [activeTab])
 
@@ -233,7 +233,7 @@ export default function NewsPage() {
             if (cache[category]) {
                 setArticles(cache[category].articles)
                 setLastUpdate(cache[category].cached_at)
-                setLoading(false) // Show cached data immediately
+                setLoading(false)
             } else {
                 setLoading(true)
             }
@@ -255,7 +255,6 @@ export default function NewsPage() {
                 }
             } else {
                 const newArticles = data.articles || []
-                // Only update displayed articles if this category is still the active one
                 if (category === activeTabRef.current) {
                     setArticles(newArticles)
                     setLastUpdate(data.cached_at || '')
@@ -271,7 +270,7 @@ export default function NewsPage() {
         } finally {
             if (!isBackground || category === activeTabRef.current) setLoading(false)
         }
-    }, []) // No deps — reads latest values via refs
+    }, [])
 
     const searchNews = useCallback(async (query) => {
         if (!query.trim()) {
@@ -294,7 +293,7 @@ export default function NewsPage() {
     useEffect(() => {
         fetchNews(activeTab)
         // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [activeTab]) // fetchNews is stable (no deps); activeTab change triggers fresh load
+    }, [activeTab])
 
     const displayArticles = searchResults ? searchResults.articles : articles
     const isSearchMode = searchResults !== null
@@ -326,7 +325,6 @@ export default function NewsPage() {
         return () => clearInterval(interval)
     }, [])
 
-    // Polling: use activeTabRef so this interval never becomes stale regardless of tab switches
     const fetchNewsRef = useRef(fetchNews)
     useEffect(() => { fetchNewsRef.current = fetchNews }, [fetchNews])
 
@@ -344,7 +342,7 @@ export default function NewsPage() {
             }
         }, 5000)
         return () => clearInterval(interval)
-    }, []) // Stable — all mutable state accessed via refs
+    }, [])
 
     const handleSearchInput = (e) => {
         const val = e.target.value
@@ -473,26 +471,26 @@ export default function NewsPage() {
                                     {reprocessing[article.url] ? '⏳' : '🔄'}
                                 </button>
                                 <div className={styles.cardBody}>
-                                    <div style={{ display: 'flex', alignItems: 'center', gap: '10px', flexWrap: 'wrap', marginBottom: '4px' }}>
+                                    <div className={styles.cardTitleRow}>
                                         <a
                                             href={article.url}
                                             target="_blank"
                                             rel="noopener noreferrer"
                                             className={styles.cardTitle}
-                                            style={{ margin: 0, textDecoration: 'none', color: 'inherit' }}
                                         >
                                             {article.title} 🔗
                                         </a>
                                         {article.audio_cached && article.audio_cached !== 'error' ? (
                                             <button
                                                 onClick={(e) => togglePlay(e, article)}
-                                                style={{ background: audioData[article.url]?.status === 'playing' ? '#10b981' : 'transparent', color: audioData[article.url]?.status === 'playing' ? '#fff' : '#3b82f6', border: '1px solid', borderColor: audioData[article.url]?.status === 'playing' ? '#10b981' : '#3b82f6', borderRadius: '4px', padding: '2px 8px', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '4px', fontSize: '12px', fontWeight: 'bold' }}
+                                                className={`${styles.playBtn} ${audioData[article.url]?.status === 'playing' ? styles.playBtnActive : ''}`}
                                                 title={audioData[article.url]?.status === 'playing' ? 'Dừng đọc' : 'Nghe Tóm Tắt AI'}
+                                                disabled={audioData[article.url]?.status === 'loading'}
                                             >
-                                                {audioData[article.url]?.status === 'loading' ? '⏳ Đang tải' : audioData[article.url]?.status === 'playing' ? '⏸️ Đang phát' : '▶️ Nghe'}
+                                                {audioData[article.url]?.status === 'loading' ? '⏳ Đang tải...' : audioData[article.url]?.status === 'playing' ? '⏸️ Đang phát' : '▶️ Nghe'}
                                             </button>
                                         ) : !article.audio_cached ? (
-                                            <span style={{ fontSize: '12px', color: '#94a3b8', display: 'flex', alignItems: 'center', gap: '4px', border: '1px dashed #64748b', padding: '2px 8px', borderRadius: '4px' }}>
+                                            <span className={styles.playBtnPending}>
                                                 ⏳ Đang tạo Audio
                                             </span>
                                         ) : null}
@@ -504,7 +502,7 @@ export default function NewsPage() {
                                         <span className={styles.cardSource}>{article.icon} {article.source}</span>
                                         {article.date && <span className={styles.cardDate}>{article.date}</span>}
                                         {article.tag && (
-                                            <span className={styles.cardCategory} style={{ backgroundColor: '#10b981', color: '#fff', marginLeft: '6px' }}>
+                                            <span className={styles.cardTag}>
                                                 🏷️ {article.tag}
                                             </span>
                                         )}
@@ -518,7 +516,7 @@ export default function NewsPage() {
                                         <p className={styles.cardDesc}>{article.description}</p>
                                     )}
                                     {(audioData[article.url]?.text || article.summary_text || article.audio_cached === 'error') && (
-                                        <div style={{ marginTop: '5px' }}>
+                                        <div className={styles.summaryWrap}>
                                             <button
                                                 className={styles.expandBtn}
                                                 onClick={(e) => {
@@ -530,16 +528,7 @@ export default function NewsPage() {
                                             </button>
 
                                             {expandedArticles[article.url] && (
-                                                <div style={{
-                                                    marginTop: '8px',
-                                                    padding: '10px',
-                                                    background: '#1e293b',
-                                                    borderRadius: '6px',
-                                                    fontSize: '13px',
-                                                    color: article.audio_cached === 'error' ? '#fca5a5' : '#cbd5e1',
-                                                    borderLeft: article.audio_cached === 'error' ? '3px solid #ef4444' : '3px solid #3b82f6',
-                                                    lineHeight: '1.5'
-                                                }}>
+                                                <div className={article.audio_cached === 'error' ? styles.summaryBoxError : styles.summaryBoxOk}>
                                                     {article.audio_cached === 'error' ? (
                                                         <>⚠️ <b>Lỗi AI:</b> {article.summary_text || 'Hệ thống AI đang quá tải, vui lòng thử lại sau giây lát.'}</>
                                                     ) : (
@@ -555,7 +544,6 @@ export default function NewsPage() {
                                     target="_blank"
                                     rel="noopener noreferrer"
                                     className={styles.cardRight}
-                                    style={{ textDecoration: 'none' }}
                                 >
                                     <span className={styles.cardLang}>
                                         {article.lang === 'vi' ? '🇻🇳' : '🌐'}
@@ -582,9 +570,9 @@ export default function NewsPage() {
                 </div>
                 <div className={styles.historyContent}>
                     {historyLoading ? (
-                        <div style={{ textAlign: 'center', padding: '20px', color: '#64748b', fontSize: '13px' }}>Đang tải lịch sử...</div>
+                        <div className={styles.historyEmpty}>Đang tải lịch sử...</div>
                     ) : historyData.length === 0 ? (
-                        <div style={{ textAlign: 'center', padding: '20px', color: '#64748b', fontSize: '13px' }}>Không có lịch sử 7 ngày qua</div>
+                        <div className={styles.historyEmpty}>Không có lịch sử 7 ngày qua</div>
                     ) : (
                         historyData.map((hItem, idx) => (
                             <div key={idx} className={styles.historyItem}>
@@ -623,13 +611,13 @@ export default function NewsPage() {
                                         </button>
                                     )}
                                     {hItem.audio_cached !== true && (
-                                        <span style={{ fontSize: '11px', color: '#64748b' }}>⏳ Chờ</span>
+                                        <span className={styles.historyPending}>⏳ Chờ</span>
                                     )}
                                 </div>
                                 {hItem.summary_text && (
-                                    <details style={{ marginTop: '4px', fontSize: '12px', color: '#94a3b8' }}>
-                                        <summary style={{ cursor: 'pointer', color: '#60a5fa' }}>Xem tóm tắt</summary>
-                                        <p style={{ marginTop: '4px', lineHeight: '1.5' }}>{hItem.summary_text}</p>
+                                    <details className={styles.historySummary}>
+                                        <summary className={styles.historySummaryToggle}>Xem tóm tắt</summary>
+                                        <p className={styles.historySummaryText}>{hItem.summary_text}</p>
                                     </details>
                                 )}
                             </div>

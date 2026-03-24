@@ -25,12 +25,12 @@ export default function HomePage() {
             </div>
 
             <section>
-                <h2 className="section-title">Tài nguyên hệ thống</h2>
+                <h2 className="section-title">⚡ Tài nguyên hệ thống</h2>
                 <SystemStats />
             </section>
 
             <section style={{ marginTop: '2.5rem' }}>
-                <h2 className="section-title">Chức năng</h2>
+                <h2 className="section-title">🧩 Chức năng</h2>
                 <div className={styles.features}>
                     {FEATURES.map((f, i) => (
                         <Link key={i} href={f.href} className={styles.card}>
@@ -47,7 +47,7 @@ export default function HomePage() {
             </section>
 
             <footer className={styles.footer}>
-                CyberAI Assessment Platform · FastAPI · Next.js · LocalAI · © 2026
+                CyberAI Assessment Platform · FastAPI · Next.js · Open Claude · © 2026
             </footer>
         </div>
     )

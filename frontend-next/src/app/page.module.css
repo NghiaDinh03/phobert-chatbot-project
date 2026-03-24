@@ -1,33 +1,34 @@
 .hero {
     text-align: center;
-    padding: 3rem 0 2.5rem;
+    padding: 3.5rem 0 2.5rem;
 }
 
 .heroLabel {
     display: inline-block;
-    font-size: 0.75rem;
+    font-size: 0.72rem;
     font-weight: 600;
     color: var(--accent-blue);
     background: var(--blue-subtle);
-    border: 1px solid rgba(59, 130, 246, 0.15);
-    padding: 4px 14px;
+    border: 1px solid var(--border-active);
+    padding: 5px 16px;
     border-radius: 20px;
-    margin-bottom: 1rem;
-    letter-spacing: 0.3px;
+    margin-bottom: 1.25rem;
+    letter-spacing: 0.4px;
 }
 
 .heroTitle {
-    font-size: 2.2rem;
+    font-size: 2.4rem;
     font-weight: 800;
-    letter-spacing: -1px;
+    letter-spacing: -1.5px;
     margin-bottom: 0.75rem;
     color: var(--text-primary);
+    line-height: 1.1;
 }
 
 .heroSub {
     font-size: 1rem;
     color: var(--text-muted);
-    max-width: 550px;
+    max-width: 560px;
     margin: 0 auto;
     line-height: 1.7;
 }

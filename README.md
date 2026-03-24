@@ -1,251 +1,545 @@
 <div align="center">
-  <h1>PhoBERT AI Platform v2.0</h1>
-  <p>Enterprise RAG, ISO 27001 Assessment & AI News Aggregator</p>
+  <h1>🛡️ CyberAI Assessment Platform v2.0</h1>
+  <p>Enterprise ISO 27001 Assessment · RAG Chatbot · AI News Aggregator · Text-to-Speech</p>
   <p>
-    <a href="README.md">🇬🇧 English</a> | <a href="README_vi.md">🇻🇳 Tiếng Việt</a>
+    <a href="README.md"><img src="https://img.shields.io/badge/English-README-blue?logo=googletranslate&logoColor=white" /></a>
+    <a href="README_vi.md"><img src="https://img.shields.io/badge/Tiếng Việt-README-red?logo=googletranslate&logoColor=white" /></a>
+  </p>
+  <p>
+    <img src="https://img.shields.io/badge/Next.js-15-black?logo=next.js" />
+    <img src="https://img.shields.io/badge/FastAPI-0.115-009688?logo=fastapi" />
+    <img src="https://img.shields.io/badge/Python-3.11-3776AB?logo=python" />
+    <img src="https://img.shields.io/badge/Docker-Compose-2496ED?logo=docker" />
+    <img src="https://img.shields.io/badge/ChromaDB-Vector_Store-orange" />
   </p>
 </div>
 
-## Table of Contents
-- [Overview](#overview)
-- [What's New in v2.0](#whats-new-in-v20)
-- [System Architecture](#system-architecture)
-- [Key Features](#key-features)
-- [AI Models Integration](#ai-models-integration)
-- [Quick Start](#quick-start)
-- [Documentation](#documentation)
-- [License](#license)
+---
 
-## Overview
-PhoBERT AI Platform is a comprehensive, on-premise AI system featuring **ISO 27001:2022 & TCVN 11930** compliance assessment, Retrieval-Augmented Generation (RAG) capabilities, and Automated News Aggregation. Designed to run completely via Docker Compose, the system utilizes a Multi-Tier Fallback architecture to guarantee maximum High Availability (HA).
+## Table of Contents
+
+- [Overview](#overview)
+- [System Architecture](#system-architecture)
+- [Feature Mechanism Flows](#feature-mechanism-flows)
+  - [AI Chatbot (RAG)](#1-ai-chatbot-rag-flow)
+  - [ISO 27001 Assessment](#2-iso-27001-assessment-flow)
+  - [News Aggregator + TTS](#3-news-aggregator--text-to-speech-flow)
+  - [Analytics Dashboard](#4-analytics-dashboard-flow)
+- [Tech Stack](#tech-stack)
+- [AI Models](#ai-models)
+- [Quick Start](#quick-start)
+- [Environment Variables](#environment-variables)
+- [Documentation](#documentation)
+- [Performance](#performance)
 
 ---
 
-## 🆕 What's New in v2.0
+## Overview
 
-### 🔄 Unified Cloud LLM Service (Open Claude + Multi-Tier Fallback)
-- **New Primary API**: Replaced scattered API integrations with a unified `CloudLLMService` powered by **Open Claude** (`gemini-3-pro-preview` model).
-- **3-Tier Smart Fallback Chain**: Open Claude → OpenRouter → LocalAI (on-premise). If any cloud provider fails, the system seamlessly cascades to the next.
-- **Multi-Key Round-Robin**: Supports multiple API keys per provider with automatic rotation. When a key hits Rate Limit (HTTP 429), it enters a 60-second cooldown and the system switches to the next available key.
-- **Exponential Backoff Retry**: Intelligent retry logic across all providers.
+**CyberAI Assessment Platform** is a fully containerized, on-premise AI system designed for Vietnamese enterprises. It combines:
 
-### 🧠 Conversation Memory (Session-Based Context)
-- **Before**: Each chat message was a standalone request — the AI had zero memory of previous messages.
-- **Now**: Full session-based conversation memory storing up to **20 recent messages per session**.
-- **Persistent Storage**: File-based JSON sessions survive container restarts.
-- **Auto-Cleanup**: Sessions expire after **24 hours** (configurable TTL).
-- **New API Endpoints**: `GET /api/chat/history/{session_id}` and `DELETE /api/chat/history/{session_id}`.
+- **ISO 27001:2022 & TCVN 11930:2017 compliance assessment** — automated gap analysis powered by a dual-LLM pipeline
+- **RAG-powered AI Chatbot** — retrieves knowledge from your own ISO/law documents via ChromaDB and answers with source attribution
+- **AI News Aggregator** — fetches cybersecurity and financial RSS feeds, translates to Vietnamese, and generates audio summaries via Edge-TTS
+- **System Analytics Dashboard** — real-time monitoring of AI services, cache usage, vector store health, and assessment history
 
-### 🔍 Enhanced RAG Pipeline
-- **Semantic Chunking**: Respects Markdown structure (headers, tables, lists) instead of naive character splitting.
-- **Header Hierarchy Tracking**: Prepends parent header context to each chunk for better relevance.
-- **Increased Overlap**: 150-character overlap between chunks for improved context preservation.
-- **Multi-Query Search**: Generates Vietnamese query variations to increase recall from the vector store.
-- **Cosine Similarity Scoring**: Results are sorted by relevance score.
-- **Source Attribution**: RAG responses now include which documents were used as references.
-
-### ⚡ CPU Performance Optimization
-| Technique | Description |
-|-----------|-------------|
-| PyTorch Thread Control | `torch.set_num_threads()` configurable via `TORCH_THREADS` env var |
-| JIT Optimization | `torch.jit.optimize_for_inference()` for faster CPU inference |
-| Semaphore Throttling | Limits concurrent AI requests to prevent CPU overload |
-| Cloud-First Strategy | Prioritizes Cloud APIs to offload CPU from local model inference |
-| Batch Chunking | Processes translation in batches of 8 titles to prevent OOM |
-| Aggressive Caching | File-based persistent cache with TTL management |
-| Request Size Limit | Middleware caps request body at 2MB |
-| Docker Memory Limits | Backend: 4GB, LocalAI: 8GB, Frontend: 1GB |
-
-### 🛡️ Security & Stability Hardening
-| Feature | Details |
-|---------|---------|
-| CORS Whitelist | Configurable via `CORS_ORIGINS` env var (no more wildcard `*`) |
-| Rate Limiting | Per-endpoint rate limiting via `slowapi` (e.g., `10/minute` for chat) |
-| Request Size Limit | 2MB middleware to prevent abuse |
-| Input Validation | Pydantic schemas with `min_length=1, max_length=2000` |
-| Error Boundaries | Custom 404/500 handlers with graceful degradation |
-| Config Validation | `settings.validate()` runs on startup to catch misconfigurations |
-| Docker Health Checks | Automated health monitoring for Backend & LocalAI containers |
-
-### 🏗️ Intelligent Model Router
-- **Before**: Simple regex-based question classification.
-- **Now**: Keyword-weighted semantic classification across **7 route categories**: `iso`, `security`, `legal`, `technical`, `news`, `general`, `greeting`.
-- Each route triggers a custom system prompt and dedicated RAG context for higher accuracy.
-
-### 🔧 RAG Service v2.0
-- New dedicated `rag_service.py` module providing a clean interface for Retrieval-Augmented Generation.
-- Uses `CloudLLMService` instead of direct LocalAI calls for faster response times.
-- Supports `retrieve_with_sources()` for full source attribution in answers.
-- Relevance threshold checking via `is_relevant()` method.
-
-### 🧹 Code Cleanup — Production-Ready Codebase
-- **Removed** all decorative section separators and redundant inline comments across the entire backend.
-- **Streamlined** docstrings to concise one-liners at file level only.
-- **Eliminated** obvious comments (e.g., `# Check cooldown`, `# Build messages array`) that added no value.
-- **Retained** only meaningful comments explaining business logic and edge cases.
-- **Result**: ~25-40% code reduction across 10+ core files while maintaining full functionality. The codebase now reads like a professional production project.
-
-### 🦙 Upgraded LocalAI Model — Llama 3.1 70B
-- **Before**: Llama 3.1 8B Instruct (Q4_K_M) — decent but limited reasoning for complex ISO assessments.
-- **Now**: **Llama 3.1 70B Instruct (Q4_K_M)** — significantly smarter for chatbot conversations, ISO gap analysis, and security auditing.
-- Docker memory limits raised: Backend **6GB**, LocalAI **12GB**, Frontend **2GB**.
-- Inference timeout increased to **180s** to accommodate larger model.
-- Fallback: If machine has <16GB RAM, switch to 8B model in `.env`.
-
-### 📰 Enhanced News Pipeline — Full-Content Translation
-- **Before**: Articles were truncated to 6000 chars and summarized. Cloud API and VinAI handled translation separately.
-- **Now**: Cloud API handles **full translation + editorial rewrite** in a single pass (up to 12000 chars, no content truncation).
-- **Prompts upgraded** to enforce 100% factual accuracy: all names, statistics, CVE codes, dates, and technical specs must be preserved verbatim.
-- **No summarization** — articles are fully translated/rewritten in broadcast-quality Vietnamese, ready for Text-to-Speech.
-- Added more pronunciation fixes for TTS: DDoS, VPN, SSL, TLS, ransomware, blockchain, crypto.
-- `max_tokens` raised to **16000** to prevent output truncation on long articles.
+The entire system runs via a single `docker-compose up` command with no manual dependency setup required.
 
 ---
 
 ## System Architecture
 
-The project leverages a modern Client-Server model powered by various AI models distributed across dedicated Docker containers.
+### Container Topology
 
-### 1. 🖥️ Frontend (Next.js 15)
-- **Ultra-fast SPA:** Single Page Application design eliminating page reloads. Includes modular tabs (Analytics, Chat, Form ISO, News).
-- **Client-Side Caching:** Built-in caching (React state/ref) for the News module to persistently store tabs without refetching, reducing bandwidth and latency.
-- **Smart Audio Control:** A modern audio interface that provides text-to-speech for news summaries directly on articles or via the History Panel.
+```
+┌─────────────────────────────────────────────────────────────────┐
+│                       phobert-network (bridge)                  │
+│                                                                 │
+│  ┌──────────────────┐    ┌──────────────────┐    ┌───────────┐  │
+│  │  phobert-frontend│    │  phobert-backend │    │phobert-   │  │
+│  │  (Next.js 15)    │◄──►│  (FastAPI)       │◄──►│localai    │  │
+│  │  Port: 3000      │    │  Port: 8000      │    │Port: 8080 │  │
+│  └──────────────────┘    └────────┬─────────┘    └───────────┘  │
+│                                   │                              │
+│                          ┌────────▼─────────┐                   │
+│                          │   /data (Volume)  │                   │
+│                          │  ├─ vector_store/ │                   │
+│                          │  ├─ summaries/    │                   │
+│                          │  ├─ sessions/     │                   │
+│                          │  ├─ iso_documents/│                   │
+│                          │  └─ translations/ │                   │
+│                          └──────────────────┘                   │
+└─────────────────────────────────────────────────────────────────┘
+```
 
-### 2. ⚙️ Backend (FastAPI - Python)
-A high-performance backend processing requests via multi-threading and robust routing:
-- **`cloud_llm_service.py`** 🆕: Unified Cloud LLM client supporting Open Claude (primary), OpenRouter (fallback), and LocalAI (last resort) with multi-key round-robin and auto-cooldown.
-- **`chat_service.py`:** Manages conversation routing with **session-based memory**, interacts with Cloud LLM first, then queries the Vector Database via RAG.
-- **`model_router.py`:** Keyword-weighted semantic classification routing tasks across 7 categories to the appropriate AI model and system prompt.
-- **`rag_service.py`** 🆕: Enhanced RAG pipeline with multi-query search, source attribution, and Cloud LLM integration.
-- **`summary_service.py`:** The core of the news summarization engine featuring a **3-Tier Fallback & Round-Robin mechanism**:
-  1. **Open Claude (gemini-3-pro-preview)**: Primary cloud API with multi-key rotation and 60s cooldown on rate limit.
-  2. **OpenRouter**: Cascades here if all Open Claude keys fail.
-  3. **LocalAI (On-premise)**: Final fallback using local AI if all cloud APIs are unavailable or quotas are exhausted.
-- **`news_service.py`:** Fetches RSS feeds from major cybersecurity sources (The Hacker News, Dark Reading, etc.) and manages a 7-day lifecycle cleanup for `articles_history.json`.
-- **`translation_service.py`:** Utilizes the `VinAI Translate` model (135M parameters) for direct CPU-based title translation, optimized with PyTorch JIT and configurable thread control.
-- **`session_store.py`** 🆕: File-based persistent session storage for conversation memory with 24h TTL and auto-cleanup.
+### Request Routing
 
-### 3. 💾 Data Persistent Storage (`data/` Directory)
-Mounted into Docker to safely retain configurations, logic, and databases:
-- **`data/iso_documents/`**: Drop your `.md` files here. ChromaDB converts them into a Knowledge Base for the ISO auditing bot.
-- **`data/vector_store/`**: Contains the ChromaDB SQLite Vector Database.
-- **`data/summaries/`**: Stores JSON Cache for content and the `data/summaries/audio/` directory.
-  - **Audio Caching Mechanism:** URLs are hashed (MD5). Edge-TTS converts Vietnamese text to static `hash.mp3` files. Cached audio files persist for 7 days to eliminate redundant TTS API calls and reduce RAM/Disk usage.
-- **`data/sessions/`** 🆕: Persistent conversation session files (JSON) with auto-expiry.
-- **`data/assessments/`**: Stores historical generated ISO reports.
+- **Frontend → Backend**: All `/api/*` calls are transparently proxied via `next.config.js` rewrites rule:
+  ```
+  /api/:path*  →  http://backend:8000/api/:path*
+  ```
+  No CORS issues; the frontend never calls the backend directly from the browser.
 
-## Key Features
+- **Backend → Cloud AI**: `CloudLLMService` routes to **Open Claude** (primary), **OpenRouter** (secondary), **LocalAI** (final fallback) using a multi-key round-robin scheduler with 60s per-key cooldown on HTTP 429.
 
-### 🏠 Dashboard
-- Live 4-timezone world clock.
-- Quick navigation to core system features.
+- **Backend → LocalAI**: Via `http://localai:8080/v1/chat/completions` (OpenAI-compatible API). LocalAI hot-loads GGUF models on first request.
 
-### 💬 AI Chat (ISO RAG) — *Enhanced in v2.0*
-- Employs Retrieval-Augmented Generation (RAG) with **semantic chunking** and **multi-query search**.
-- **Conversation Memory**: The AI remembers your previous messages within a session (up to 20 messages).
-- **Cloud-First Strategy**: Prioritizes fast cloud AI (Open Claude) and falls back to LocalAI when needed.
-- **Source Attribution**: Answers cite which documents were used as references.
-- **Session Management**: View chat history or clear sessions via API.
+---
 
-### 📊 Analytics & Monitoring
-- Ultimate dashboard tracking hardware health (CPU, RAM).
-- Maps container metrics and AI Model statuses (Idle/Busy).
-- Manage ChromaDB (Clear, Reload) and System History seamlessly.
-- **Cloud LLM Health Check** 🆕: Monitor status of Open Claude, OpenRouter, and LocalAI providers.
+## Feature Mechanism Flows
 
-### 📝 ISO Assessment Form
-- Rapid 20+ question survey regarding Enterprise Network Infrastructure.
-- Automatically generates comprehensive Action Plan reports using Llama 3.1 & SecurityLLM.
-- Analyzes gaps for ISO 27001:2022 and TCVN 11930 standards.
+### 1. AI Chatbot (RAG) Flow
 
-### 📰 AI News Aggregator
-- 3 main cybersecurity news categories continuously fetched.
-- One-click **🔊 Listen** immediately triggers the summarize -> MP3 generation -> play flow (Plays from cache on subsequent listens).
-- **7-Day History Sidebar:** Revisit old articles and listen to cached static audio without consuming API tokens.
+```
+User types question
+        │
+        ▼
+[Frontend: /chatbot]
+POST /api/chat  ──►  [Backend: chat_service.py]
+                              │
+                    ┌─────────▼──────────┐
+                    │ 1. Session Memory   │
+                    │  Load last 20 msgs  │
+                    │  from sessions/     │
+                    └─────────┬──────────┘
+                              │
+                    ┌─────────▼──────────┐
+                    │ 2. Route Detection  │
+                    │  model_router.py    │
+                    │  7 categories:      │
+                    │  iso/security/legal │
+                    │  /tech/news/general │
+                    │  /greeting          │
+                    └─────────┬──────────┘
+                              │
+                    ┌─────────▼──────────┐
+                    │ 3. RAG Retrieval    │
+                    │  Embed question     │
+                    │  all-MiniLM-L6-v2  │
+                    │  Query ChromaDB     │
+                    │  Top-3 chunks by    │
+                    │  Cosine Similarity  │
+                    └─────────┬──────────┘
+                              │
+                    ┌─────────▼──────────┐
+                    │ 4. Cloud LLM Call   │
+                    │  Open Claude (1st)  │
+                    │  OpenRouter (2nd)   │
+                    │  LocalAI (fallback) │
+                    └─────────┬──────────┘
+                              │
+                    ┌─────────▼──────────┐
+                    │ 5. Save + Respond   │
+                    │  Append to session  │
+                    │  Stream response    │
+                    │  to frontend        │
+                    └────────────────────┘
+                              │
+                              ▼
+                   Answer with source attribution
+                   displayed in chat UI
+```
 
-## AI Models Integration
+**Key components:**
+- [`backend/services/chat_service.py`](backend/services/chat_service.py) — orchestrates session memory, routing, RAG, and LLM calls
+- [`backend/services/rag_service.py`](backend/services/rag_service.py) — vector retrieval with multi-query search
+- [`backend/services/cloud_llm_service.py`](backend/services/cloud_llm_service.py) — multi-provider LLM client
+- [`frontend-next/src/app/chatbot/page.js`](frontend-next/src/app/chatbot/page.js) — streaming chat UI with session sidebar
 
-| # | Model | Provider | Role |
-|---|-------|----------|------|
-| 1 | **gemini-3-pro-preview** 🆕 | Open Claude (Cloud) | Primary brain for chat, RAG, and summarization via unified Cloud LLM |
-| 2 | **Llama 3.1 Instruct (70B)** 🆕 | LocalAI (On-premise) | Upgraded fallback — smarter reasoning for chat, ISO assessment, and local inference |
-| 3 | **SecurityLLM (7B)** | LocalAI (On-premise) | Cybersecurity expert for auditing internal networks |
-| 4 | **Gemini 2.5 Flash / OpenRouter** | Cloud API | Fallback cloud provider for fast summarization |
-| 5 | **VinAI Translate (135M)** | HuggingFace Transformers | 100% on-server Vietnamese translator (CPU-optimized with JIT) |
-| 6 | **all-MiniLM-L6-v2** | ChromaDB | Embeds markdown text into mathematical vectors |
-| 7 | **Edge-TTS** | Microsoft Service | Natural, fluent Text-to-Speech output |
+---
+
+### 2. ISO 27001 Assessment Flow
+
+```
+User fills assessment form
+(industry, infrastructure, policies)
+        │
+        ▼
+[Frontend: /form-iso]
+  Step 1: Select standard (ISO 27001 / TCVN 11930)
+  Step 2: Infrastructure details
+  Step 3: Policy checkboxes (93 controls)
+        │
+        ▼
+POST /api/iso27001/assess
+        │
+        ▼
+[Backend: iso27001_service.py]
+        │
+        ├──► Phase 1: RAG Context Retrieval
+        │     Query ChromaDB with assessment data
+        │     Retrieve relevant ISO/TCVN document chunks
+        │
+        ├──► Phase 2: Gap Analysis (SecurityLLM / Cloud LLM)
+        │     Receives: form JSON + RAG context
+        │     Outputs: raw list of gaps, risks, violations
+        │     Format: bullet points, severity levels
+        │
+        └──► Phase 3: Report Generation (Cloud LLM / Llama)
+              Receives: gap analysis from Phase 2
+              Role: "Expert report writer"
+              Outputs: structured Vietnamese markdown report
+              Includes: risk level, action plan, ISO references
+        │
+        ▼
+Response: { risk_level, report_markdown, controls_analyzed }
+        │
+        ▼
+[Frontend: displays report]
+  Risk level badge (Critical/High/Medium/Low)
+  Markdown report with action plan
+  Save to data/assessments/ for history
+```
+
+**Key components:**
+- [`backend/api/routes/iso27001.py`](backend/api/routes/iso27001.py) — assessment endpoints
+- [`frontend-next/src/app/form-iso/page.js`](frontend-next/src/app/form-iso/page.js) — multi-step form UI
+- [`frontend-next/src/data/standards.js`](frontend-next/src/data/standards.js) — ISO/TCVN control definitions
+- [`data/knowledge_base/iso27001.json`](data/knowledge_base/iso27001.json) — 93 control definitions
+
+---
+
+### 3. News Aggregator + Text-to-Speech Flow
+
+#### Background Flow (Auto, every cycle)
+```
+[Background Worker: news_service.py]
+        │
+        ▼
+┌───────────────────────────────────────────────────┐
+│ RSS Feed Fetch                                    │
+│  • Cybersecurity: The Hacker News, BleepingComp  │
+│  • Stocks (International): CNBC, Yahoo Finance   │
+│  • Stocks (Vietnam): CafeF, VnEconomy            │
+│  feedparser library → 15–20 articles/category    │
+└───────────────────┬───────────────────────────────┘
+                    │
+                    ▼
+┌───────────────────────────────────────────────────┐
+│ Title Translation (Background Thread)             │
+│  VinAI Translate (135M params, CPU-only)          │
+│  EN → VI for international articles               │
+│  Batch: 8 titles per call (OOM prevention)        │
+│  Cache: data/translations/<category>.json         │
+└───────────────────┬───────────────────────────────┘
+                    │
+                    ▼
+┌───────────────────────────────────────────────────┐
+│ Article Tagging (Background Thread)               │
+│  CloudLLMService → short prompt:                  │
+│  "Tag 1-2 keywords. No explanation."              │
+│  Tags: Ransomware, Pháp lý, Zero-Day, Cổ tức...  │
+└───────────────────┬───────────────────────────────┘
+                    │
+                    ▼
+             Results served via
+          GET /api/news?category=...
+```
+
+#### On-Demand Flow (User clicks 🔊 Play)
+```
+[User clicks Play on article]
+        │
+        ▼
+[Frontend: togglePlay() in news/page.js]
+  Check client-side audioData state
+        │
+   cached? ──YES──► play existing Audio()
+        │
+       NO
+        │
+        ▼
+POST /api/news/summarize { url, title, lang }
+        │
+        ▼
+[Backend: summary_service.py]
+        │
+        ▼
+┌───────────────────────────────────────────────────┐
+│ Step 1: Cache Check                               │
+│  MD5(url) → check data/summaries/<hash>.json      │
+│  If hit → return cached audio_url + summary_vi    │
+└───────────────────┬───────────────────────────────┘
+                    │ Cache miss
+                    ▼
+┌───────────────────────────────────────────────────┐
+│ Step 2: Article Scraping (3-method fallback)      │
+│  1. requests + BeautifulSoup4 (primary)           │
+│  2. trafilatura (fallback)                        │
+│  3. newspaper3k (last resort)                     │
+│  Noise filtering, deduplication, 12000 char cap   │
+└───────────────────┬───────────────────────────────┘
+                    │
+                    ▼
+┌───────────────────────────────────────────────────┐
+│ Step 3: AI Translation + Editorial Rewrite        │
+│  CloudLLMService 3-tier fallback:                 │
+│  1. Open Claude (gemini-3-pro-preview)            │
+│     Multi-key round-robin, 60s cooldown on 429    │
+│  2. OpenRouter (if all Cloud keys fail)           │
+│  3. LocalAI / Llama 3.1 (offline fallback)        │
+│  Prompt: full editorial rewrite in Vietnamese     │
+│  Preserves: CVEs, dates, names, stats verbatim    │
+│  max_tokens: 16000                                │
+└───────────────────┬───────────────────────────────┘
+                    │
+                    ▼
+┌───────────────────────────────────────────────────┐
+│ Step 4: Pronunciation Fix                         │
+│  _fix_pronunciation(): DDoS→"Đi Đốt", VPN, SSL   │
+│  TLS, ransomware, blockchain → readable VI terms  │
+└───────────────────┬───────────────────────────────┘
+                    │
+                    ▼
+┌───────────────────────────────────────────────────┐
+│ Step 5: Text-to-Speech (Edge-TTS)                 │
+│  Microsoft Edge-TTS, voice: vi-VN-HoaiMyNeural   │
+│  Output: data/summaries/audio/<hash>.mp3          │
+│  Hash = MD5(url)                                  │
+└───────────────────┬───────────────────────────────┘
+                    │
+                    ▼
+┌───────────────────────────────────────────────────┐
+│ Step 6: Persist Cache                             │
+│  data/summaries/<hash>.json                       │
+│  { summary_vi, audio_url, created_at, retryable } │
+│  TTL: 7 days → auto-cleaned by background worker  │
+└───────────────────┬───────────────────────────────┘
+                    │
+                    ▼
+[Frontend receives { audio_url, summary_vi }]
+  Creates Audio() object → plays MP3 stream
+  Shows Vietnamese summary below article card
+  History sidebar updated with cached entry
+```
+
+**Key components:**
+- [`backend/services/summary_service.py`](backend/services/summary_service.py) — scraping, translation, TTS, caching
+- [`backend/services/news_service.py`](backend/services/news_service.py) — RSS fetching, background workers
+- [`backend/services/cloud_llm_service.py`](backend/services/cloud_llm_service.py) — 3-tier AI fallback
+- [`frontend-next/src/app/news/page.js`](frontend-next/src/app/news/page.js) — news UI with audio player
+
+---
+
+### 4. Analytics Dashboard Flow
+
+```
+[Frontend: /analytics]
+        │
+        ├──► Poll every 5s: GET /api/system/stats
+        │     CPU usage, RAM usage, disk usage
+        │     Rendered by SystemStats.js component
+        │
+        ├──► On load: GET /api/iso27001/history
+        │     List all past assessments
+        │     Columns: date, standard, risk level
+        │     Actions: view report, delete, reuse form data
+        │
+        ├──► On load: GET /api/system/cache-stats
+        │     Count of translation JSON files
+        │     Count of summary JSON + audio MP3 files
+        │     Total disk usage (MB)
+        │
+        └──► ChromaDB Panel: GET /api/iso27001/chromadb/stats
+              Total documents, total chunks
+              Distance metric (cosine)
+              ─────────────────────────────
+              [Search Test Box]
+              POST /api/iso27001/chromadb/search { query }
+              Returns top-3 matching chunks with score
+              ─────────────────────────────
+              [Reindex Button]
+              POST /api/iso27001/chromadb/reload
+              Clears DB → scans data/iso_documents/
+              Chunks all .md files → embeds → stores
+```
+
+---
+
+## Tech Stack
+
+### Frontend
+
+| Technology | Version | Role |
+|-----------|---------|------|
+| **Next.js** | 15.1 | App Router, SSR, API route proxying |
+| **React** | 19.0 | Component model, `useState`, `useEffect` |
+| **CSS Modules** | — | Scoped styling with CSS custom properties |
+| **react-markdown** | 9.0 | Renders AI-generated markdown reports |
+| **remark-gfm** | 4.0 | GitHub-flavored markdown tables/lists |
+
+### Backend
+
+| Technology | Version | Role |
+|-----------|---------|------|
+| **FastAPI** | 0.115 | Async REST API framework |
+| **Python** | 3.11 | Runtime |
+| **Pydantic** | v2 | Input validation schemas |
+| **slowapi** | — | Per-endpoint rate limiting |
+| **feedparser** | — | RSS feed parsing |
+| **BeautifulSoup4** | — | Primary HTML scraper |
+| **trafilatura** | — | Fallback article extractor |
+| **newspaper3k** | — | Final-fallback article extractor |
+| **edge-tts** | — | Microsoft Edge Text-to-Speech (async) |
+| **chromadb** | — | Local vector store (SQLite backend) |
+| **sentence-transformers** | — | `all-MiniLM-L6-v2` embedding model |
+| **transformers + torch** | — | VinAI Translate (EN→VI, 135M params) |
+| **httpx** | — | Async HTTP client for Cloud LLM calls |
+
+### Infrastructure
+
+| Technology | Role |
+|-----------|------|
+| **Docker + Docker Compose** | Container orchestration |
+| **LocalAI** | OpenAI-compatible local inference server (GGUF) |
+| **ChromaDB (SQLite)** | On-disk vector database |
+| **Docker bridge network** | Isolated inter-container communication |
+| **Docker Volumes** | Persistent data mount at `/data` |
+
+---
+
+## AI Models
+
+| # | Model | Provider | Parameters | Role |
+|---|-------|----------|-----------|------|
+| 1 | **gemini-3-pro-preview** | Open Claude (Cloud) | — | Primary LLM for chat, summarization, ISO analysis |
+| 2 | **OpenRouter models** | OpenRouter (Cloud) | — | Secondary cloud fallback for all LLM tasks |
+| 3 | **Llama 3.1 70B Instruct Q4_K_M** | LocalAI (On-premise) | 70B | Offline fallback LLM — chat, ISO report generation |
+| 4 | **SecurityLLM (7B Q4_K_M)** | LocalAI (On-premise) | 7B | Security-specialized model for ISO gap analysis |
+| 5 | **VinAI Translate (envit5-translation)** | HuggingFace / CPU | 135M | EN→VI title translation, fully offline |
+| 6 | **all-MiniLM-L6-v2** | sentence-transformers | 22M | Text embedding for ChromaDB vector search |
+| 7 | **Edge-TTS (vi-VN-HoaiMyNeural)** | Microsoft (online) | — | Vietnamese Text-to-Speech audio generation |
+
+### AI Orchestration Logic
+
+```
+Task arrives at CloudLLMService
+        │
+        ├── task_type = "localai_only"? ──YES──► LocalAI directly
+        │
+        └── Cloud path:
+              Try Open Claude keys (round-robin)
+                    │ 429 → cooldown 60s, try next key
+                    │ All keys exhausted?
+                    ▼
+              Try OpenRouter keys (round-robin)
+                    │ All keys exhausted?
+                    ▼
+              Try LocalAI (final fallback)
+                    │ Timeout: INFERENCE_TIMEOUT (120s)
+                    ▼
+              Return result or raise exception
+```
+
+---
 
 ## Quick Start
 
-The architecture deployment is highly streamlined via `docker-compose`. All DNS/Network routing issues are pre-configured.
+### Prerequisites
+- Docker Engine + Docker Compose (v2)
+- 16 GB RAM minimum (32 GB recommended for 70B model)
+- 30 GB free disk space for GGUF models
 
-### 1. Clone & Setup Environment
+### 1. Clone & Setup
 ```bash
 git clone https://github.com/NghiaDinh03/phobert-chatbot-project.git
 cd phobert-chatbot-project
 cp .env.example .env
 ```
 
-### 2. Configure API Keys
-Open the `.env` file and configure the following:
-
+### 2. Configure API Keys (`.env`)
 ```env
-# Primary Cloud LLM (Open Claude)
-CLOUD_API_KEYS=your_key_1,your_key_2,your_key_3
+# Primary Cloud LLM — Open Claude (required for chat to work)
+CLOUD_API_KEYS=your_key_1,your_key_2
 CLOUD_LLM_API_URL=https://open-claude.com/v1
 CLOUD_MODEL_NAME=gemini-3-pro-preview
 
-# (Optional) OpenRouter as fallback
+# Secondary fallback (optional but recommended)
 OPENROUTER_API_KEYS=your_openrouter_key
 
-# (Optional) Legacy Gemini keys
-GEMINI_API_KEYS=key1,key2,key3
+# CORS — restrict to your domain in production
+CORS_ORIGINS=http://localhost:3000
 ```
 
-> ⚠️ **Note:** The system requires at least **one** Cloud API key (Open Claude OR OpenRouter) for chat to work. Keys support comma-separated format for automatic Round-Robin load balancing!
+> ⚠️ At least **one** `CLOUD_API_KEYS` entry is required. Multiple keys separated by commas enable automatic Round-Robin load balancing and rate-limit recovery.
 
-### 3. Build & Run
+### 3. Build & Launch
 ```bash
 docker-compose up --build -d
 ```
-*This command pulls required images, downloads GGUF models into `/models`, installs libraries, and spins up `phobert-frontend`, `phobert-backend`, and `phobert-localai` containers with memory limits and health checks.*
+
+First run downloads GGUF models (~15–25 GB) and builds all images — allow 15–30 minutes.
 
 ### 4. Access
-Open your browser and navigate to **http://localhost:3000**
+Open **http://localhost:3000** in your browser.
 
-### 5. (Optional) Performance Tuning
-For CPU-constrained environments, adjust these in `.env`:
+### 5. Optional Performance Tuning
 ```env
-TORCH_THREADS=4          # PyTorch threads for translation
-MAX_CONCURRENT_REQUESTS=3 # Max concurrent AI requests
+TORCH_THREADS=4           # CPU threads for VinAI translation
+MAX_CONCURRENT_REQUESTS=3 # Max parallel AI requests
 INFERENCE_TIMEOUT=120     # LocalAI timeout (seconds)
 CLOUD_TIMEOUT=60          # Cloud API timeout (seconds)
 ```
 
+---
+
+## Environment Variables
+
+| Variable | Default | Description |
+|---------|---------|-------------|
+| `CLOUD_API_KEYS` | `` | Comma-separated Open Claude API keys |
+| `CLOUD_LLM_API_URL` | `https://open-claude.com/v1` | Cloud LLM base URL |
+| `CLOUD_MODEL_NAME` | `gemini-3-pro-preview` | Cloud model identifier |
+| `OPENROUTER_API_KEYS` | `` | Comma-separated OpenRouter API keys |
+| `LOCALAI_URL` | `http://localai:8080` | LocalAI server URL |
+| `MODEL_NAME` | `Meta-Llama-3.1-70B-Instruct-Q4_K_M.gguf` | LocalAI primary model |
+| `SECURITY_MODEL_NAME` | same as MODEL_NAME | LocalAI security model |
+| `CORS_ORIGINS` | `http://localhost:3000` | Allowed CORS origins (comma-separated) |
+| `TORCH_THREADS` | auto (cpu_count) | PyTorch thread count for translation |
+| `MAX_CONCURRENT_REQUESTS` | `3` | Semaphore limit for concurrent AI calls |
+| `INFERENCE_TIMEOUT` | `120` | Timeout (s) for LocalAI calls |
+| `CLOUD_TIMEOUT` | `60` | Timeout (s) for Cloud LLM calls |
+| `RATE_LIMIT_CHAT` | `10/minute` | Chat endpoint rate limit |
+| `RATE_LIMIT_ASSESS` | `3/minute` | Assessment endpoint rate limit |
+| `RATE_LIMIT_NEWS` | `5/minute` | News summarize endpoint rate limit |
+| `JWT_SECRET` | `change-me-in-production` | JWT signing secret |
+| `DEBUG` | `false` | Enable debug logging |
+
+---
+
 ## Documentation
-The project includes deep functional and technical documentation inside the `docs/` directory:
-- 📖 **[Architecture Details](./docs/architecture.md)**
-- 📖 **[API References](./docs/api.md)**
-- 📖 **[Deployment Guide](./docs/deployment.md)**
-- 📖 **[ChromaDB Implementation](./docs/chromadb_guide.md)**
-- 📖 **[RAG & PICO Markdown Formatting Standard](./docs/markdown_rag_standard.md)**
-- 📖 **[Analytics & Monitoring Guide](./docs/analytics_monitoring.md)**
-- 📖 **[News Aggregator Architecture](./docs/news_aggregator.md)**
-- 📖 **[ISO Assessment Form Flow](./docs/iso_assessment_form.md)**
 
-## v2.0 Performance Comparison
+| Document | Description |
+|---------|-------------|
+| [Architecture](./docs/architecture.md) | Container topology, network routing, AI orchestration |
+| [API Reference](./docs/api.md) | All FastAPI endpoints with request/response schemas |
+| [News Aggregator](./docs/news_aggregator.md) | RSS fetch, translation, TTS audio generation flow |
+| [Chatbot RAG](./docs/chatbot_rag.md) | Vector embedding, ChromaDB retrieval, LLM pipeline |
+| [ISO Assessment](./docs/iso_assessment_form.md) | Multi-step form, dual-LLM analysis, report generation |
+| [Analytics](./docs/analytics_monitoring.md) | Dashboard panels, system stats, ChromaDB management |
+| [ChromaDB Guide](./docs/chromadb_guide.md) | Adding documents, reindexing, troubleshooting |
+| [Deployment Guide](./docs/deployment.md) | System requirements, Docker setup, health checks |
+| [Markdown RAG Standard](./docs/markdown_rag_standard.md) | How to format .md files for optimal RAG quality |
+| [Multi-Standard Plan](./docs/multi_standard_assessment_plan_v2.md) | ISO 27001 + TCVN 11930 assessment architecture |
 
-| Metric | v1.0 | v2.0 | Improvement |
-|--------|------|------|-------------|
-| Chat Response (Cloud) | N/A | ~2-5s | 🆕 New |
-| Chat Response (LocalAI) | 15-30s | 15-30s (fallback only) | Cloud-first strategy |
-| Translation Batch | No chunking | 8 titles/batch | More stable |
-| Session Persistence | In-memory (lost on restart) | File-based (persistent) | ✅ Persistent |
-| Conversation Context | None | 20 messages/session | ✅ New |
-| RAG Chunk Quality | Basic split | Semantic + headers | More accurate |
-| API Security | CORS `*` | Whitelist + rate limit | ✅ Secured |
-| Error Recovery | Crash | Graceful fallback chain | ✅ Stable |
+---
+
+## Performance Reference
+
+| Metric | Value |
+|--------|-------|
+| Chat response (Cloud) | ~2–5 seconds |
+| Chat response (LocalAI 70B) | ~30–60 seconds (fallback) |
+| News title translation (batch 8) | ~3–8 seconds |
+| Article scrape + summarize + TTS | ~15–40 seconds (first call) |
+| Audio playback (cached) | ~0 ms (instant, file served) |
+| ChromaDB vector search (top-3) | < 100 ms |
+| Session memory per session | 20 messages, 24h TTL |
+| Audio/Summary cache TTL | 7 days auto-cleanup |
+| Docker memory limits | Backend: 6 GB, LocalAI: 12 GB, Frontend: 2 GB |
+
+---
 
 ## License
-This project is proprietary and built for enterprise network assessment purposes.
-*Focused on premium end-user experiences, data security, memory overflow protection, and multi-tier robust fallback systems.*
+
+This project is proprietary and built for enterprise cybersecurity assessment purposes.

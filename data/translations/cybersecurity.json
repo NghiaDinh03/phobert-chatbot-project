@@ -1,5 +1,5 @@
 {
-  "timestamp": 1774303893.669779,
+  "timestamp": 1774338471.6624167,
   "translations": {
     "220ed4d967f5": "Chúng tôi đã tìm thấy tám vectơ tấn công bên trong nền tảng AWS. Đây là những gì kẻ tấn công có thể làm với chúng",
     "0225e7355a19": "Microsoft Cảnh báo Lừa đảo IRS Lượt truy cập 29.000 Người dùng, Triển khai Phần mềm độc hại RMM",
@@ -27,6 +27,9 @@
     "e0d1cdcdf003": "Tin tặc Bắc Triều Tiên lạm dụng VS Code Auto-Run Tasks để triển khai phần mềm độc hại StoatWaffle",
     "ff0a6bbe6815": "Trivy Chuỗi cung ứng tấn công mục tiêu bí mật CI / CD",
     "69ec3c2debbf": "CISO tranh luận về vai trò của con người trong an ninh AI-Powered",
-    "2761d7bbf4a2": "AI trong SOC: Điều gì có thể sai?"
+    "2761d7bbf4a2": "AI trong SOC: Điều gì có thể sai?",
+    "4b48d4a0b377": "Kỷ nguyên mới của Ransomware: Di chuyển với tốc độ AI",
+    "5a746362115a": "Mỹ. Sentences Hacker Nga để 6.75 năm cho vai trò trong $9M thiệt hại ransomware",
+    "51c092b3d77a": "Citrix kêu gọi vá lỗ hổng NetScaler quan trọng cho phép rò rỉ dữ liệu không được xác thực"
   }
 }

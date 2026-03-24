@@ -326,6 +326,14 @@
     gap: 1px;
 }
 
+.cardTitleRow {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    flex-wrap: wrap;
+    margin-bottom: 4px;
+}
+
 .card {
     display: grid;
     grid-template-columns: 1fr auto;
@@ -389,6 +397,7 @@
     font-weight: 700;
     line-height: 1.45;
     color: var(--text-primary);
+    text-decoration: none;
     display: -webkit-box;
     -webkit-line-clamp: 2;
     line-clamp: 2;
@@ -649,4 +658,115 @@
 .reprocessBtn:disabled {
     opacity: 0.5;
     cursor: not-allowed;
+}
+
+.summaryBoxOk {
+    margin-top: 8px;
+    padding: 10px 12px;
+    background: var(--blue-subtle);
+    border-radius: 6px;
+    font-size: 0.8rem;
+    color: var(--text-secondary);
+    border-left: 3px solid var(--accent-blue);
+    line-height: 1.55;
+}
+
+.summaryBoxError {
+    margin-top: 8px;
+    padding: 10px 12px;
+    background: var(--red-subtle);
+    border-radius: 6px;
+    font-size: 0.8rem;
+    color: var(--accent-red);
+    border-left: 3px solid var(--accent-red);
+    line-height: 1.55;
+}
+
+.playBtn {
+    background: transparent;
+    color: var(--accent-blue);
+    border: 1px solid var(--accent-blue);
+    border-radius: 4px;
+    padding: 2px 8px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    font-size: 0.75rem;
+    font-weight: 700;
+    font-family: inherit;
+    transition: all 0.15s;
+    white-space: nowrap;
+    flex-shrink: 0;
+}
+
+.playBtn:hover {
+    background: var(--blue-subtle);
+}
+
+.playBtnActive {
+    background: var(--accent-green);
+    color: #fff;
+    border-color: var(--accent-green);
+}
+
+.playBtnActive:hover {
+    background: var(--accent-green);
+    opacity: 0.9;
+}
+
+.playBtnPending {
+    background: transparent;
+    color: var(--text-dim);
+    border: 1px dashed var(--text-dim);
+    border-radius: 4px;
+    padding: 2px 8px;
+    font-size: 0.75rem;
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    white-space: nowrap;
+    flex-shrink: 0;
+}
+
+.cardTag {
+    background: var(--accent-green);
+    color: #fff;
+    font-size: 0.6rem;
+    font-weight: 600;
+    padding: 1px 6px;
+    border-radius: 4px;
+    margin-left: 6px;
+}
+
+.summaryWrap {
+    margin-top: 5px;
+}
+
+.historyEmpty {
+    text-align: center;
+    padding: 20px;
+    color: var(--text-dim);
+    font-size: 13px;
+}
+
+.historyPending {
+    font-size: 11px;
+    color: var(--text-dim);
+}
+
+.historySummary {
+    margin-top: 4px;
+    font-size: 12px;
+    color: var(--text-secondary);
+}
+
+.historySummaryToggle {
+    cursor: pointer;
+    color: var(--accent-blue);
+}
+
+.historySummaryText {
+    margin-top: 4px;
+    line-height: 1.5;
 }
