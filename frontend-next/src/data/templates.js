@@ -40,7 +40,9 @@ export const ASSESSMENT_TEMPLATES = [
                 incidents_12m: 2,
                 iso_status: "Đã chứng nhận"
             },
-            notes: "Đã đạt chứng nhận ISO 27001:2022 từ BSI. SOC L2/L3 hoạt động 24/7 với 15 analyst. Diễn tập Red Team/Blue Team hàng quý. PCI-DSS Level 1 compliant. Đang triển khai SASE (Zscaler). 2 sự cố phishing trong 12 tháng qua đều được SOC phát hiện và xử lý trong 15 phút."
+            notes: "Đã đạt chứng nhận ISO 27001:2022 từ BSI. SOC L2/L3 hoạt động 24/7 với 15 analyst. Diễn tập Red Team/Blue Team hàng quý. PCI-DSS Level 1 compliant. Đang triển khai SASE (Zscaler). 2 sự cố phishing trong 12 tháng qua đều được SOC phát hiện và xử lý trong 15 phút.",
+            assessment_scope: "full",
+            scope_description: ""
         }
     },
     {
@@ -84,7 +86,9 @@ export const ASSESSMENT_TEMPLATES = [
                 incidents_12m: 1,
                 iso_status: "Đã chứng nhận"
             },
-            notes: "ISO 27001:2022 certified (TÜV Rheinland). DevSecOps pipeline: GitLab CI → SonarQube SAST → Trivy container scan → OWASP ZAP DAST → ArgoCD deploy. Pentest hàng quý bởi CyberSecurity Vietnam. Bug bounty program trên HackerOne. DPO chuyên trách. Đào tạo Security Awareness hàng quý qua KnowBe4."
+            notes: "ISO 27001:2022 certified (TÜV Rheinland). DevSecOps pipeline: GitLab CI → SonarQube SAST → Trivy container scan → OWASP ZAP DAST → ArgoCD deploy. Pentest hàng quý bởi CyberSecurity Vietnam. Bug bounty program trên HackerOne. DPO chuyên trách. Đào tạo Security Awareness hàng quý qua KnowBe4.",
+            assessment_scope: "full",
+            scope_description: ""
         }
     },
     {
@@ -121,7 +125,9 @@ export const ASSESSMENT_TEMPLATES = [
                 incidents_12m: 1,
                 iso_status: "Đang triển khai"
             },
-            notes: "Vừa bị 1 đợt Phishing tương đối lớn vào tháng trước, 3 nhân sự click nhầm link nhưng EDR đã block được payload. Đang trong quá trình hoàn thiện tài liệu để xin chứng nhận ISO 27001."
+            notes: "Vừa bị 1 đợt Phishing tương đối lớn vào tháng trước, 3 nhân sự click nhầm link nhưng EDR đã block được payload. Đang trong quá trình hoàn thiện tài liệu để xin chứng nhận ISO 27001.",
+            assessment_scope: "by_department",
+            scope_description: "Phòng IT, Phòng Bảo mật, Phòng Vận hành Core Banking"
         }
     },
     {
@@ -157,7 +163,9 @@ export const ASSESSMENT_TEMPLATES = [
                 incidents_12m: 3,
                 iso_status: "Chưa triển khai"
             },
-            notes: "CSDL bệnh nhân (Hồ sơ bệnh án điện tử) lưu trữ không mã hóa trên SQL Server. Chưa có quy trình xử lý sự cố lộ lọt dữ liệu. 3 lần bị ransomware cảnh báo trong năm qua nhưng Kaspersky đã chặn."
+            notes: "CSDL bệnh nhân (Hồ sơ bệnh án điện tử) lưu trữ không mã hóa trên SQL Server. Chưa có quy trình xử lý sự cố lộ lọt dữ liệu. 3 lần bị ransomware cảnh báo trong năm qua nhưng Kaspersky đã chặn.",
+            assessment_scope: "by_system",
+            scope_description: "Hệ thống HIS (Hospital Information System), SQL Server CSDL bệnh nhân, Mạng VLAN Khám bệnh"
         }
     },
     {
@@ -194,7 +202,9 @@ export const ASSESSMENT_TEMPLATES = [
                 incidents_12m: 0,
                 iso_status: "Chưa triển khai"
             },
-            notes: "Tốc độ code rất nhanh nhưng chưa có chính sách tài liệu hóa. Cần rà soát theo TCVN 11930 để chuẩn bị xin giấy phép đăng ký cung cấp dịch vụ viễn thông tại VN."
+            notes: "Tốc độ code rất nhanh nhưng chưa có chính sách tài liệu hóa. Cần rà soát theo TCVN 11930 để chuẩn bị xin giấy phép đăng ký cung cấp dịch vụ viễn thông tại VN.",
+            assessment_scope: "by_system",
+            scope_description: "Platform SaaS trên AWS EKS, RDS PostgreSQL, API Gateway — không bao gồm môi trường dev/staging"
         }
     },
     {
@@ -232,7 +242,9 @@ export const ASSESSMENT_TEMPLATES = [
                 incidents_12m: 2,
                 iso_status: "Đang triển khai"
             },
-            notes: "Cung cấp dịch vụ công trực tuyến mức 3-4 cho 1.2 triệu dân. 2 lần bị DDoS nhắm vào Cổng TTĐT nhưng WAF đã chặn. Chưa có quy trình ứng cứu sự cố chính thức. Cần hoàn thiện diễn tập ATTT hàng năm theo yêu cầu Bộ TT&TT."
+            notes: "Cung cấp dịch vụ công trực tuyến mức 3-4 cho 1.2 triệu dân. 2 lần bị DDoS nhắm vào Cổng TTĐT nhưng WAF đã chặn. Chưa có quy trình ứng cứu sự cố chính thức. Cần hoàn thiện diễn tập ATTT hàng năm theo yêu cầu Bộ TT&TT.",
+            assessment_scope: "by_system",
+            scope_description: "Cổng Thông tin Điện tử, Hệ thống Dịch vụ Công trực tuyến, máy chủ AD và Exchange nội bộ"
         }
     }
 ];

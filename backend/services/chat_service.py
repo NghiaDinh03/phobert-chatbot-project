@@ -3,6 +3,7 @@
 import re
 import logging
 import threading
+from datetime import datetime, timezone
 from typing import Dict, Any, Generator, List
 
 from core.config import settings
@@ -235,7 +236,17 @@ class ChatService:
         return {"status": "ok", "message": "Đã xóa ngữ cảnh hội thoại", "session_id": session_id}
 
     @staticmethod
-    def assess_system(system_data: Dict[str, Any]) -> Dict[str, Any]:
+    def assess_system(system_data: Dict[str, Any], model_mode: str = "hybrid") -> Dict[str, Any]:
+        """
+        Đánh giá hệ thống với 3 chế độ model:
+          - "hybrid"  (mặc định): Phase1=SecurityLM(LocalAI) + Phase2=OpenClaude (RAG)
+          - "local"  : Cả hai Phase dùng LocalAI — bảo mật tối đa, dữ liệu không rời server
+          - "cloud"  : Cả hai Phase dùng OpenClaude — chất lượng cao nhất
+        model_mode có thể được truyền qua system_data["model_mode"] hoặc tham số trực tiếp.
+        """
+        # Ưu tiên giá trị trực tiếp; fallback sang system_data nếu có
+        effective_mode = model_mode or system_data.get("model_mode", "hybrid")
+
         vs = ChatService.get_vector_store()
 
         standard = system_data.get("assessment_standard", "iso27001")
@@ -245,26 +256,108 @@ class ChatService:
         elif standard == "nd13":
             search_query = "Nghị định 13 bảo vệ dữ liệu cá nhân"
 
+        # Try to load custom standard for dynamic metadata
+        custom_std = None
+        try:
+            from services.standard_service import load_standard, WEIGHT_SCORE as WS
+            custom_std = load_standard(standard)
+        except Exception:
+            pass
+
+        if custom_std:
+            # Custom standard — dynamic search query and scoring
+            std_name = custom_std.get("name", standard)
+            search_query = f"{std_name} compliance security controls"
+            all_ctrls = []
+            for cat in custom_std.get("controls", []):
+                all_ctrls.extend(cat.get("controls", []))
+                # Add category names to search query for better RAG retrieval
+                search_query += f", {cat.get('category', '')}"
+        else:
+            std_name = "ISO 27001:2022" if standard != "tcvn11930" else "TCVN 11930:2017 (Yêu cầu kỹ thuật theo 5 cấp độ)"
+
         context_results = vs.search(search_query, top_k=6)
         context = "\n---\n".join([r["text"] for r in context_results])
 
         implemented = system_data.get("compliance", {}).get("implemented_controls", [])
         score = len(implemented)
         max_score = 93
-        std_name = "ISO 27001:2022"
+        percentage = 0
 
-        if standard == "tcvn11930":
+        if custom_std:
+            max_score = len(all_ctrls) if all_ctrls else 1
+            # Use weighted scoring for custom standards
+            weight_map = {c["id"]: WS.get(c.get("weight", "medium"), 1) for c in all_ctrls}
+            max_weighted = sum(weight_map.values())
+            achieved_weighted = sum(weight_map.get(cid, 0) for cid in implemented)
+            percentage = round((achieved_weighted / max_weighted) * 100, 1) if max_weighted > 0 else 0
+        elif standard == "tcvn11930":
             max_score = 34
-            std_name = "TCVN 11930:2017 (Yêu cầu kỹ thuật theo 5 cấp độ)"
+            percentage = round((score / max_score) * 100, 1)
+        else:
+            percentage = round((score / max_score) * 100, 1)
 
-        percentage = round((score / max_score) * 100, 1)
+        # ── Build weight breakdown for AI prompt ────────────────────────
+        weight_labels = {"critical": "Tối quan trọng", "high": "Quan trọng", "medium": "Trung bình", "low": "Thấp"}
+        weight_scores = {"critical": 4, "high": 3, "medium": 2, "low": 1}
+
+        # Collect all controls with weights for breakdown
+        all_controls_flat = []
+        if custom_std:
+            for cat in custom_std.get("controls", []):
+                for ctrl in cat.get("controls", []):
+                    all_controls_flat.append(ctrl)
+        else:
+            # Built-in standards — build from implemented list & known totals
+            # We don't have weight data server-side for built-in, so use simple breakdown
+            pass
+
+        # Calculate weight breakdown
+        weight_breakdown = {"critical": {"total": 0, "implemented": 0}, "high": {"total": 0, "implemented": 0},
+                           "medium": {"total": 0, "implemented": 0}, "low": {"total": 0, "implemented": 0}}
+        missing_controls_by_weight = {"critical": [], "high": [], "medium": [], "low": []}
+
+        if all_controls_flat:
+            for ctrl in all_controls_flat:
+                w = ctrl.get("weight", "medium")
+                weight_breakdown[w]["total"] += 1
+                if ctrl["id"] in implemented:
+                    weight_breakdown[w]["implemented"] += 1
+                else:
+                    missing_controls_by_weight[w].append(f"{ctrl['id']} ({ctrl.get('label', '')})")
+
+        weight_breakdown_txt = ""
+        if all_controls_flat:
+            weight_breakdown_txt = "\n\nPHÂN BỔ TRỌNG SỐ CONTROLS:\n"
+            for w in ["critical", "high", "medium", "low"]:
+                bd = weight_breakdown[w]
+                if bd["total"] > 0:
+                    pct = round((bd["implemented"] / bd["total"]) * 100, 1)
+                    weight_breakdown_txt += (
+                        f"- {weight_labels[w]} ({weight_scores[w]} điểm): "
+                        f"{bd['implemented']}/{bd['total']} đạt ({pct}%)\n"
+                    )
+
+            # List missing critical & high controls for AI focus
+            critical_missing = missing_controls_by_weight["critical"]
+            high_missing = missing_controls_by_weight["high"]
+            if critical_missing:
+                weight_breakdown_txt += f"\n⚠️ CONTROLS TỐI QUAN TRỌNG CHƯA ĐẠT ({len(critical_missing)}):\n"
+                for m in critical_missing[:15]:
+                    weight_breakdown_txt += f"  🔴 {m}\n"
+            if high_missing:
+                weight_breakdown_txt += f"\n⚠️ CONTROLS QUAN TRỌNG CHƯA ĐẠT ({len(high_missing)}):\n"
+                for m in high_missing[:15]:
+                    weight_breakdown_txt += f"  🟠 {m}\n"
 
         system_info_txt = f"Tiêu chuẩn đánh giá: {std_name}\n"
         system_info_txt += f"Mức độ tuân thủ: {score}/{max_score} Controls đạt yêu cầu ({percentage}%).\n"
-        system_info_txt += f"Các Controls đã đạt: {', '.join(implemented)}\n\nCHI TIẾT HẠ TẦNG HỆ THỐNG:\n"
+        system_info_txt += f"Các Controls đã đạt: {', '.join(implemented)}\n"
+        system_info_txt += weight_breakdown_txt
+        system_info_txt += "\nCHI TIẾT HẠ TẦNG HỆ THỐNG:\n"
 
         for key, value in system_data.items():
-            if key in ["compliance", "assessment_standard", "implemented_controls"]:
+            if key in ["compliance", "assessment_standard", "implemented_controls", "model_mode"]:
                 continue
             if isinstance(value, dict):
                 for k, v in value.items():
@@ -274,53 +367,359 @@ class ChatService:
             else:
                 system_info_txt += f"- {key}: {value}\n"
 
-        # Phase 1: Security analysis
-        security_prompt = (
-            f"Bạn là chuyên gia Auditor về {std_name}. Hệ thống đang chấm điểm sơ bộ đạt {percentage}% "
-            f"tuân thủ ({score}/{max_score} Controls). Dựa vào các Controls ĐÃ ĐẠT và THÔNG TIN HỆ THỐNG, "
-            f"hãy chỉ ra những RỦI RO, lỗ hổng (GAPs). Chỉ trả về danh sách phát hiện kỹ thuật thô."
+        # ── Xác định task_type cho từng Phase theo model_mode ──────────────
+        if effective_mode == "local":
+            p1_task_type = "iso_local"
+            p2_task_type = "iso_local"
+            logger.info("[Assessment] model_mode=local — cả hai Phase dùng LocalAI")
+        elif effective_mode == "cloud":
+            p1_task_type = "iso_analysis"
+            p2_task_type = "iso_analysis"
+            logger.info("[Assessment] model_mode=cloud — cả hai Phase dùng OpenClaude")
+        else:
+            p1_task_type = "iso_local"
+            p2_task_type = "iso_analysis"
+            logger.info("[Assessment] model_mode=hybrid — Phase1 LocalAI, Phase2 OpenClaude")
+
+        # ── Phase 1: Chunked per-category analysis for LocalAI ─────────────
+        # When using LocalAI (iso_local), split by category to avoid context window overflow.
+        # Each chunk: 1 category (~8-37 controls) + system summary + lightweight prompt.
+        # Cloud mode: single full prompt (larger context window).
+
+        def _build_category_chunk_prompt(cat_name: str, cat_controls: list, impl: list,
+                                          pct: float, sc: int, mx: int, sys_summary: str) -> str:
+            missing = [c for c in cat_controls if c["id"] not in impl]
+            present = [c for c in cat_controls if c["id"] in impl]
+            missing_str = "\n".join(
+                f"  ❌ {c['id']} [{c.get('weight','medium').upper()}] {c.get('label','')}"
+                for c in missing[:20]  # cap at 20 to avoid overflow
+            )
+            present_str = ", ".join(c["id"] for c in present[:15])
+            return (
+                f"Auditor {std_name} — Category: {cat_name}\n"
+                f"Tổng tuân thủ toàn hệ thống: {pct}% ({sc}/{mx})\n\n"
+                f"CONTROLS ĐÃ ĐẠT trong nhóm này: {present_str or 'Không có'}\n"
+                f"CONTROLS CHƯA ĐẠT:\n{missing_str or 'Tất cả đã đạt'}\n\n"
+                f"THÔNG TIN HỆ THỐNG (tóm tắt):\n{sys_summary[:800]}\n\n"
+                f"NHIỆM VỤ: Với mỗi control CHƯA ĐẠT trong nhóm '{cat_name}':\n"
+                f"- Phân loại rủi ro: 🔴 Critical | 🟠 High | 🟡 Medium | ⚪ Low\n"
+                f"- Ước tính Likelihood (1-5) và Impact (1-5)\n"
+                f"- 1 câu khuyến nghị ngắn gọn\n\n"
+                f"OUTPUT FORMAT (bảng markdown ngắn gọn):\n"
+                f"| Control | Severity | L | I | Risk | Khuyến nghị |\n"
+                f"|---------|----------|---|---|------|-------------|\n"
+                f"[Điền data — chỉ controls CHƯA ĐẠT]"
+            )
+
+        def _build_single_full_prompt(pct: float, sc: int, mx: int, sys_info: str, ctx: str) -> tuple:
+            sp = (
+                f"Bạn là chuyên gia Auditor về {std_name}. Tuân thủ: {pct}% ({sc}/{mx} Controls).\n\n"
+                f"NHIỆM VỤ:\n"
+                f"1. Phân loại GAP theo rủi ro: 🔴 Critical, 🟠 High, 🟡 Medium, ⚪ Low\n"
+                f"2. Đánh giá Likelihood + Impact cho mỗi GAP\n"
+                f"3. Risk Score = L × I; sắp xếp giảm dần\n"
+                f"4. RISK REGISTER dạng bảng: Control | GAP | Severity | L | I | Risk | Khuyến nghị\n\n"
+                f"## DANH SÁCH PHÁT HIỆN\n[GAP với severity]\n\n"
+                f"## RISK REGISTER\n"
+                f"| Control | GAP | Severity | L | I | Risk | Khuyến nghị |\n"
+                f"|---------|-----|----------|---|---|------|-------------|\n[data]\n\n"
+                f"## TÓM TẮT RỦI RO\n[Tổng: Critical/High/Medium/Low]"
+            )
+            um = f"Tài liệu {std_name}:\n{ctx}\n\nBiên bản khảo sát:\n{sys_info}"
+            return sp, um
+
+        # Build concise system summary for chunks (avoid repeating 3000 chars 4 times)
+        sys_summary_short = (
+            f"Tổ chức: {system_data.get('organization', {}).get('name', '')} | "
+            f"Ngành: {system_data.get('organization', {}).get('industry', '')} | "
+            f"Nhân sự: {system_data.get('organization', {}).get('employees', 0)} | "
+            f"IT: {system_data.get('organization', {}).get('it_staff', 0)}\n"
+            f"Firewall: {system_data.get('infrastructure', {}).get('firewalls', '')[:80]}\n"
+            f"AV/EDR: {system_data.get('infrastructure', {}).get('antivirus', '')[:60]}\n"
+            f"SIEM: {system_data.get('infrastructure', {}).get('siem', '')[:60]}\n"
+            f"Cloud: {system_data.get('infrastructure', {}).get('cloud', '')[:60]}\n"
+            f"Backup: {system_data.get('infrastructure', {}).get('backup', '')[:60]}\n"
+            f"VPN: {system_data.get('infrastructure', {}).get('vpn', '')}\n"
+            f"Sự cố 12T: {system_data.get('compliance', {}).get('incidents_12m', 0)}\n"
+            f"Ghi chú: {(system_data.get('notes') or '')[:300]}"
         )
-        messages_p1 = [
-            {"role": "system", "content": security_prompt},
-            {"role": "user", "content": f"Tài liệu {std_name}:\n{context}\n\nBiên bản khảo sát:\n{system_info_txt}"},
-        ]
 
         try:
-            result_p1 = CloudLLMService.chat_completion(
-                messages=messages_p1, temperature=0.3, local_model=settings.SECURITY_MODEL_NAME)
-            raw_analysis = result_p1.get("content", "")
+            raw_analysis = ""
+            result_p1 = None
 
-            # Phase 2: Format report
+            if p1_task_type == "iso_local" and all_controls_flat:
+                # ── Chunked mode: analyze per category for LocalAI ───────────
+                # Get categories from standard
+                std_categories = custom_std.get("controls", []) if custom_std else []
+
+                # Fallback: build categories from all_controls_flat if no custom_std
+                if not std_categories and all_controls_flat:
+                    std_categories = [{"category": "Tất cả Controls", "controls": all_controls_flat}]
+
+                chunk_results = []
+                logger.info(f"[Assessment] Chunked mode: {len(std_categories)} categories for LocalAI")
+
+                for cat_idx, category in enumerate(std_categories):
+                    cat_name = category.get("category", f"Category {cat_idx+1}")
+                    cat_controls = category.get("controls", [])
+                    missing_in_cat = [c for c in cat_controls if c["id"] not in implemented]
+
+                    if not missing_in_cat:
+                        # All controls in this category implemented — skip
+                        chunk_results.append(
+                            f"### {cat_name}\n✅ Tất cả controls đã đạt — không có GAP.\n"
+                        )
+                        logger.info(f"[Assessment] Category '{cat_name}' — all implemented, skipping chunk")
+                        continue
+
+                    chunk_prompt = _build_category_chunk_prompt(
+                        cat_name, cat_controls, implemented,
+                        percentage, score, max_score, sys_summary_short
+                    )
+                    chunk_messages = [{"role": "user", "content": chunk_prompt}]
+
+                    try:
+                        chunk_result = CloudLLMService.chat_completion(
+                            messages=chunk_messages,
+                            temperature=0.3,
+                            local_model=settings.SECURITY_MODEL_NAME,
+                            task_type=p1_task_type
+                        )
+                        chunk_content = chunk_result.get("content", "").strip()
+                        if chunk_content:
+                            chunk_results.append(f"### {cat_name}\n{chunk_content}")
+                            logger.info(f"[Assessment] Chunk {cat_idx+1}/{len(std_categories)} '{cat_name}' OK ({len(chunk_content)} chars)")
+                        if result_p1 is None:
+                            result_p1 = chunk_result
+                    except Exception as chunk_err:
+                        logger.warning(f"[Assessment] Chunk '{cat_name}' failed: {chunk_err}")
+                        chunk_results.append(f"### {cat_name}\n⚠️ Không phân tích được chunk này: {chunk_err}")
+
+                raw_analysis = "\n\n".join(chunk_results)
+                logger.info(f"[Assessment] All chunks complete — total raw: {len(raw_analysis)} chars")
+
+            else:
+                # ── Single full prompt mode: Cloud or no controls flat list ─
+                security_prompt, user_msg = _build_single_full_prompt(
+                    percentage, score, max_score, system_info_txt, context
+                )
+                messages_p1 = [
+                    {"role": "system", "content": security_prompt},
+                    {"role": "user", "content": user_msg},
+                ]
+                result_p1 = CloudLLMService.chat_completion(
+                    messages=messages_p1,
+                    temperature=0.3,
+                    local_model=settings.SECURITY_MODEL_NAME,
+                    task_type=p1_task_type
+                )
+                raw_analysis = result_p1.get("content", "")
+
+            # Phase 2: Format report with Risk Register + Structured JSON output
             today = datetime.now(timezone.utc).strftime("%d/%m/%Y")
             org_name = system_data.get("organization", {}).get("name", "Tổ chức")
+            industry = system_data.get("organization", {}).get("industry", "")
+            org_size = system_data.get("organization", {}).get("size", "")
+            employees = system_data.get("organization", {}).get("employees", 0)
+            mode_label = {
+                "local": "LocalAI only (SecurityLM)",
+                "cloud": "Cloud only (OpenClaude)",
+                "hybrid": "Hybrid (SecurityLM + OpenClaude)"
+            }
+
+            weight_summary = f"\n\nDữ liệu trọng số:\n{weight_breakdown_txt}" if weight_breakdown_txt else ""
+
             formatting_prompt = (
                 f"Bạn là chuyên gia trình bày Báo cáo Đánh giá ATTT chuyên nghiệp. "
-                f"Trình bày lại báo cáo bằng Markdown tiếng Việt gồm:\n"
-                f"1. ĐÁNH GIÁ TỔNG QUAN (tóm tắt {percentage}% — {score}/{max_score} Controls)\n"
-                f"2. PHÂN TÍCH LỖ HỔNG (GAP ANALYSIS)\n"
-                f"3. KHUYẾN NGHỊ ƯU TIÊN (ACTION PLAN)\n\n"
-                f"Thông tin bắt buộc điền vào báo cáo:\n"
-                f"- Đối tượng đánh giá: {org_name}\n"
-                f"- Tiêu chuẩn tham chiếu: {std_name}\n"
-                f"- Ngày lập báo cáo: {today}\n"
-                f"- KHÔNG dùng placeholder như [Ngày hiện tại] hay [tên tổ chức] — dùng thông tin thực ở trên.\n\n"
-                f"Dữ liệu thô từ Security Auditor:\n{raw_analysis}"
+                f"Trình bày lại báo cáo bằng Markdown tiếng Việt với CẤU TRÚC BẮT BUỘC sau:\n\n"
+                f"## 1. ĐÁNH GIÁ TỔNG QUAN\n"
+                f"- Tóm tắt: {percentage}% tuân thủ — {score}/{max_score} Controls đạt\n"
+                f"- Bảng phân bổ trọng số (Critical/High/Medium/Low đạt bao nhiêu %)\n\n"
+                f"## 2. RISK REGISTER (BẢNG RỦI RO)\n"
+                f"Bảng markdown BẮT BUỘC có các cột:\n"
+                f"| # | Control ID | Mô tả GAP | Severity | Likelihood | Impact | Risk Score | Khuyến nghị | Timeline |\n"
+                f"Severity: 🔴 Critical, 🟠 High, 🟡 Medium, ⚪ Low. Risk Score = L×I giảm dần.\n\n"
+                f"## 3. PHÂN TÍCH LỖ HỔNG CHI TIẾT (GAP Analysis)\n"
+                f"Phân nhóm theo severity: Critical trước, Low sau.\n\n"
+                f"## 4. KHUYẾN NGHỊ ƯU TIÊN (Action Plan)\n"
+                f"Lộ trình: Ngắn hạn (0-30 ngày), Trung hạn (1-3 tháng), Dài hạn (3-12 tháng).\n\n"
+                f"## 5. TÓM TẮT ĐIỀU HÀNH (Executive Summary)\n"
+                f"Dành cho C-level:\n"
+                f"  a) Key Metrics: compliance %, controls đạt/thiếu, phân bổ critical/high/medium/low\n"
+                f"  b) Top 3 rủi ro + ước tính ngân sách khắc phục (VD: triển khai EDR ~50-150M VND/năm)\n"
+                f"  c) Next Steps: 3 hành động ưu tiên trong 30 ngày\n\n"
+                f"---\n"
+                f"Đối tượng: {org_name} | Ngành: {industry} | Tiêu chuẩn: {std_name} | Ngày: {today}\n"
+                f"Chế độ AI: {mode_label.get(effective_mode, effective_mode)}\n\n"
+                f"Dữ liệu từ Security Auditor:\n{raw_analysis}{weight_summary}"
             )
             result_p2 = CloudLLMService.chat_completion(
                 messages=[{"role": "user", "content": formatting_prompt}],
-                temperature=0.5, local_model=settings.MODEL_NAME)
+                temperature=0.5,
+                task_type=p2_task_type
+            )
+            markdown_report = result_p2.get("content", "")
+
+            json_data = ChatService._build_structured_json(
+                raw_analysis=raw_analysis,
+                percentage=percentage,
+                score=score,
+                max_score=max_score,
+                implemented=implemented,
+                weight_breakdown=weight_breakdown,
+                missing_controls_by_weight=missing_controls_by_weight,
+                org_name=org_name,
+                industry=industry,
+                org_size=org_size,
+                employees=employees,
+                std_name=std_name,
+                standard=standard,
+                today=today,
+                effective_mode=effective_mode,
+            )
 
             return {
-                "report": result_p2.get("content", ""),
+                "report": markdown_report,
+                "json_data": json_data,
                 "details": [],
+                "model_mode": effective_mode,
                 "model_used": {
-                    "phase1": f"{result_p1.get('provider')}:{result_p1.get('model')}",
+                    "phase1": f"{result_p1.get('provider') if result_p1 else 'localai'}:{result_p1.get('model') if result_p1 else settings.SECURITY_MODEL_NAME}",
                     "phase2": f"{result_p2.get('provider')}:{result_p2.get('model')}",
                 },
             }
         except Exception as e:
             logger.error(f"Assessment error: {e}")
             return {"report": f"Lỗi tạo báo cáo: {str(e)}", "details": [], "error": True}
+
+    @staticmethod
+    def _build_structured_json(
+        raw_analysis: str,
+        percentage: float,
+        score: int,
+        max_score: int,
+        implemented: list,
+        weight_breakdown: dict,
+        missing_controls_by_weight: dict,
+        org_name: str,
+        industry: str,
+        org_size: str,
+        employees: int,
+        std_name: str,
+        standard: str,
+        today: str,
+        effective_mode: str,
+    ) -> dict:
+        """
+        Build structured JSON output for dashboard consumption.
+        Parses GAP severity counts from raw Phase 1 analysis and packages
+        all scoring data into a clean, frontend-parseable dict.
+        """
+        import re
+
+        # ── Count severity from raw_analysis ─────────────────────────────
+        critical_count = len(re.findall(r'🔴|Critical|critical', raw_analysis))
+        high_count = len(re.findall(r'🟠|High(?!est)', raw_analysis))
+        medium_count = len(re.findall(r'🟡|Medium|medium', raw_analysis))
+        low_count = len(re.findall(r'⚪|Low(?!est)', raw_analysis))
+
+        # Clamp to plausible range (avoid duplicate mentions inflating counts)
+        total_gap_mentions = critical_count + high_count + medium_count + low_count
+        if total_gap_mentions > 200:
+            # Normalise: divide by ~3 to account for repeated mentions
+            critical_count = max(0, critical_count // 3)
+            high_count = max(0, high_count // 3)
+            medium_count = max(0, medium_count // 3)
+            low_count = max(0, low_count // 3)
+
+        # ── Weight breakdown from controls ────────────────────────────────
+        wb = weight_breakdown or {}
+        missing = missing_controls_by_weight or {}
+
+        def wb_pct(w):
+            bd = wb.get(w, {})
+            total = bd.get("total", 0)
+            impl = bd.get("implemented", 0)
+            return round((impl / total * 100), 1) if total > 0 else 0.0
+
+        # ── Compliance tier ───────────────────────────────────────────────
+        if percentage >= 80:
+            tier = "high"
+            tier_label = "Tuân thủ cao"
+        elif percentage >= 50:
+            tier = "medium"
+            tier_label = "Tuân thủ một phần"
+        elif percentage >= 25:
+            tier = "low"
+            tier_label = "Tuân thủ thấp"
+        else:
+            tier = "critical"
+            tier_label = "Không tuân thủ"
+
+        # ── Build top missing controls list ──────────────────────────────
+        top_gaps = []
+        for sev in ["critical", "high", "medium"]:
+            for ctrl_str in (missing.get(sev, []))[:5]:
+                parts = ctrl_str.split(" (", 1)
+                ctrl_id = parts[0].strip()
+                ctrl_label = parts[1].rstrip(")") if len(parts) > 1 else ""
+                top_gaps.append({"id": ctrl_id, "label": ctrl_label, "severity": sev})
+            if len(top_gaps) >= 10:
+                break
+
+        return {
+            "assessment_date": today,
+            "standard": standard,
+            "standard_name": std_name,
+            "ai_mode": effective_mode,
+            "organization": {
+                "name": org_name,
+                "industry": industry,
+                "size": org_size,
+                "employees": employees,
+            },
+            "compliance": {
+                "score": score,
+                "max_score": max_score,
+                "percentage": percentage,
+                "tier": tier,
+                "tier_label": tier_label,
+                "implemented_count": len(implemented),
+                "missing_count": max_score - score,
+            },
+            "weight_breakdown": {
+                "critical": {
+                    "total": wb.get("critical", {}).get("total", 0),
+                    "implemented": wb.get("critical", {}).get("implemented", 0),
+                    "percent": wb_pct("critical"),
+                },
+                "high": {
+                    "total": wb.get("high", {}).get("total", 0),
+                    "implemented": wb.get("high", {}).get("implemented", 0),
+                    "percent": wb_pct("high"),
+                },
+                "medium": {
+                    "total": wb.get("medium", {}).get("total", 0),
+                    "implemented": wb.get("medium", {}).get("implemented", 0),
+                    "percent": wb_pct("medium"),
+                },
+                "low": {
+                    "total": wb.get("low", {}).get("total", 0),
+                    "implemented": wb.get("low", {}).get("implemented", 0),
+                    "percent": wb_pct("low"),
+                },
+            },
+            "risk_summary": {
+                "critical_gaps": critical_count,
+                "high_gaps": high_count,
+                "medium_gaps": medium_count,
+                "low_gaps": low_count,
+                "total_gaps": critical_count + high_count + medium_count + low_count,
+            },
+            "top_gaps": top_gaps,
+            "implemented_controls": implemented,
+        }
 
     @staticmethod
     def health_check() -> Dict[str, Any]:

@@ -56,19 +56,22 @@ async def internal_error_handler(request: Request, exc):
 
 @app.middleware("http")
 async def limit_request_size(request: Request, call_next):
-    if request.url.path not in ["/api/documents/upload"]:
+    # Allow larger uploads for documents, standards, and evidence files
+    exempt_prefixes = ["/api/documents/upload", "/api/standards/upload", "/api/standards/validate", "/api/iso27001/evidence/"]
+    if not any(request.url.path.startswith(p) for p in exempt_prefixes):
         content_length = request.headers.get("content-length")
         if content_length and int(content_length) > 2 * 1024 * 1024:
             return JSONResponse(status_code=413, content={"error": "Request body too large", "max_size": "2MB"})
     return await call_next(request)
 
 
-from api.routes import chat, document, health, iso27001, system, news
+from api.routes import chat, document, health, iso27001, system, news, standards
 
 app.include_router(health.router, prefix="/api", tags=["Health"])
 app.include_router(chat.router, prefix="/api", tags=["Chat"])
 app.include_router(document.router, prefix="/api", tags=["Documents"])
 app.include_router(iso27001.router, prefix="/api", tags=["ISO27001"])
+app.include_router(standards.router, prefix="/api", tags=["Standards"])
 app.include_router(system.router, prefix="/api", tags=["System"])
 app.include_router(news.router, prefix="/api", tags=["News"])
 

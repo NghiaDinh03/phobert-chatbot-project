@@ -1,0 +1,48 @@
+{
+  "id": "83b61519-294e-4fa6-9283-c1f69a0b7350",
+  "status": "completed",
+  "system_info": {
+    "assessment_standard": "tcvn11930",
+    "organization": {
+      "name": "Bệnh viện Đa khoa Trung tâm Y Tế Mới",
+      "size": "large",
+      "industry": "Y tế - Khám chữa bệnh",
+      "employees": 500,
+      "it_staff": 5
+    },
+    "infrastructure": {
+      "servers": 15,
+      "firewalls": "FortiGate 100F",
+      "vpn": "Không",
+      "cloud": "Không sử dụng",
+      "antivirus": "Kaspersky Endpoint Security",
+      "backup": "NAS Synology backup hàng ngày",
+      "siem": "Không có",
+      "network_diagram": "Mạng đơn giản 2 VLAN: Khu Hành chính (VLAN 10) và Khu Khám Bệnh (VLAN 20). FortiGate 100F đặt tại biên. Switch HP 1920 không managed. Phần mềm HIS chạy trên 2 server Dell PowerEdge T440 (Windows Server 2019 + SQL Server 2017). Không có DMZ. Wi-Fi dùng chung cho nhân viên và khách."
+    },
+    "compliance": {
+      "iso_status": "Chưa triển khai",
+      "implemented_controls": [
+        "NW.01",
+        "NW.02",
+        "SV.01",
+        "SV.02",
+        "DAT.01"
+      ],
+      "incidents_12m": 3
+    },
+    "notes": "CSDL bệnh nhân (Hồ sơ bệnh án điện tử) lưu trữ không mã hóa trên SQL Server. Chưa có quy trình xử lý sự cố lộ lọt dữ liệu. 3 lần bị ransomware cảnh báo trong năm qua nhưng Kaspersky đã chặn.\n\nPHẠM VI ĐÁNH GIÁ: Theo hệ thống cụ thể — Hệ thống HIS (Hospital Information System), SQL Server CSDL bệnh nhân, Mạng VLAN Khám bệnh",
+    "model_mode": "local"
+  },
+  "compliance_percent": 14.7,
+  "model_mode": "local",
+  "standard": "tcvn11930",
+  "evidence_attached": false,
+  "created_at": "2026-03-25T12:31:37.514547+00:00",
+  "updated_at": "2026-03-25T12:31:46.841814+00:00",
+  "result": {
+    "report": "Lỗi tạo báo cáo: LocalAI failed for local-only task: LocalAI: [LocalAI] Busy: AI tóm tắt & dịch bài (3/6): Lừa đảo mã thiết bị Lượt truy cập 340 + ...",
+    "details": [],
+    "error": true
+  }
+}

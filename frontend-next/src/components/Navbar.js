@@ -11,7 +11,6 @@ const NAV_ITEMS = [
     { href: '/chatbot', label: 'AI Chat', icon: '💬' },
     { href: '/form-iso', label: 'Đánh giá', icon: '📋' },
     { href: '/news', label: 'Tin tức', icon: '📰' },
-    { href: '/templates', label: 'Mẫu', icon: '📂' },
     { href: '/analytics', label: 'Analytics', icon: '📊' },
 ]
 

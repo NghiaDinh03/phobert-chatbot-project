@@ -38,5 +38,11 @@ sse-starlette>=1.8.0
 # ======= Security & Rate Limiting =======
 slowapi>=0.1.9
 
+# ======= YAML Parsing (Dynamic Standards) =======
+pyyaml>=6.0
+
+# ======= PDF Export (optional — fallback to HTML if not installed) =======
+weasyprint>=62.0
+
 # ======= Logging =======
 # (uses stdlib logging, no extra deps)

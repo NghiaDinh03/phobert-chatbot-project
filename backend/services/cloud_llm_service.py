@@ -167,14 +167,33 @@ class CloudLLMService:
         raise Exception(f"[OpenClaude] All keys failed. Last error: {last_error}")
 
     @classmethod
-    def _call_localai(cls, model: str, messages: List[Dict], temperature: float = 0.7) -> Dict[str, Any]:
-        logger.info(f"[LocalAI] Requesting model={model}, messages={len(messages)}")
+    def _call_localai(cls, model: str, messages: List[Dict], temperature: float = 0.7,
+                      priority: bool = False) -> Dict[str, Any]:
+        """Call LocalAI.
+        
+        Args:
+            priority: If True (ISO assessment), bypass news-busy check and pause news
+                      summarization so the assessment can proceed immediately.
+        """
+        logger.info(f"[LocalAI] Requesting model={model}, messages={len(messages)}, priority={priority}")
 
         try:
-            from services.news_service import get_ai_status
+            from services.news_service import get_ai_status, set_ai_status
             ai_status = get_ai_status()
             if "Đang rảnh" not in ai_status:
-                raise Exception(f"[LocalAI] Busy: {ai_status}")
+                if priority:
+                    # ISO assessment takes priority — pause news summarization
+                    logger.warning(
+                        f"[LocalAI] News busy ({ai_status[:60]}) — "
+                        f"ISO assessment has priority, pausing news & proceeding"
+                    )
+                    # Signal news worker to pause after current item
+                    set_ai_status("⏸️ Tạm dừng (ISO assessment ưu tiên)")
+                    # Brief wait for in-flight news request to complete
+                    import time as _time
+                    _time.sleep(1.5)
+                else:
+                    raise Exception(f"[LocalAI] Busy: {ai_status}")
         except ImportError:
             pass
 
@@ -197,6 +216,15 @@ class CloudLLMService:
             raise Exception(f"[LocalAI] Timeout after {settings.INFERENCE_TIMEOUT}s")
         except Exception as e:
             raise Exception(f"[LocalAI] Connection error: {e}")
+        finally:
+            # Restore idle status so news can resume
+            if priority:
+                try:
+                    from services.news_service import get_ai_status, set_ai_status
+                    if "Tạm dừng" in get_ai_status():
+                        set_ai_status("Đang rảnh")
+                except ImportError:
+                    pass
 
         if response.status_code != 200:
             raise Exception(f"[LocalAI] HTTP {response.status_code}: {response.text[:200]}")
@@ -223,11 +251,11 @@ class CloudLLMService:
         local_model = local_model or settings.MODEL_NAME
         errors = []
 
-        # ISO local pre-processing: LocalAI only, skip cloud
+        # ISO local pre-processing: LocalAI only, skip cloud — always runs with priority=True
         if task_type in LOCAL_ONLY_TASKS:
-            logger.info(f"[ChatCompletion] task_type={task_type} → LocalAI only")
+            logger.info(f"[ChatCompletion] task_type={task_type} → LocalAI only (priority)")
             try:
-                result = cls._call_localai(local_model, messages, temperature)
+                result = cls._call_localai(local_model, messages, temperature, priority=True)
                 if result["content"]:
                     return result
                 errors.append("LocalAI: empty content")
