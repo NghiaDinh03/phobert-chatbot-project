@@ -1115,10 +1115,31 @@ export default function FormISOPage() {
                     {result.status === 'failed' || result.error ? (
                         <div className={styles.errorBox}>
                             <h3>❌ Đã có lỗi xảy ra</h3>
-                            <p>{result.report || 'Timeout hoặc lỗi phân tích. Vui lòng thử lại.'}</p>
-                            <button className={styles.btnSecondary} onClick={() => setActiveTab('form')} style={{ marginTop: '1rem' }}>
-                                ← Sửa thông tin & thử lại
-                            </button>
+                            <p className={styles.errorDetail}>{result.report || 'Timeout hoặc lỗi phân tích.'}</p>
+                            {/* Smart error guidance */}
+                            {(result.report || '').includes('could not load model') || (result.report || '').includes('rpc error') ? (
+                                <div className={styles.errorGuidance}>
+                                    <strong>🔧 Nguyên nhân:</strong> LocalAI không load được model (thiếu RAM hoặc model file chưa tải).
+                                    <br /><strong>Giải pháp ngay:</strong> Chuyển sang chế độ <strong>Hybrid</strong> hoặc <strong>Cloud</strong> ở Bước 4 → đánh giá lại.
+                                </div>
+                            ) : (result.report || '').includes('Busy') || (result.report || '').includes('Tạm dừng') ? (
+                                <div className={styles.errorGuidance}>
+                                    <strong>⏳ Nguyên nhân:</strong> AI đang bận xử lý tác vụ khác (tóm tắt tin tức).
+                                    <br /><strong>Giải pháp:</strong> Chờ 1-2 phút rồi thử lại, hoặc chuyển sang chế độ <strong>Hybrid/Cloud</strong>.
+                                </div>
+                            ) : null}
+                            <div style={{ display: 'flex', gap: '0.75rem', marginTop: '1rem', flexWrap: 'wrap' }}>
+                                <button className={styles.btnSecondary} onClick={() => setActiveTab('form')}>
+                                    ← Quay lại chỉnh sửa
+                                </button>
+                                <button className={styles.btnPrimary} onClick={() => {
+                                    set('model_mode', 'hybrid')
+                                    setActiveTab('form')
+                                    setStep(4)
+                                }}>
+                                    ⚡ Chuyển sang Hybrid & thử lại
+                                </button>
+                            </div>
                         </div>
                     ) : result.status === 'processing' ? (
                         <div className={styles.processingCard}>
@@ -1127,27 +1148,38 @@ export default function FormISOPage() {
                                 <span className={styles.spinnerIcon}>🤖</span>
                             </div>
                             <h3 className={styles.processingTitle}>AI đang phân tích hệ thống...</h3>
+                            <div className={styles.processingTabAway}>
+                                <span>💡</span>
+                                <span>
+                                    <strong>Bạn có thể chuyển sang tab khác</strong> — hệ thống xử lý nền,
+                                    tự động cập nhật khi xong. Quay lại tab <strong>Lịch sử</strong> để xem kết quả.
+                                </span>
+                            </div>
                             <p className={styles.processingDesc}>
-                                Model đang đánh giá <strong>{form.implemented_controls.length}/{totalControls} controls</strong> ({compliancePercent}%) và tạo báo cáo chuyên sâu.
-                                <br />Quá trình thường mất <strong>30–90 giây</strong>.
+                                Đang đánh giá <strong>{form.implemented_controls.length}/{totalControls} controls</strong> ({compliancePercent}%).
+                                {form.model_mode === 'local'
+                                    ? ' Local AI (4 category chunks) — thường mất 2–5 phút.'
+                                    : form.model_mode === 'hybrid'
+                                    ? ' Hybrid (SecurityLM local + Cloud format) — thường mất 1–3 phút.'
+                                    : ' Cloud AI — thường mất 30–60 giây.'}
                             </p>
                             <div className={styles.processingSteps}>
                                 <div className={styles.procStep}>
                                     <span className={styles.procStepDot} style={{ background: 'var(--accent-green)' }} />
-                                    <span>Truy xuất kiến thức ISO từ ChromaDB</span>
+                                    <span>RAG lookup — ChromaDB tài liệu ISO</span>
                                 </div>
                                 <div className={styles.procStep}>
                                     <span className={`${styles.procStepDot} ${styles.procStepAnim}`} />
-                                    <span>Phân tích GAP với AI Auditor (Phase 1)</span>
+                                    <span>Phase 1 — SecurityLM phân tích GAP từng category</span>
                                 </div>
                                 <div className={styles.procStep}>
                                     <span className={styles.procStepDot} style={{ opacity: 0.3 }} />
-                                    <span>Định dạng báo cáo chuyên nghiệp (Phase 2)</span>
+                                    <span>Phase 2 — {form.model_mode === 'local' ? 'Meta-Llama' : 'OpenClaude'} format báo cáo</span>
                                 </div>
                             </div>
                             <div className={styles.pollingInfo} style={{ justifyContent: 'center', marginTop: '1rem' }}>
                                 <span className={styles.pollingDot} />
-                                <span>Tự động cập nhật mỗi 10 giây</span>
+                                <span>Tự động kiểm tra mỗi 10 giây · ID: {result.id?.slice(0,8)}</span>
                             </div>
                         </div>
                     ) : (

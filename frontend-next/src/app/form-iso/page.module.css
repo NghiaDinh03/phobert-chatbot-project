@@ -3077,6 +3077,51 @@
     }
 }
 
+/* ── Error Guidance Box ──────────────────────────────────── */
+
+.errorDetail {
+    color: var(--text-secondary);
+    font-size: 0.82rem;
+    line-height: 1.6;
+    margin: 0.5rem 0;
+    word-break: break-word;
+}
+
+.errorGuidance {
+    background: color-mix(in srgb, var(--accent-amber, #f59e0b) 8%, transparent);
+    border: 1px solid color-mix(in srgb, var(--accent-amber, #f59e0b) 25%, transparent);
+    border-radius: 8px;
+    color: var(--text-secondary);
+    font-size: 0.82rem;
+    line-height: 1.7;
+    margin-top: 0.75rem;
+    padding: 0.6rem 1rem;
+}
+
+/* ── Processing Tab-Away Banner ──────────────────────────── */
+
+.processingTabAway {
+    display: flex;
+    align-items: flex-start;
+    gap: 0.5rem;
+    background: color-mix(in srgb, var(--accent-blue) 8%, transparent);
+    border: 1px solid color-mix(in srgb, var(--accent-blue) 20%, transparent);
+    border-radius: 10px;
+    color: var(--text-secondary);
+    font-size: 0.82rem;
+    line-height: 1.6;
+    margin: 0.75rem 0 1rem;
+    padding: 0.65rem 1rem;
+    text-align: left;
+    max-width: 480px;
+}
+
+.processingTabAway span:first-child {
+    font-size: 1rem;
+    flex-shrink: 0;
+    margin-top: 1px;
+}
+
 /* ── JSON Dashboard Panel ────────────────────────────────── */
 
 .jsonDashboard {
