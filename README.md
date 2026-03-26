@@ -71,19 +71,25 @@ Host Machine
 │                      └── session_store.py       ← file-based sessions
 │
 └── :8080  ──► phobert-localai   (LocalAI GGUF server)
-                   /models/Meta-Llama-3.1-70B-Instruct-Q4_K_M.gguf
-                   /models/SecurityLLM-7B-Q4_K_M.gguf
+                   /models/Meta-Llama-3.1-8B-Instruct-Q4_K_M.gguf   ← Phase 2 report
+                   /models/SecurityLLM-7B-Q4_K_M.gguf               ← Phase 1 GAP analysis
+                   RAM required: ~9GB total (8B ~5GB + 7B ~4GB)
 
 Shared Volume:  ./data:/data
   data/
-  ├── iso_documents/   ← .md knowledge base for ChromaDB
-  ├── vector_store/    ← ChromaDB SQLite (collection: iso_documents)
-  ├── summaries/       ← Article JSON cache (7-day TTL)
-  │   └── audio/       ← Edge-TTS MP3 files
-  ├── sessions/        ← Chat session JSON (24h TTL)
-  ├── translations/    ← VinAI title translation cache
-  ├── assessments/     ← ISO assessment reports (permanent)
-  └── knowledge_base/  ← Static ISO/TCVN control definitions
+  ├── iso_documents/   ← 21 .md knowledge base files for ChromaDB
+  │   ├── iso27001_annex_a.md, tcvn_11930_2017.md   ← Primary standards
+  │   ├── iso27002_2022.md, nist_csf_2.md, nist_sp800_53.md
+  │   ├── pci_dss_4.md, soc2_trust_criteria.md, hipaa_security_rule.md
+  │   ├── gdpr_compliance.md, nis2_directive.md, owasp_top10_2021.md
+  │   ├── cis_controls_v8.md, nd85_2016_cap_do_httt.md
+  │   ├── gap_analysis_patterns.md, infrastructure_description_guide.md
+  │   └── author_profile.md  ← Creator info for chatbot queries
+  ├── vector_store/    ← ChromaDB SQLite (221 chunks, cosine similarity)
+  ├── summaries/       ← Article JSON cache
+  ├── sessions/        ← Chat session JSON
+  ├── assessments/     ← ISO assessment JSON (id, status, result, json_data)
+  └── knowledge_base/  ← benchmark_iso27001.json + control definitions
 ```
 
 ### AI Fallback Chain
@@ -92,33 +98,89 @@ Shared Volume:  ./data:/data
 Task arrives → CloudLLMService.chat_completion()
     │
     ├── task_type == "iso_local"?
-    │     └── LocalAI ONLY (SecurityLLM) → raise if fails
+    │     ├── Health check: localai_health_check(timeout=15s)
+    │     │     ├── PASS → LocalAI SecurityLLM (priority=True, preempts news)
+    │     │     └── FAIL (OOM/RPC) → auto-fallback:
+    │     │           local mode  → hybrid (if cloud keys available)
+    │     │           hybrid mode → cloud only
+    │     └── raise if no fallback available
     │
     └── Cloud path:
           Open Claude (CLOUD_API_KEYS, round-robin)
             │ 429 → key cooldown 60s, try next key
             │ 401 → skip key (config issue, no cooldown)
-            │ 404 → retry with CLOUD_MODEL_NAME default
             │ All keys exhausted?
             ▼
-          LocalAI (http://localai:8080/v1/chat/completions)
-            │ Timeout: INFERENCE_TIMEOUT (default 120s)
-            │ Busy check: get_ai_status() ≠ "Đang rảnh" → raise
+          LocalAI fallback (http://localai:8080)
+            │ Timeout: INFERENCE_TIMEOUT (300s default)
+            │ Priority: ISO assessment preempts news summarization
             ▼
           raise Exception("All AI providers failed")
 ```
 
 ### Task-Specific Model Routing
 
-| Task type | Cloud model | Fallback |
-|-----------|-------------|---------|
-| `news_translate` | `gemini-2.5-pro` | LocalAI 70B |
-| `news_summary` | `gemini-3-flash-preview` | LocalAI 70B |
-| `iso_analysis` | `gemini-2.5-pro` | LocalAI SecurityLLM |
-| `complex` | `gemini-2.5-pro` | LocalAI 70B |
-| `chat` | `gemini-3-pro-preview` | LocalAI 70B |
-| `iso_local` | — | LocalAI SecurityLLM only |
-| `default` | `gemini-3-pro-preview` | LocalAI 70B |
+| Task type | Model (Phase) | Description |
+|-----------|---------------|-------------|
+| `iso_local` | SecurityLLM 7B (Phase 1) | Domain-specific GAP analysis per category |
+| `iso_local` Phase 2 | Meta-Llama 8B (local) or Cloud | Report formatting |
+| `iso_analysis` | `gemini-2.5-pro` (Cloud) | Cloud-only ISO analysis |
+| `news_translate` | `gemini-2.5-pro` | EN→VI translation |
+| `news_summary` | `gemini-3-flash-preview` | Article summarization |
+| `chat` | `gemini-3-pro-preview` | General conversation |
+| `complex` | `gemini-2.5-pro` | Complex reasoning |
+
+### Assessment Algorithm — 2-Phase Pipeline
+
+```
+User submits form
+       │
+       ▼
+[Pre-check] localai_health_check() → auto-downgrade mode if OOM
+       │
+       ▼
+[Phase 1: SecurityLM 7B — GAP Analysis per Category]
+  For each standard category (A.5/A.6/A.7/A.8 or NW/SV/APP/DAT/MNG):
+    1. RAG lookup: ChromaDB.search(cat_name + std_name, top_k=2)
+    2. Build compact prompt (~1000 tokens): missing controls + system summary + RAG excerpt
+    3. SecurityLM returns JSON array: [{id, severity, likelihood, impact, risk, gap, recommendation}]
+    4. Validate JSON → retry ×2 if invalid → skip if all attempts fail
+  Aggregate all category results → Risk Register markdown
+       │
+       ▼
+[P2 Compression] if raw_analysis > 2500 chars → extract table rows only
+       │
+       ▼
+[Phase 2: Meta-Llama 8B (local) / Cloud (hybrid/cloud mode)]
+  Input: Risk Register + scoring data + org info
+  Output: Full Markdown report (5 sections):
+    1. ĐÁNH GIÁ TỔNG QUAN — compliance % + weight breakdown
+    2. RISK REGISTER — sorted by Risk Score (L×I)
+    3. GAP ANALYSIS — grouped by severity
+    4. ACTION PLAN — 0-30d / 1-3mo / 3-12mo roadmap
+    5. EXECUTIVE SUMMARY — metrics + budget estimates + next steps
+       │
+       ▼
+[Structured JSON] _build_structured_json() → json_data field
+  {compliance: {score, percentage, tier}, risk_summary: {critical, high, medium, low},
+   weight_breakdown: per-weight %, top_gaps: [{id, severity}], organization: {...}}
+       │
+       ▼
+[Background save] FastAPI BackgroundTasks → assessment JSON file
+  Frontend polls every 10s → auto-loads when completed
+```
+
+### Model Comparison — Benchmark Results (typical)
+
+| Metric | Local (SecurityLM + Llama 8B) | Hybrid (SecurityLM + Cloud) | Cloud Only |
+|--------|-------------------------------|----------------------------|-----------|
+| Processing time | 2–5 min | 1–3 min | 30–60s |
+| Section completeness | 70–85% | 85–95% | 90–98% |
+| Control accuracy | 75–85% | 80–90% | 88–95% |
+| Data stays on-prem | ✅ Yes | ⚠️ Partial | ❌ No |
+| Offline capable | ✅ Yes | ❌ No | ❌ No |
+
+> Run `GET /api/benchmark/test-cases` + `POST /api/benchmark/run` to reproduce results.
 
 ---
 
