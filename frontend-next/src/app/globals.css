@@ -3,12 +3,14 @@
 :root {
   --bg-primary: #0B0F1A;
   --bg-secondary: #111827;
+  --bg-page: #0f1623;
   --bg-card: #1A2332;
   --bg-card-hover: #1E293B;
   --bg-subtle: rgba(255, 255, 255, 0.03);
   --bg-muted: rgba(255, 255, 255, 0.05);
   --bg-overlay: rgba(0, 0, 0, 0.55);
   --bg-sidebar: #0F172A;
+  --hover: rgba(255, 255, 255, 0.05);
 
   --text-primary: #F1F5F9;
   --text-secondary: #CBD5E1;
@@ -21,6 +23,7 @@
   --accent-green: #10B981;
   --accent-amber: #F59E0B;
   --accent-red: #EF4444;
+  --accent-orange: #F97316;
 
   --border: rgba(255, 255, 255, 0.06);
   --border-light: rgba(255, 255, 255, 0.08);

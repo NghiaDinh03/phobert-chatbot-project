@@ -1088,14 +1088,15 @@
 }
 
 .historyItem {
-    display: flex;
-    justify-content: space-between;
+    display: grid;
+    grid-template-columns: 1fr 72px auto;
     align-items: center;
-    padding: 1rem 1.15rem;
+    gap: 0.75rem;
+    padding: 0.85rem 1.15rem;
     background: var(--input-bg);
     border: 1px solid var(--border);
     border-radius: 9px;
-    transition: all 0.2s ease;
+    transition: all 0.18s ease;
 }
 
 .historyItem:hover {
@@ -1108,6 +1109,7 @@
     display: flex;
     flex-direction: column;
     gap: 3px;
+    min-width: 0;
 }
 
 .histTitle {
@@ -1195,8 +1197,8 @@
     flex-direction: column;
     align-items: center;
     justify-content: center;
-    min-width: 60px;
-    padding: 0 8px;
+    width: 72px;
+    flex-shrink: 0;
 }
 
 .histPercentNum {
@@ -1471,9 +1473,18 @@
     }
 
     .historyItem {
-        flex-direction: column;
-        align-items: flex-start;
-        gap: 8px;
+        grid-template-columns: 1fr auto;
+        grid-template-rows: auto auto;
+    }
+
+    .historyItem .histPercent {
+        display: none;
+    }
+
+    .historyItem .histAction {
+        grid-column: 2;
+        grid-row: 1 / 3;
+        align-self: center;
     }
 
     .tabs {
@@ -3041,9 +3052,12 @@
     }
 
     .historyItem {
-        flex-direction: column;
-        gap: 8px;
-        align-items: flex-start;
+        grid-template-columns: 1fr auto;
+        gap: 6px;
+    }
+
+    .historyItem .histPercent {
+        display: none;
     }
 
     .histPercent {

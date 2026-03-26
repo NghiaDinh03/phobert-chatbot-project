@@ -302,6 +302,25 @@ export default function FormISOPage() {
         return () => clearInterval(timer)
     }, [result])
 
+    // When user switches back to 'result' tab, auto-check if still processing
+    useEffect(() => {
+        if (activeTab === 'result' && result?.id && result?.status === 'processing') {
+            refreshStatus(result.id)
+        }
+        if (activeTab === 'history') {
+            fetchHistory()
+        }
+    }, [activeTab]) // eslint-disable-line react-hooks/exhaustive-deps
+
+    // Poll history tab if any assessment is processing
+    useEffect(() => {
+        if (activeTab !== 'history') return
+        const hasProcessing = assessmentHistory.some(h => h.status === 'processing' || h.status === 'pending')
+        if (!hasProcessing) return
+        const timer = setInterval(() => fetchHistory(), POLL_INTERVAL)
+        return () => clearInterval(timer)
+    }, [activeTab, assessmentHistory])
+
     const set = (key, val) => setForm(p => ({ ...p, [key]: val }))
 
     const clearDraft = () => {
@@ -1487,28 +1506,37 @@ ${(result.report || '').replace(/^(#{1,6})\s+(.+)$/gm, (m, h, t) => `<h${h.lengt
                                         </div>
                                         <div className={styles.histStd}>Tiêu chuẩn: <strong>{hist.standard}</strong></div>
                                     </div>
-                                    {hist.compliance_percent != null && (
-                                        <div className={styles.histPercent}>
-                                            <span className={`${styles.histPercentNum} ${
-                                                hist.compliance_percent >= 80 ? styles.scoreNumFull :
-                                                hist.compliance_percent >= 50 ? styles.scoreNumMostly :
-                                                hist.compliance_percent >= 25 ? styles.scoreNumPartial :
-                                                styles.scoreNumLow
-                                            }`}>{hist.compliance_percent}%</span>
-                                            <span className={styles.histPercentLabel}>tuân thủ</span>
-                                        </div>
-                                    )}
+                                    {/* Always render percent column for consistent grid — show placeholder if null */}
+                                    <div className={styles.histPercent}>
+                                        {hist.compliance_percent != null ? (
+                                            <>
+                                                <span className={`${styles.histPercentNum} ${
+                                                    hist.compliance_percent >= 80 ? styles.scoreNumFull :
+                                                    hist.compliance_percent >= 50 ? styles.scoreNumMostly :
+                                                    hist.compliance_percent >= 25 ? styles.scoreNumPartial :
+                                                    styles.scoreNumLow
+                                                }`}>{hist.compliance_percent}%</span>
+                                                <span className={styles.histPercentLabel}>tuân thủ</span>
+                                            </>
+                                        ) : (
+                                            <span className={styles.histPercentLabel} style={{ fontSize: '0.7rem', opacity: 0.4 }}>—</span>
+                                        )}
+                                    </div>
                                     <div className={styles.histAction}>
                                         <span className={`${styles.statusBadge} ${styles[`status_${hist.status}`]}`}>
                                             {hist.status === 'completed' ? '✅ Hoàn thành' :
-                                                hist.status === 'failed' ? '❌ Thất bại' :
-                                                    hist.status === 'processing' ? '⏳ Đang xử lý' : '🔄 Chờ xử lý'}
+                                             hist.status === 'failed' ? '❌ Thất bại' :
+                                             hist.status === 'processing' ? '⏳ Xử lý...' : '🔄 Chờ'}
                                         </span>
                                         {hist.status === 'completed' && (
                                             <button className={styles.btnSmall} onClick={() => refreshStatus(hist.id)}>Xem →</button>
                                         )}
-                                        {hist.status === 'processing' && (
+                                        {(hist.status === 'processing' || hist.status === 'pending') && (
                                             <button className={styles.btnSmall} onClick={() => refreshStatus(hist.id)}>Kiểm tra</button>
+                                        )}
+                                        {hist.status === 'failed' && (
+                                            <button className={styles.btnSmall} style={{ color: 'var(--accent-amber,#f59e0b)' }}
+                                                onClick={() => { setActiveTab('form'); setStep(4) }}>Thử lại</button>
                                         )}
                                     </div>
                                 </div>
