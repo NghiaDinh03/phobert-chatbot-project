@@ -1,3 +1,23 @@
+/* ── Shared utility classes ──────────────────────────── */
+
+.helperText {
+    font-size: 0.82rem;
+    color: var(--text-dim);
+    line-height: 1.6;
+    margin-bottom: 0.75rem;
+}
+
+.sectionTitle {
+    font-size: 0.95rem;
+    font-weight: 600;
+    color: var(--text-primary);
+    margin-bottom: 0.75rem;
+    display: flex;
+    align-items: center;
+    gap: 7px;
+    letter-spacing: -0.01em;
+}
+
 .header {
     text-align: center;
     padding: 2rem 0 2.5rem;
@@ -1357,4 +1377,352 @@
     .stdGrid { grid-template-columns: 1fr; }
     .stdSchemaBox { flex-direction: column; }
     .stdDetailPanel { width: 100vw; }
+}
+
+/* ── Benchmark Tab ────────────────────────────────────── */
+
+.benchmarkWrap {
+    max-width: 900px;
+    margin: 0 auto;
+    padding-bottom: 3rem;
+}
+
+.benchmarkHeader {
+    margin-bottom: 1.25rem;
+}
+
+.benchmarkGuideRow {
+    display: grid;
+    grid-template-columns: repeat(5, 1fr);
+    gap: 0.5rem;
+    margin-bottom: 1.5rem;
+}
+
+.benchmarkGuideCard {
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 0.65rem 0.75rem;
+    display: flex;
+    flex-direction: column;
+    gap: 3px;
+}
+
+.benchmarkGuideLabel {
+    font-size: 0.75rem;
+    font-weight: 600;
+    color: var(--text-secondary);
+}
+
+.benchmarkGuideMax {
+    font-size: 0.85rem;
+    font-weight: 700;
+    color: var(--accent-blue);
+}
+
+.benchmarkGuideDesc {
+    font-size: 0.68rem;
+    color: var(--text-dim);
+}
+
+.benchmarkControls {
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 1.25rem;
+    margin-bottom: 1.5rem;
+    display: flex;
+    flex-direction: column;
+    gap: 0.85rem;
+}
+
+.benchmarkModeRow {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    flex-wrap: wrap;
+}
+
+.benchmarkModeLabel {
+    font-size: 0.82rem;
+    font-weight: 500;
+    color: var(--text-secondary);
+    margin-right: 0.25rem;
+}
+
+.benchmarkModeBtn {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    background: var(--bg-page, #0f1623);
+    border: 1.5px solid var(--border);
+    border-radius: 8px;
+    cursor: pointer;
+    font-family: inherit;
+    padding: 0.5rem 0.85rem;
+    font-size: 0.8rem;
+    font-weight: 500;
+    color: var(--text-secondary);
+    transition: all 0.15s;
+    min-width: 110px;
+}
+
+.benchmarkModeBtn:hover:not(:disabled) {
+    border-color: var(--accent-blue);
+    color: var(--accent-blue);
+}
+
+.benchmarkModeBtnActive {
+    border-color: var(--accent-blue) !important;
+    background: color-mix(in srgb, var(--accent-blue) 10%, transparent) !important;
+    color: var(--accent-blue) !important;
+}
+
+.benchmarkModeSub {
+    font-size: 0.65rem;
+    color: var(--text-dim);
+    font-weight: 400;
+    margin-top: 1px;
+}
+
+.benchmarkCompareLabel {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    font-size: 0.82rem;
+    color: var(--text-secondary);
+    cursor: pointer;
+}
+
+.benchmarkRunBtn {
+    align-self: flex-start;
+    background: linear-gradient(135deg, #2563EB, #7C3AED);
+    border: none;
+    border-radius: 9px;
+    color: #fff;
+    cursor: pointer;
+    font-family: inherit;
+    font-size: 0.85rem;
+    font-weight: 600;
+    padding: 0.65rem 1.5rem;
+    transition: all 0.18s;
+}
+
+.benchmarkRunBtn:hover:not(:disabled) {
+    box-shadow: 0 4px 16px rgba(37,99,235,0.35);
+    transform: translateY(-1px);
+}
+
+.benchmarkRunBtn:disabled {
+    opacity: 0.35;
+    cursor: not-allowed;
+    transform: none;
+}
+
+.benchmarkSectionTitle {
+    font-size: 0.9rem;
+    font-weight: 600;
+    color: var(--text-primary);
+    margin: 0 0 0.75rem;
+}
+
+.benchmarkCaseList {
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 1rem 1.25rem;
+    margin-bottom: 1.5rem;
+}
+
+.benchmarkCaseItem {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    padding: 0.45rem 0;
+    border-bottom: 1px solid var(--border);
+    font-size: 0.82rem;
+}
+
+.benchmarkCaseItem:last-child { border-bottom: none; }
+
+.benchmarkCaseId {
+    font-family: monospace;
+    color: var(--accent-blue);
+    font-size: 0.75rem;
+    min-width: 55px;
+}
+
+.benchmarkCaseName {
+    flex: 1;
+    color: var(--text-secondary);
+}
+
+.benchmarkCatBadge {
+    font-size: 0.68rem;
+    padding: 2px 8px;
+    border-radius: 10px;
+    background: var(--blue-subtle);
+    color: var(--accent-blue);
+    border: 1px solid var(--border-active);
+}
+
+.benchmarkCaseMeta {
+    color: var(--text-dim);
+    font-size: 0.72rem;
+}
+
+/* Results */
+.benchmarkResults {
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 1.25rem;
+    margin-bottom: 1.5rem;
+}
+
+.benchmarkSummary {
+    display: flex;
+    gap: 0.75rem;
+    margin-bottom: 1.25rem;
+    flex-wrap: wrap;
+}
+
+.benchmarkSummaryCard {
+    background: var(--bg-page, #0f1623);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 0.75rem 1.25rem;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 3px;
+    min-width: 100px;
+}
+
+.benchmarkSummaryMode {
+    font-size: 0.72rem;
+    color: var(--text-dim);
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+}
+
+.benchmarkSummaryScore {
+    font-size: 1.5rem;
+    font-weight: 800;
+    line-height: 1;
+}
+
+.benchmarkSummaryGrade {
+    font-size: 0.72rem;
+    color: var(--text-dim);
+}
+
+.scoreGradeA { color: var(--accent-green); }
+.scoreGradeB { color: var(--accent-blue); }
+.scoreGradeC { color: var(--accent-amber, #f59e0b); }
+.scoreGradeD { color: var(--accent-red); }
+
+.benchmarkResultItem {
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 0.75rem 1rem;
+    margin-bottom: 0.5rem;
+}
+
+.benchmarkResultHeader {
+    font-size: 0.82rem;
+    color: var(--text-secondary);
+    margin-bottom: 0.5rem;
+}
+
+.benchmarkResultModes {
+    display: flex;
+    gap: 0.75rem;
+    flex-wrap: wrap;
+}
+
+.benchmarkResultMode {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    background: var(--bg-page, #0f1623);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    padding: 0.35rem 0.75rem;
+    font-size: 0.75rem;
+}
+
+.benchmarkResultModeLabel {
+    color: var(--text-dim);
+    font-weight: 500;
+    text-transform: capitalize;
+    min-width: 45px;
+}
+
+.benchmarkResultScore { font-weight: 700; }
+.benchmarkResultTime { color: var(--text-dim); }
+.benchmarkResultLen { color: var(--text-dim); }
+.benchmarkResultError { color: var(--accent-red); font-size: 0.72rem; }
+
+/* Audit comparison note */
+.benchmarkAuditNote {
+    background: color-mix(in srgb, var(--accent-blue) 5%, transparent);
+    border: 1px solid color-mix(in srgb, var(--accent-blue) 15%, transparent);
+    border-radius: 12px;
+    padding: 1.25rem 1.5rem;
+    margin-top: 1.5rem;
+}
+
+.benchmarkAuditNote h4 {
+    font-size: 0.9rem;
+    font-weight: 700;
+    color: var(--text-primary);
+    margin-bottom: 0.85rem;
+}
+
+.benchmarkAuditGrid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 1rem;
+    margin-bottom: 0.85rem;
+}
+
+.benchmarkAuditCol {
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 0.85rem 1rem;
+}
+
+.benchmarkAuditColTitle {
+    font-size: 0.78rem;
+    font-weight: 700;
+    color: var(--accent-blue);
+    margin-bottom: 0.5rem;
+}
+
+.benchmarkAuditCol ul {
+    padding-left: 1rem;
+    display: flex;
+    flex-direction: column;
+    gap: 3px;
+}
+
+.benchmarkAuditCol li {
+    font-size: 0.75rem;
+    color: var(--text-secondary);
+    line-height: 1.4;
+}
+
+.benchmarkAuditNote2 {
+    font-size: 0.8rem;
+    color: var(--text-secondary);
+    line-height: 1.6;
+    margin: 0;
+}
+
+@media (max-width: 640px) {
+    .benchmarkGuideRow { grid-template-columns: repeat(2, 1fr); }
+    .benchmarkAuditGrid { grid-template-columns: 1fr; }
+    .benchmarkModeRow { flex-direction: column; align-items: flex-start; }
 }

@@ -79,12 +79,14 @@
 [data-theme="light"] {
   --bg-primary: #F8FAFC;
   --bg-secondary: #F1F5F9;
+  --bg-page: #F1F5F9;
   --bg-card: #FFFFFF;
   --bg-card-hover: #F8FAFC;
   --bg-subtle: rgba(0, 0, 0, 0.02);
   --bg-muted: rgba(0, 0, 0, 0.04);
   --bg-overlay: rgba(15, 23, 42, 0.35);
   --bg-sidebar: #FFFFFF;
+  --hover: rgba(0, 0, 0, 0.04);
 
   --text-primary: #0F172A;
   --text-secondary: #334155;

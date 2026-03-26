@@ -9,15 +9,41 @@ env/
 ENV/
 *.egg-info/
 
-# Data
+# Runtime data — không commit lên GitHub (sinh ra khi chạy ứng dụng)
 data/sessions/*
 !data/sessions/.gitkeep
 data/uploads/*
 !data/uploads/.gitkeep
-data/vector_store/*.faiss
+data/summaries/*
+!data/summaries/.gitkeep
+data/summaries/audio/*
+data/assessments/*
+!data/assessments/.gitkeep
+data/exports/*
+!data/exports/.gitkeep
+data/evidence/*
+!data/evidence/.gitkeep
+data/articles_history.json
+data/translations/*.json
+data/standards/*
+!data/standards/.gitkeep
 
-# Models (large files) - Ignore toàn bộ thư mục models
+# Vector store runtime files (rebuilt on startup via reindex)
+data/vector_store/*.faiss
+data/vector_store/chroma.sqlite3
+data/vector_store/*/
+
+# Models (large files)
 models/
+*.gguf
+*.bin
+*.safetensors
+
+# Dev/AI assistant context files (không liên quan đến source code đề tài)
+context.md
+.claude/
+.cursor/
+.roo/
 
 # IDE
 .vscode/
@@ -29,7 +55,7 @@ models/
 .DS_Store
 Thumbs.db
 
-# Environment
+# Environment (chứa API keys — KHÔNG commit)
 .env
 
 # Docker
@@ -40,15 +66,14 @@ node_modules/
 .next/
 frontend-next/.next/
 frontend-next/node_modules/
+frontend-next/.env.local
 
 # Sensitive files
 *.key
 *.pem
 *.cert
 *.secret
-
-# Cline / AI assistants
-.claude/
+*.p12
 
 # Misc
 hash.txt

@@ -50,7 +50,12 @@ function SvgGauge({ percent, size = 96, color = 'var(--accent-blue)' }) {
 }
 
 export default function AnalyticsPage() {
-    const [activeMainTab, setActiveMainTab] = useState('dashboard') // 'dashboard' | 'standards'
+    const [activeMainTab, setActiveMainTab] = useState('dashboard') // 'dashboard' | 'standards' | 'benchmark'
+    const [benchmarkCases, setBenchmarkCases] = useState(null)
+    const [benchmarkRunning, setBenchmarkRunning] = useState(false)
+    const [benchmarkResult, setBenchmarkResult] = useState(null)
+    const [benchmarkMode, setBenchmarkMode] = useState('hybrid')
+    const [benchmarkCompare, setBenchmarkCompare] = useState(false)
     const [services, setServices] = useState(null)
     const [assessments, setAssessments] = useState([])
     const [loading, setLoading] = useState(true)
@@ -285,6 +290,18 @@ export default function AnalyticsPage() {
                     onClick={() => setActiveMainTab('standards')}
                 >
                     📋 Tiêu chuẩn
+                </button>
+                <button
+                    className={`${styles.mainTab} ${activeMainTab === 'benchmark' ? styles.mainTabActive : ''}`}
+                    onClick={async () => {
+                        setActiveMainTab('benchmark')
+                        if (!benchmarkCases) {
+                            const res = await fetch('/api/benchmark/test-cases')
+                            if (res.ok) setBenchmarkCases(await res.json())
+                        }
+                    }}
+                >
+                    🧪 Benchmark AI
                 </button>
                 <span className={styles.mainTabSpacer} />
                 <Link href="/form-iso" className={styles.mainTabLink}>← Đánh giá</Link>
@@ -1031,6 +1048,192 @@ export default function AnalyticsPage() {
             )}
             </div>
             )} {/* end activeMainTab === 'dashboard' */}
+
+            {/* ══════════════════════════════════════
+                TAB: BENCHMARK AI — Model Comparison
+            ══════════════════════════════════════ */}
+            {activeMainTab === 'benchmark' && (
+                <div className={styles.benchmarkWrap}>
+                    <div className={styles.benchmarkHeader}>
+                        <div>
+                            <h2 className={styles.sectionTitle}>🧪 Benchmark AI Auditor</h2>
+                            <p className={styles.helperText}>
+                                So sánh chất lượng phân tích giữa các model: <strong>SecurityLM (LocalAI)</strong> vs <strong>Meta-Llama (LocalAI)</strong> vs <strong>Cloud (OpenClaude)</strong>.
+                                Dữ liệu test case chuẩn với kết quả mong đợi đã được định nghĩa sẵn.
+                            </p>
+                        </div>
+                    </div>
+
+                    {/* Scoring Guide */}
+                    <div className={styles.benchmarkGuideRow}>
+                        {[
+                            { label: 'Section đầy đủ', max: 5, desc: '5 section bắt buộc' },
+                            { label: 'Risk coverage', max: 3, desc: 'Control ID chính xác' },
+                            { label: 'Severity format', max: 3, desc: '🔴🟠🟡⚪ + Risk Register' },
+                            { label: 'Executive Summary', max: 2, desc: 'Metrics + Next Steps' },
+                            { label: 'Action Plan', max: 2, desc: 'Timeline cụ thể' },
+                        ].map(g => (
+                            <div key={g.label} className={styles.benchmarkGuideCard}>
+                                <span className={styles.benchmarkGuideLabel}>{g.label}</span>
+                                <span className={styles.benchmarkGuideMax}>{g.max} pts</span>
+                                <span className={styles.benchmarkGuideDesc}>{g.desc}</span>
+                            </div>
+                        ))}
+                    </div>
+
+                    {/* Run Controls */}
+                    <div className={styles.benchmarkControls}>
+                        <div className={styles.benchmarkModeRow}>
+                            <label className={styles.benchmarkModeLabel}>Chế độ chạy:</label>
+                            {[
+                                { id: 'local', label: '🔒 Local Only', desc: 'SecurityLM 7B' },
+                                { id: 'hybrid', label: '⚡ Hybrid', desc: 'SecurityLM + Cloud' },
+                                { id: 'cloud', label: '☁️ Cloud', desc: 'OpenClaude' },
+                            ].map(m => (
+                                <button
+                                    key={m.id}
+                                    className={`${styles.benchmarkModeBtn} ${benchmarkMode === m.id ? styles.benchmarkModeBtnActive : ''}`}
+                                    onClick={() => setBenchmarkMode(m.id)}
+                                    disabled={benchmarkRunning}
+                                >
+                                    {m.label}
+                                    <span className={styles.benchmarkModeSub}>{m.desc}</span>
+                                </button>
+                            ))}
+                        </div>
+                        <label className={styles.benchmarkCompareLabel}>
+                            <input
+                                type="checkbox"
+                                checked={benchmarkCompare}
+                                onChange={e => setBenchmarkCompare(e.target.checked)}
+                                disabled={benchmarkRunning}
+                            />
+                            <span>So sánh Local vs Cloud (chạy 2 lần/test case)</span>
+                        </label>
+                        <button
+                            className={styles.benchmarkRunBtn}
+                            disabled={benchmarkRunning || !benchmarkCases}
+                            onClick={async () => {
+                                setBenchmarkRunning(true)
+                                setBenchmarkResult(null)
+                                try {
+                                    const body = {
+                                        model_mode: benchmarkMode,
+                                        compare_modes: benchmarkCompare ? ['local', 'cloud'] : [benchmarkMode]
+                                    }
+                                    const res = await fetch('/api/benchmark/run', {
+                                        method: 'POST',
+                                        headers: { 'Content-Type': 'application/json' },
+                                        body: JSON.stringify(body)
+                                    })
+                                    if (res.ok) setBenchmarkResult(await res.json())
+                                } catch (e) { console.error(e) }
+                                finally { setBenchmarkRunning(false) }
+                            }}
+                        >
+                            {benchmarkRunning ? '⏳ Đang chạy...' : `▶ Chạy Benchmark (${benchmarkCases?.total_cases || '?'} test cases)`}
+                        </button>
+                    </div>
+
+                    {/* Test Cases List */}
+                    {benchmarkCases && (
+                        <div className={styles.benchmarkCaseList}>
+                            <h4 className={styles.benchmarkSectionTitle}>📋 Test Cases ({benchmarkCases.total_cases})</h4>
+                            {benchmarkCases.test_cases?.map(tc => (
+                                <div key={tc.id} className={styles.benchmarkCaseItem}>
+                                    <span className={styles.benchmarkCaseId}>{tc.id}</span>
+                                    <span className={styles.benchmarkCaseName}>{tc.name}</span>
+                                    <span className={`${styles.benchmarkCatBadge} ${styles[`bcat_${tc.category}`]}`}>{tc.category}</span>
+                                    <span className={styles.benchmarkCaseMeta}>{tc.implemented_controls_count} controls</span>
+                                </div>
+                            ))}
+                        </div>
+                    )}
+
+                    {/* Results */}
+                    {benchmarkResult && (
+                        <div className={styles.benchmarkResults}>
+                            <h4 className={styles.benchmarkSectionTitle}>📊 Kết quả Benchmark</h4>
+
+                            {/* Summary */}
+                            <div className={styles.benchmarkSummary}>
+                                {Object.entries(benchmarkResult.summary?.per_mode_avg_score || {}).map(([mode, score]) => (
+                                    <div key={mode} className={styles.benchmarkSummaryCard}>
+                                        <span className={styles.benchmarkSummaryMode}>{mode}</span>
+                                        <span className={`${styles.benchmarkSummaryScore} ${
+                                            score >= 85 ? styles.scoreGradeA :
+                                            score >= 70 ? styles.scoreGradeB :
+                                            score >= 55 ? styles.scoreGradeC : styles.scoreGradeD
+                                        }`}>{score}%</span>
+                                        <span className={styles.benchmarkSummaryGrade}>
+                                            {score >= 85 ? 'Grade A' : score >= 70 ? 'Grade B' : score >= 55 ? 'Grade C' : 'Grade D'}
+                                        </span>
+                                    </div>
+                                ))}
+                            </div>
+
+                            {/* Per test case */}
+                            {benchmarkResult.results?.map(r => (
+                                <div key={r.id} className={styles.benchmarkResultItem}>
+                                    <div className={styles.benchmarkResultHeader}>
+                                        <strong>{r.id}</strong> — {r.name}
+                                    </div>
+                                    <div className={styles.benchmarkResultModes}>
+                                        {Object.entries(r.modes || {}).map(([mode, data]) => (
+                                            <div key={mode} className={styles.benchmarkResultMode}>
+                                                <span className={styles.benchmarkResultModeLabel}>{mode}</span>
+                                                {data.status === 'ok' ? (
+                                                    <>
+                                                        <span className={`${styles.benchmarkResultScore} ${
+                                                            data.quality_score?.percentage >= 85 ? styles.scoreGradeA :
+                                                            data.quality_score?.percentage >= 70 ? styles.scoreGradeB :
+                                                            data.quality_score?.percentage >= 55 ? styles.scoreGradeC : styles.scoreGradeD
+                                                        }`}>{data.quality_score?.percentage}% ({data.quality_score?.grade})</span>
+                                                        <span className={styles.benchmarkResultTime}>⏱ {data.elapsed_seconds}s</span>
+                                                        <span className={styles.benchmarkResultLen}>{data.report_length} chars</span>
+                                                    </>
+                                                ) : (
+                                                    <span className={styles.benchmarkResultError}>❌ {data.error?.slice(0, 80)}</span>
+                                                )}
+                                            </div>
+                                        ))}
+                                    </div>
+                                </div>
+                            ))}
+                        </div>
+                    )}
+
+                    {/* Tool vs Real IT Audit explanation */}
+                    <div className={styles.benchmarkAuditNote}>
+                        <h4>🔍 Công cụ này vs IT Audit thực tế</h4>
+                        <div className={styles.benchmarkAuditGrid}>
+                            <div className={styles.benchmarkAuditCol}>
+                                <div className={styles.benchmarkAuditColTitle}>🤖 CyberAI Assessment Tool</div>
+                                <ul>
+                                    <li>IT staff tự khai báo controls đã triển khai</li>
+                                    <li>AI phân tích GAP và tạo Risk Register tự động</li>
+                                    <li>Hoàn thành trong 2–5 phút</li>
+                                    <li>LocalAI: dữ liệu không rời server (air-gap)</li>
+                                    <li>Phù hợp cho: Pre-audit self-assessment, đào tạo, benchmark nội bộ</li>
+                                </ul>
+                            </div>
+                            <div className={styles.benchmarkAuditCol}>
+                                <div className={styles.benchmarkAuditColTitle}>👨‍💼 IT Audit Chính thức</div>
+                                <ul>
+                                    <li>Auditor bên thứ ba đến kiểm tra trực tiếp</li>
+                                    <li>Phỏng vấn nhân viên, kiểm tra bằng chứng thực tế</li>
+                                    <li>Mất 2–6 tuần cho tổ chức trung bình</li>
+                                    <li>Kết quả là báo cáo pháp lý có giá trị chứng nhận</li>
+                                    <li>Phù hợp cho: Chứng nhận ISO, tuân thủ pháp lý, báo cáo khách hàng</li>
+                                </ul>
+                            </div>
+                        </div>
+                        <p className={styles.benchmarkAuditNote2}>
+                            <strong>Kết luận:</strong> Tool này <em>không thay thế</em> IT Audit chính thức mà là công cụ <strong>hỗ trợ</strong> — giúp mọi IT staff (không cần chuyên môn bảo mật sâu) tự đánh giá sơ bộ hệ thống, xác định điểm yếu và chuẩn bị cho audit thực tế.
+                        </p>
+                    </div>
+                </div>
+            )}
         </div>
     )
 }

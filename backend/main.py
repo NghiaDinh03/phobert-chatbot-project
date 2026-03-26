@@ -65,7 +65,7 @@ async def limit_request_size(request: Request, call_next):
     return await call_next(request)
 
 
-from api.routes import chat, document, health, iso27001, system, news, standards
+from api.routes import chat, document, health, iso27001, system, news, standards, benchmark
 
 app.include_router(health.router, prefix="/api", tags=["Health"])
 app.include_router(chat.router, prefix="/api", tags=["Chat"])
@@ -74,6 +74,7 @@ app.include_router(iso27001.router, prefix="/api", tags=["ISO27001"])
 app.include_router(standards.router, prefix="/api", tags=["Standards"])
 app.include_router(system.router, prefix="/api", tags=["System"])
 app.include_router(news.router, prefix="/api", tags=["News"])
+app.include_router(benchmark.router, prefix="/api", tags=["Benchmark"])
 
 
 @app.on_event("startup")
