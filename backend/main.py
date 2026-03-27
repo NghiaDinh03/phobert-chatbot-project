@@ -77,6 +77,39 @@ app.include_router(news.router, prefix="/api", tags=["News"])
 app.include_router(benchmark.router, prefix="/api", tags=["Benchmark"])
 
 
+# ── Dataset generation endpoint ────────────────────────
+from fastapi import BackgroundTasks as _BT
+
+@app.post("/api/dataset/generate", tags=["Dataset"])
+async def generate_dataset(background_tasks: _BT,
+                            news_limit: int = 30,
+                            synthetic_count: int = 10):
+    """Trigger fine-tuning dataset generation in background.
+    Produces /data/knowledge_base/finetune_iso27001.jsonl (Alpaca format).
+    """
+    def _run():
+        from services.dataset_generator import run_full_pipeline
+        run_full_pipeline(news_limit=news_limit, synthetic_count=synthetic_count)
+
+    background_tasks.add_task(_run)
+    return {"status": "accepted", "message": f"Dataset generation started (news={news_limit}, synthetic={synthetic_count})"}
+
+
+@app.get("/api/dataset/status", tags=["Dataset"])
+async def dataset_status():
+    """Check generated dataset status."""
+    import os, json
+    meta_path = os.path.join(os.getenv("DATA_PATH", "./data"), "knowledge_base", "finetune_metadata.json")
+    jsonl_path = os.path.join(os.getenv("DATA_PATH", "./data"), "knowledge_base", "finetune_iso27001.jsonl")
+    if not os.path.exists(meta_path):
+        return {"status": "not_generated", "message": "Run POST /api/dataset/generate first"}
+    with open(meta_path, "r", encoding="utf-8") as f:
+        meta = json.load(f)
+    size_kb = round(os.path.getsize(jsonl_path) / 1024, 1) if os.path.exists(jsonl_path) else 0
+    meta["file_size_kb"] = size_kb
+    return {"status": "ready", **meta}
+
+
 @app.on_event("startup")
 def on_startup():
     for w in settings.validate():
