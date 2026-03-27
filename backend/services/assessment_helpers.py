@@ -17,26 +17,29 @@ def build_chunk_prompt(cat_name: str, cat_controls: list, implemented: list,
                        sys_summary: str, std_name: str, rag_ctx: str = "") -> str:
     missing = [c for c in cat_controls if c["id"] not in implemented]
     present = [c for c in cat_controls if c["id"] in implemented]
-    # Cap at 15 missing controls per chunk to keep prompt < 1200 tokens
     missing_str = "\n".join(
         f"❌{c['id']}[{c.get('weight','m').upper()[0]}]{c.get('label','')[:40]}"
         for c in missing[:15]
     )
     present_str = ", ".join(c["id"] for c in present[:12])
-    # RAG: 350 chars max to leave room for controls list
     rag_section = f"\nREF:{rag_ctx[:350]}\n" if rag_ctx else ""
-    # sys_summary: keep most critical fields only, cap at 400 chars
+    # Few-shot examples embedded directly so SecurityLM 7B understands exact format
+    few_shot = (
+        'VÍ DỤ OUTPUT (chỉ trả về JSON, không text thêm):\n'
+        '[{"id":"A.5.1","severity":"critical","likelihood":4,"impact":5,"risk":20,'
+        '"gap":"Chính sách ATTT chưa được ban hành","recommendation":"Ban hành chính sách ATTT ngay trong 30 ngày"},\n'
+        ' {"id":"A.5.9","severity":"high","likelihood":3,"impact":3,"risk":9,'
+        '"gap":"Chưa có danh mục tài sản thông tin","recommendation":"Lập asset inventory cho phần cứng và dữ liệu"}]\n\n'
+    )
     return (
         f"ISO Auditor — {std_name} | {cat_name} | Tuân thủ:{pct}%({sc}/{mx})\n"
         f"HỆ THỐNG:{sys_summary[:400]}\n"
         f"{rag_section}"
         f"ĐÃ ĐẠT:{present_str or 'none'}\n"
         f"CHƯA ĐẠT:\n{missing_str or 'all done'}\n\n"
-        f"Trả về JSON array cho mỗi control CHƯA ĐẠT (chỉ JSON):\n"
-        f'[{{"id":"XX","severity":"critical|high|medium|low",'
-        f'"likelihood":3,"impact":4,"risk":12,'
-        f'"gap":"lỗ hổng","recommendation":"hành động"}}]\n'
-        f"Nếu tất cả đạt: []"
+        f"{few_shot}"
+        f"Trả về JSON array cho mỗi control CHƯA ĐẠT ở trên (CHÍNH XÁC format như ví dụ, chỉ JSON):\n"
+        f"[]\n nếu tất cả đạt."
     )
 
 
@@ -61,8 +64,13 @@ def infer_gap_from_control(ctrl: dict, cat_name: str) -> dict:
     }
 
 
-def validate_chunk_output(content: str, cat_name: str) -> Optional[List[Dict]]:
+def validate_chunk_output(content: str, cat_name: str,
+                          valid_ids: Optional[List[str]] = None) -> Optional[List[Dict]]:
+    """Parse and validate JSON output from SecurityLM.
+    valid_ids: if provided, reject items with IDs not in this set (anti-hallucination).
+    """
     content = content.strip()
+    # Handle model wrapping in ```json ... ``` or just ```...```
     match = re.search(r'\[.*?\]', content, re.DOTALL)
     if not match:
         return None
@@ -70,14 +78,27 @@ def validate_chunk_output(content: str, cat_name: str) -> Optional[List[Dict]]:
         data = json.loads(match.group())
         if not isinstance(data, list):
             return None
+        # Empty list is valid (all controls implemented)
+        if len(data) == 0:
+            return []
         validated = []
         for item in data:
-            if not isinstance(item, dict) or not item.get("id"):
+            if not isinstance(item, dict):
                 continue
+            ctrl_id = str(item.get("id", "")).strip()
+            if not ctrl_id:
+                continue
+            # Anti-hallucination: skip if ID not in valid set
+            if valid_ids and ctrl_id not in valid_ids:
+                logger.debug(f"[Validate] Rejected hallucinated control ID: {ctrl_id}")
+                continue
+            sev = item.get("severity", "medium")
+            if sev not in ("critical", "high", "medium", "low"):
+                sev = "medium"
             validated.append({
-                "id": item["id"],
+                "id": ctrl_id,
                 "category": cat_name,
-                "severity": item.get("severity", "medium"),
+                "severity": sev,
                 "likelihood": max(1, min(5, int(item.get("likelihood", 3)))),
                 "impact": max(1, min(5, int(item.get("impact", 3)))),
                 "risk": max(1, min(25, int(item.get("risk", 9)))),

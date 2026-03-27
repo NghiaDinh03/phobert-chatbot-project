@@ -577,10 +577,32 @@ class SummaryService:
             SummaryService._save_cache(url, res)
             return res
 
-        # ── Step 3: Edge-TTS — generate Vietnamese audio ────────────────────────
-        logger.info(f"[ProcessArticle] Step 3 — Generating TTS audio (text_len={len(summary_vi)})")
+        # ── Step 2.5: Generate short TTS summary (3-5 sentences for audio only) ─
+        tts_text = summary_vi  # default: full text
         try:
-            text_to_read = SummaryService._fix_pronunciation(summary_vi)
+            short_summary_prompt = (
+                f"Tóm tắt bài báo sau thành 3-5 câu ngắn gọn, phù hợp đọc radio (không đề cập đến nguồn, không quảng cáo):\n\n"
+                f"{summary_vi[:3000]}"
+            )
+            short_result = CloudLLMService.chat_completion(
+                messages=[{"role": "user", "content": short_summary_prompt}],
+                temperature=0.3,
+                max_tokens=400,
+                task_type="news_summary",
+            )
+            short_text = short_result.get("content", "").strip()
+            if short_text and len(short_text) > 80:
+                tts_text = short_text
+                logger.info(f"[ProcessArticle] Step 2.5 OK — TTS summary {len(tts_text)} chars (full: {len(summary_vi)})")
+            else:
+                logger.warning(f"[ProcessArticle] Step 2.5 — short summary too short, using full text")
+        except Exception as e:
+            logger.warning(f"[ProcessArticle] Step 2.5 FAILED (TTS summary) — using full text: {e}")
+
+        # ── Step 3: Edge-TTS — generate Vietnamese audio ────────────────────────
+        logger.info(f"[ProcessArticle] Step 3 — Generating TTS audio (text_len={len(tts_text)})")
+        try:
+            text_to_read = SummaryService._fix_pronunciation(tts_text)
             communicate = edge_tts.Communicate(text_to_read, "vi-VN-HoaiMyNeural")
             asyncio.run(communicate.save(audio_path))
             logger.info(f"[ProcessArticle] Step 3 OK — audio saved to {audio_path}")

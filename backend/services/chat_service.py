@@ -479,7 +479,8 @@ class ChatService:
                             if result_p1 is None:
                                 result_p1 = chunk_result
                             chunk_content = chunk_result.get("content", "").strip()
-                            chunk_gap_items = validate_chunk_output(chunk_content, cat_name)
+                            valid_ids = [c["id"] for c in cat_controls]
+                            chunk_gap_items = validate_chunk_output(chunk_content, cat_name, valid_ids=valid_ids)
                             if chunk_gap_items is not None:
                                 logger.info(f"[Assessment] Chunk '{cat_name}' attempt {attempt+1}: {len(chunk_gap_items)} gaps")
                                 break
