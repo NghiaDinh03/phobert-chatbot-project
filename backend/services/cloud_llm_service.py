@@ -16,6 +16,7 @@ import requests
 import httpx
 from typing import Dict, Any, List
 from core.config import settings
+from services.model_guard import ModelGuard
 
 logger = logging.getLogger(__name__)
 
@@ -215,6 +216,7 @@ class CloudLLMService:
             pass
 
         # Cap max_tokens for small models to avoid OOM
+        # If user sets MAX_TOKENS>0 use that; else default 2048 for local
         effective_max_tokens = settings.MAX_TOKENS if settings.MAX_TOKENS > 0 else 2048
 
         payload = {
@@ -269,9 +271,18 @@ class CloudLLMService:
     def chat_completion(cls, messages: List[Dict], temperature: float = 0.7,
                         max_tokens: int = 8192, prefer_cloud: bool = True,
                         local_model: str = None, task_type: str = None) -> Dict[str, Any]:
-        """Route to the best model based on task_type, then fallback LocalAI → Open Claude."""
+        """Route to the best model based on task_type.
+
+        Priority order:
+        - If LOCAL_ONLY_MODE → force LocalAI (guarded by ModelGuard + health check)
+        - Else if PREFER_LOCAL=True → try LocalAI first, then cloud fallback
+        - Else (default) → cloud first, then LocalAI fallback
+        """
         local_model = local_model or settings.MODEL_NAME
         errors = []
+
+        # Override prefer_cloud using global preference for on-prem first
+        effective_prefer_cloud = prefer_cloud and not settings.PREFER_LOCAL
 
         # ISO local: try LocalAI first; if model fails to load, auto-fallback to cloud
         if task_type in LOCAL_ONLY_TASKS:
@@ -308,29 +319,71 @@ class CloudLLMService:
 
         model = cls._resolve_model(task_type)
         logger.info(f"[ChatCompletion] task_type={task_type or 'auto'}, model={model}, "
-                    f"max_tokens={max_tokens}, prefer_cloud={prefer_cloud}")
+                    f"max_tokens={max_tokens}, prefer_cloud={effective_prefer_cloud}, prefer_local={settings.PREFER_LOCAL}")
 
-        if prefer_cloud and settings.cloud_api_key_list:
+        if settings.LOCAL_ONLY_MODE and not ModelGuard.is_ready():
+            raise Exception("Local-only mode enabled nhưng thiếu file model. Kiểm tra thư mục ./models")
+
+        # In LOCAL_ONLY_MODE → force LocalAI path; cloud is never attempted
+        if settings.LOCAL_ONLY_MODE:
             try:
-                result = cls._call_open_claude(messages, temperature, max_tokens,
-                                               model=model, task_type=task_type)
-                if result["content"]:
+                result = cls._call_localai(local_model, messages, temperature)
+                if result.get("content"):
                     return result
-                logger.warning("[ChatCompletion] Open Claude returned empty content, falling back to LocalAI")
-                errors.append("Open Claude: empty content")
+                errors.append("Local-only: empty content")
             except Exception as e:
-                errors.append(f"Open Claude: {e}")
-                logger.warning(f"[ChatCompletion] Open Claude failed: {e}")
+                errors.append(f"Local-only: {e}")
+            raise Exception(f"Local-only mode: LocalAI failed: {' | '.join(errors)}")
 
-        try:
-            result = cls._call_localai(local_model, messages, temperature)
-            if result["content"]:
-                return result
-            logger.warning("[ChatCompletion] LocalAI returned empty content")
-            errors.append("LocalAI: empty content")
-        except Exception as e:
-            errors.append(f"LocalAI: {e}")
-            logger.warning(f"[ChatCompletion] LocalAI failed: {e}")
+        # Branch A: prefer_local=True → LocalAI first
+        if settings.PREFER_LOCAL:
+            try:
+                result = cls._call_localai(local_model, messages, temperature)
+                if result.get("content"):
+                    return result
+                logger.warning("[ChatCompletion] LocalAI returned empty content, trying cloud")
+                errors.append("LocalAI: empty content")
+            except Exception as e:
+                errors.append(f"LocalAI: {e}")
+                logger.warning(f"[ChatCompletion] LocalAI failed: {e}")
+
+            if settings.cloud_api_key_list:
+                try:
+                    result = cls._call_open_claude(messages, temperature, max_tokens,
+                                                   model=model, task_type=task_type)
+                    if result.get("content"):
+                        result["provider"] = result.get("provider", "open-claude") + "-fallback"
+                        return result
+                    logger.warning("[ChatCompletion] Cloud returned empty content after LocalAI fail")
+                    errors.append("Open Claude: empty content")
+                except Exception as e:
+                    errors.append(f"Open Claude: {e}")
+                    logger.warning(f"[ChatCompletion] Open Claude failed after LocalAI: {e}")
+
+        # Branch B: prefer_cloud=True (and prefer_local=False) → Cloud first
+        else:
+            if settings.cloud_api_key_list:
+                try:
+                    result = cls._call_open_claude(messages, temperature, max_tokens,
+                                                   model=model, task_type=task_type)
+                    if result.get("content"):
+                        return result
+                    logger.warning("[ChatCompletion] Open Claude returned empty content, falling back to LocalAI")
+                    errors.append("Open Claude: empty content")
+                except Exception as e:
+                    errors.append(f"Open Claude: {e}")
+                    logger.warning(f"[ChatCompletion] Open Claude failed: {e}")
+
+            try:
+                result = cls._call_localai(local_model, messages, temperature)
+                if result.get("content"):
+                    result["provider"] = result.get("provider", "localai") + "-fallback"
+                    return result
+                logger.warning("[ChatCompletion] LocalAI returned empty content")
+                errors.append("LocalAI: empty content")
+            except Exception as e:
+                errors.append(f"LocalAI: {e}")
+                logger.warning(f"[ChatCompletion] LocalAI failed: {e}")
 
         raise Exception(f"All AI providers failed: {' | '.join(errors)}")
 

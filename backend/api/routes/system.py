@@ -93,6 +93,11 @@ def get_uptime():
         return float(uptime_str.split()[0])
     return 0.0
 
+from services.cloud_llm_service import CloudLLMService
+from services.model_guard import ModelGuard
+from core.config import settings
+
+
 @router.get("/system/stats")
 def system_stats():
     cpu_info = get_cpu_info()
@@ -149,4 +154,29 @@ def cache_stats():
         },
         "total_size_bytes": trans_size + sum_size,
         "total_files": trans_files + sum_files
+    }
+
+
+@router.get("/system/ai-status")
+def ai_status():
+    health = CloudLLMService.health_check()
+    models_ready = ModelGuard.is_ready()
+    cloud_ready = bool(settings.cloud_api_key_list)
+
+    if settings.LOCAL_ONLY_MODE:
+        mode_label = "local-only"
+    elif settings.PREFER_LOCAL:
+        mode_label = "local-first"
+    else:
+        mode_label = "cloud-first"
+
+    return {
+        "local_only_mode": settings.LOCAL_ONLY_MODE,
+        "prefer_local": settings.PREFER_LOCAL,
+        "mode_label": mode_label,
+        "models_ready": models_ready,
+        "cloud_keys": cloud_ready,
+        "model_guard": ModelGuard.status(),
+        "localai": health.get("localai", {}),
+        "open_claude": health.get("open_claude", {}),
     }

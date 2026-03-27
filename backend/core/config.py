@@ -8,9 +8,17 @@ class Settings:
     DEBUG: bool = os.getenv("DEBUG", "false").lower() == "true"
 
     LOCALAI_URL: str = os.getenv("LOCALAI_URL", "http://localai:8080")
-    MODEL_NAME: str = os.getenv("MODEL_NAME", "Meta-Llama-3.1-70B-Instruct-Q4_K_M.gguf")
-    SECURITY_MODEL_NAME: str = os.getenv("SECURITY_MODEL_NAME", os.getenv("MODEL_NAME", "Meta-Llama-3.1-70B-Instruct-Q4_K_M.gguf"))
+    # Default to 8B to avoid OOM in LocalAI containers (12–16GB). 70B requires much higher RAM.
+    MODEL_NAME: str = os.getenv("MODEL_NAME", "Meta-Llama-3.1-8B-Instruct-Q4_K_M.gguf")
+    SECURITY_MODEL_NAME: str = os.getenv("SECURITY_MODEL_NAME", os.getenv("MODEL_NAME", "Meta-Llama-3.1-8B-Instruct-Q4_K_M.gguf"))
     MAX_TOKENS: int = int(os.getenv("MAX_TOKENS", "-1"))
+    LOCAL_ONLY_MODE: bool = os.getenv("LOCAL_ONLY_MODE", "false").lower() == "true"
+    # Prefer running on LocalAI first to keep data on-prem (cloud as fallback only if needed)
+    PREFER_LOCAL: bool = os.getenv("PREFER_LOCAL", "true").lower() == "true"
+    REQUIRED_MODEL_IDS: str = os.getenv(
+        "REQUIRED_MODEL_IDS",
+        "Meta-Llama-3.1-8B-Instruct-Q4_K_M.gguf,SecurityLLM-7B-Q4_K_M.gguf",
+    )
 
     CLOUD_LLM_API_URL: str = os.getenv("CLOUD_LLM_API_URL", "https://open-claude.com/v1")
     CLOUD_MODEL_NAME: str = os.getenv("CLOUD_MODEL_NAME", "gemini-3-pro-preview")
@@ -46,6 +54,10 @@ class Settings:
                 if k and k not in keys and k != "your_open_claude_api_key_here":
                     keys.append(k)
         return keys
+
+    @property
+    def required_model_ids(self) -> List[str]:
+        return [m.strip() for m in self.REQUIRED_MODEL_IDS.split(",") if m.strip()]
 
     def validate(self):
         warnings = []

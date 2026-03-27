@@ -1,5 +1,5 @@
 {
-  "timestamp": 1774480823.68108,
+  "timestamp": 1774557272.174182,
   "translations": {
     "220ed4d967f5": "Chúng tôi đã tìm thấy tám vectơ tấn công bên trong nền tảng AWS. Đây là những gì kẻ tấn công có thể làm với chúng",
     "0225e7355a19": "Microsoft Cảnh báo Lừa đảo IRS Lượt truy cập 29.000 Người dùng, Triển khai Phần mềm độc hại RMM",
@@ -79,6 +79,27 @@
     "325b903ca4e5": "AI tăng tốc tấn công, nhưng danh tính vẫn là an ninh mạng Liên kết yếu nhất",
     "cea7298deded": "Tại sao cơ sở dữ liệu 'Gần bỏ lỡ' là chìa khoá để cải thiện việc chia sẻ thông tin",
     "bfba43a14ad7": "iOS, macOS 26.4 ra mắt với các bản vá bảo mật mới",
-    "90887713696f": "Tại RSAC, EU dẫn đầu trong khi các quan chức Mỹ đứng bên lề"
+    "90887713696f": "Tại RSAC, EU dẫn đầu trong khi các quan chức Mỹ đứng bên lề",
+    "888f51fd7951": "WebRTC Skimmer bỏ qua CSP để ăn cắp dữ liệu thanh toán từ các trang web thương mại điện tử",
+    "0159b83831d0": "Dell và HP tung ra bảo mật thiết bị chống lượng tử và khả năng phục hồi mạng AI-Era",
+    "bec472e4fe70": "Quản trị viên phần mềm độc hại RedLine bị dẫn độ sang Mỹ",
+    "3ea38a31a096": "[Webinar] Ngừng đoán. Tìm hiểu để xác nhận phòng thủ của bạn chống lại các cuộc tấn công thực sự",
+    "0cdeb1d59f8a": "Lỗ hổng mở rộng Claude đã bật tiêm nhắc XSS không nhấp qua bất kỳ trang web nào",
+    "0e5cf9ec6a32": "Thạc sĩ giả mạo: Làm thế nào tin tặc và nghệ thuật giả mạo hoàn thiện nghệ thuật lừa dối",
+    "1c0f64f06d5f": "Bản tin ThreatsDay: PQC Push, AI Vuln Hunting, Bẫy cướp biển, Bộ dụng cụ lừa đảo & 20 Câu chuyện khác",
+    "3e9cc8c3e597": "Coruna iOS Kit tái sử dụng mã khai thác tam giác 2023 trong các cuộc tấn công hàng loạt mới",
+    "6d00f4bfe10b": "Hightower giữ tác động vi phạm dữ liệu 130.000",
+    "d404c1ec27a9": "BIND Cập nhật Patch lỗ hổng bảo mật cao",
+    "df6cfe3d3fa5": "Hacker Trung Quốc bắt sâu trong cơ sở hạ tầng xương sống viễn thông",
+    "29a27b902c8a": "Cisco Patches Nhiều lỗ hổng trong phần mềm IOS",
+    "6aa76359d221": "Trung gian thúc đẩy mở rộng thị trường phần mềm gián điệp toàn cầu",
+    "9d98b2c2bd53": "Làm thế nào các tổ chức có thể sử dụng Blunders để nâng cấp các chương trình bảo mật của họ",
+    "bdaca70a754e": "Quyết định phụ thuộc AI-Powered Giới thiệu, Bỏ qua lỗi bảo mật",
+    "e0c92bacd69d": "Red Menshen liên kết với Trung Quốc sử dụng cấy ghép BPFDoor tàng hình để gián điệp qua mạng viễn thông",
+    "6cdd8d80fe12": "Coruna iOS Kit tái sử dụng mã khai thác tam giác 2023 trong các cuộc tấn công hàng loạt gần đây",
+    "6da56bc465d9": "Dell và HP tung ra bảo mật thiết bị chống lượng tử",
+    "58a92bc1f37e": "Lỗ hổng quan trọng trong Langflow AI Platform bị tấn công",
+    "c8c240faabef": "Bộ định tuyến của FCC Cấm sửa lỗi sai?",
+    "f10706baeaba": "Các mối đe doạ an ninh mạng ô tô phát triển trong kỷ nguyên của các phương tiện tự trị, được kết nối"
   }
 }

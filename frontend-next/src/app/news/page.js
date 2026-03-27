@@ -29,6 +29,8 @@ export default function NewsPage() {
     const [reprocessing, setReprocessing] = useState({}) // { [url]: boolean }
     const [playingHistoryId, setPlayingHistoryId] = useState(null)
     const historyAudioRef = useRef(null)
+    const [historyDateFilter, setHistoryDateFilter] = useState('all')
+    const [diskInfo, setDiskInfo] = useState(null)
 
     const fetchHistory = useCallback(async (cat = 'all') => {
         setHistoryLoading(true)
@@ -559,69 +561,99 @@ export default function NewsPage() {
             {showHistory && <div className={styles.historyOverlay} onClick={() => setShowHistory(false)} />}
             <div className={`${styles.historySidebar} ${showHistory ? styles.open : ''}`}>
                 <div className={styles.historyHeader}>
-                    <h2>Lịch sử tin tức</h2>
+                    <div>
+                        <h2>📚 Lịch sử 7 ngày</h2>
+                        <p className={styles.historyHeaderSub}>{historyData.length} bài · Lưu trữ không xóa tự động</p>
+                    </div>
                     <button className={styles.historyClose} onClick={() => setShowHistory(false)}>✕</button>
                 </div>
+
+                {/* Category tabs */}
                 <div className={styles.historyTabs}>
                     <button className={`${styles.htab} ${historyTab === 'all' ? styles.active : ''}`} onClick={() => setHistoryTab('all')}>Tất cả</button>
                     {CATEGORIES.map(c => (
-                        <button key={c.id} className={`${styles.htab} ${historyTab === c.id ? styles.active : ''}`} onClick={() => setHistoryTab(c.id)}>{c.name}</button>
+                        <button key={c.id} className={`${styles.htab} ${historyTab === c.id ? styles.active : ''}`} onClick={() => setHistoryTab(c.id)}>
+                            {c.icon} {c.name.split(' ')[0]}
+                        </button>
                     ))}
                 </div>
+
+                {/* Date filter */}
+                {historyData.length > 0 && (() => {
+                    const dates = [...new Set(historyData.map(h => {
+                        try { return new Date(h.added_at).toLocaleDateString('vi-VN') } catch { return '' }
+                    }).filter(Boolean))]
+                    return dates.length > 1 ? (
+                        <div className={styles.historyDateFilter}>
+                            <button className={`${styles.hdateBtn} ${historyDateFilter === 'all' ? styles.active : ''}`} onClick={() => setHistoryDateFilter('all')}>Tất cả</button>
+                            {dates.slice(0, 7).map(d => (
+                                <button key={d} className={`${styles.hdateBtn} ${historyDateFilter === d ? styles.active : ''}`} onClick={() => setHistoryDateFilter(d)}>{d.slice(0, 5)}</button>
+                            ))}
+                        </div>
+                    ) : null
+                })()}
+
                 <div className={styles.historyContent}>
                     {historyLoading ? (
                         <div className={styles.historyEmpty}>Đang tải lịch sử...</div>
                     ) : historyData.length === 0 ? (
-                        <div className={styles.historyEmpty}>Không có lịch sử 7 ngày qua</div>
+                        <div className={styles.historyEmpty}>Chưa có lịch sử nào trong 7 ngày qua</div>
                     ) : (
-                        historyData.map((hItem, idx) => (
-                            <div key={idx} className={styles.historyItem}>
-                                <a href={hItem.url} target="_blank" rel="noopener noreferrer" className={styles.historyItemTitle}>
-                                    {hItem.title_vi || hItem.title}
-                                </a>
-                                <div className={styles.historyItemMeta}>
-                                    <span>{new Date(hItem.added_at).toLocaleString('vi-VN')}</span>
-                                    {hItem.audio_cached === true && hItem.hash && (
-                                        <button
-                                            className={styles.historyPlayBtn}
-                                            onClick={() => {
-                                                if (audioRef.current && !audioRef.current.paused) {
-                                                    audioRef.current.pause()
-                                                    setAudioData(prev => {
-                                                        const next = { ...prev }
-                                                        for (let k in next) { if (next[k]?.status === 'playing') next[k].status = 'ready' }
-                                                        return next
-                                                    })
-                                                    playStateRef.current.currentUrl = null
-                                                }
-
-                                                const audioUrl = `/api/news/audio/${hItem.hash}.mp3`
-                                                if (playingHistoryId === hItem.hash) {
-                                                    if (historyAudioRef.current.paused) historyAudioRef.current.play()
-                                                    else historyAudioRef.current.pause()
-                                                    setPlayingHistoryId(historyAudioRef.current.paused ? null : hItem.hash)
-                                                    return
-                                                }
-                                                historyAudioRef.current.src = audioUrl
-                                                historyAudioRef.current.play()
-                                                setPlayingHistoryId(hItem.hash)
-                                            }}
-                                        >
-                                            {playingHistoryId === hItem.hash && historyAudioRef.current && !historyAudioRef.current.paused ? '⏸️ Dừng' : '🔊 Nghe'}
-                                        </button>
-                                    )}
-                                    {hItem.audio_cached !== true && (
-                                        <span className={styles.historyPending}>⏳ Chờ</span>
+                        (() => {
+                            const filtered = historyData.filter(h => {
+                                if (historyDateFilter === 'all') return true
+                                try { return new Date(h.added_at).toLocaleDateString('vi-VN') === historyDateFilter }
+                                catch { return false }
+                            })
+                            if (filtered.length === 0) return <div className={styles.historyEmpty}>Không có bài trong ngày này</div>
+                            return filtered.map((hItem, idx) => (
+                                <div key={idx} className={styles.historyCard}>
+                                    <div className={styles.historyCardTop}>
+                                        <a href={hItem.url} target="_blank" rel="noopener noreferrer" className={styles.historyItemTitle}>
+                                            {hItem.title_vi || hItem.title}
+                                        </a>
+                                        {hItem.audio_cached === true && hItem.hash && (
+                                            <button
+                                                className={`${styles.historyPlayBtn} ${playingHistoryId === hItem.hash ? styles.historyPlayBtnActive : ''}`}
+                                                onClick={() => {
+                                                    if (audioRef.current && !audioRef.current.paused) {
+                                                        audioRef.current.pause()
+                                                        setAudioData(prev => { const n = {...prev}; for (let k in n) { if (n[k]?.status==='playing') n[k].status='ready' }; return n })
+                                                        playStateRef.current.currentUrl = null
+                                                    }
+                                                    const audioUrl = `/api/news/audio/${hItem.hash}.mp3`
+                                                    if (playingHistoryId === hItem.hash) {
+                                                        if (historyAudioRef.current.paused) historyAudioRef.current.play()
+                                                        else historyAudioRef.current.pause()
+                                                        setPlayingHistoryId(historyAudioRef.current.paused ? null : hItem.hash)
+                                                        return
+                                                    }
+                                                    historyAudioRef.current.src = audioUrl
+                                                    historyAudioRef.current.play()
+                                                    setPlayingHistoryId(hItem.hash)
+                                                }}
+                                                title="Nghe tóm tắt AI"
+                                            >
+                                                {playingHistoryId === hItem.hash && historyAudioRef.current && !historyAudioRef.current.paused ? '⏸️' : '🔊'}
+                                            </button>
+                                        )}
+                                    </div>
+                                    <div className={styles.historyItemMeta}>
+                                        <span className={styles.historyItemDate}>
+                                            {(() => { try { return new Date(hItem.added_at).toLocaleTimeString('vi-VN', {hour:'2-digit',minute:'2-digit'}) + ' ' + new Date(hItem.added_at).toLocaleDateString('vi-VN', {day:'2-digit',month:'2-digit'}) } catch { return '' } })()}
+                                        </span>
+                                        {hItem.source && <span className={styles.historyItemSource}>{hItem.source}</span>}
+                                        {hItem.audio_cached !== true && <span className={styles.historyPending}>⏳ Chờ audio</span>}
+                                    </div>
+                                    {hItem.summary_text && (
+                                        <details className={styles.historySummary}>
+                                            <summary className={styles.historySummaryToggle}>📝 Xem tóm tắt AI</summary>
+                                            <p className={styles.historySummaryText}>{hItem.summary_text}</p>
+                                        </details>
                                     )}
                                 </div>
-                                {hItem.summary_text && (
-                                    <details className={styles.historySummary}>
-                                        <summary className={styles.historySummaryToggle}>Xem tóm tắt</summary>
-                                        <p className={styles.historySummaryText}>{hItem.summary_text}</p>
-                                    </details>
-                                )}
-                            </div>
-                        ))
+                            ))
+                        })()
                     )}
                 </div>
             </div>

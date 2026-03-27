@@ -8,6 +8,7 @@ from typing import Dict, Any, Generator, List
 
 from core.config import settings
 from services.cloud_llm_service import CloudLLMService
+from services.model_guard import ModelGuard
 from services.model_router import route_model
 from services.web_search import WebSearch
 from repositories.vector_store import VectorStore
@@ -85,6 +86,9 @@ class ChatService:
 
     @staticmethod
     def generate_response(message: str, session_id: str = "default") -> Dict[str, Any]:
+        guard_error = ChatService._local_only_guard()
+        if guard_error:
+            return guard_error
         try:
             routing = route_model(message)
             model_name = routing["model"]
@@ -111,7 +115,12 @@ class ChatService:
             history = ss.get_context_messages(session_id, max_messages=10)
             messages = ChatService._build_messages(message, routing, context, search_context, history)
 
-            result = CloudLLMService.chat_completion(messages=messages, temperature=0.7, local_model=model_name)
+            result = CloudLLMService.chat_completion(
+                messages=messages,
+                temperature=0.7,
+                local_model=model_name,
+                prefer_cloud=False,  # ưu tiên LocalAI để giữ dữ liệu on-prem
+            )
             response_text = ChatService.clean_response(result["content"]) if result.get("content") else ""
 
             ss.add_message(session_id, "user", message)
@@ -143,6 +152,10 @@ class ChatService:
 
     @staticmethod
     def generate_response_stream(message: str, session_id: str = "default") -> Generator:
+        guard_error = ChatService._local_only_guard(stream=True, session_id=session_id)
+        if guard_error:
+            yield guard_error
+            return
         try:
             # Check if AI is busy
             try:
@@ -196,7 +209,12 @@ class ChatService:
             history = ss.get_context_messages(session_id, max_messages=10)
             messages = ChatService._build_messages(message, routing, context, search_context, history)
 
-            result = CloudLLMService.chat_completion(messages=messages, temperature=0.7, local_model=model_name)
+            result = CloudLLMService.chat_completion(
+                messages=messages,
+                temperature=0.7,
+                local_model=model_name,
+                prefer_cloud=False,
+            )
             response_text = ChatService.clean_response(result["content"]) if result.get("content") else ""
 
             ss.add_message(session_id, "user", message)
@@ -236,11 +254,54 @@ class ChatService:
         return {"status": "ok", "message": "Đã xóa ngữ cảnh hội thoại", "session_id": session_id}
 
     @staticmethod
+    def _local_only_guard(stream: bool = False, session_id: str = "default"):
+        if not settings.LOCAL_ONLY_MODE:
+            return None
+        models_ready = ModelGuard.is_ready()
+        localai_ready = CloudLLMService.localai_health_check(model=settings.MODEL_NAME, timeout=8)
+        if models_ready and localai_ready:
+            return None
+
+        message = "⚠️ Local-only mode đang bật nhưng hệ thống chưa sẵn sàng. "
+        if not models_ready:
+            missing = [m for m, status in ModelGuard.status().items() if status != "present"]
+            message += f"Thiếu model: {', '.join(missing)}. "
+        if not localai_ready:
+            message += "LocalAI không phản hồi — kiểm tra container phobert-localai."
+
+        if stream:
+            return {
+                "step": "done",
+                "data": {
+                    "response": message,
+                    "model": settings.MODEL_NAME,
+                    "provider": "local-only-guard",
+                    "route": "guard",
+                    "session_id": session_id,
+                    "rag_used": False,
+                    "search_used": False,
+                    "sources": [],
+                    "web_sources": [],
+                    "tokens": {"prompt_tokens": 0, "completion_tokens": 0, "total_tokens": 0},
+                    "error": True,
+                },
+            }
+
+        return {
+            "response": message,
+            "model": settings.MODEL_NAME,
+            "provider": "local-only-guard",
+            "session_id": session_id,
+            "error": True,
+        }
+
+    @staticmethod
     def assess_system(system_data: Dict[str, Any], model_mode: str = "hybrid") -> Dict[str, Any]:
-        from services.controls_catalog import get_categories, get_flat_controls, calc_compliance, build_weight_breakdown, BUILTIN_CONTROLS
+        from services.controls_catalog import get_categories, get_flat_controls, calc_compliance, build_weight_breakdown
         from services.assessment_helpers import (
             build_chunk_prompt, validate_chunk_output, gap_items_to_markdown,
-            build_full_prompt, build_weight_breakdown_txt, compress_for_phase2, build_sys_summary
+            build_full_prompt, build_weight_breakdown_txt, compress_for_phase2,
+            build_sys_summary, infer_gap_from_control
         )
 
         effective_mode = model_mode or system_data.get("model_mode", "hybrid")
@@ -318,6 +379,37 @@ class ChatService:
                     effective_mode = "cloud"
                     logger.warning("[Assessment] hybrid→cloud fallback (LocalAI unavailable)")
 
+        # ── If LocalAI fails mid-run for hybrid → retry phase with cloud ────
+        def _try_phase(messages, temperature, local_model, task_type, priority=False):
+            """Try LocalAI first (if configured), then fallback to cloud if local load fails in hybrid/cloud modes."""
+            errors = []
+            # If in hybrid and local is intended
+            if effective_mode in ("local", "hybrid"):
+                try:
+                    return CloudLLMService._call_localai(local_model, messages, temperature, priority=priority)
+                except Exception as e:
+                    err_str = str(e)
+                    errors.append(f"LocalAI: {err_str}")
+                    logger.warning(f"[Assessment] LocalAI failed (task={task_type}): {err_str}")
+                    is_load_error = any(kw in err_str for kw in ["Model load failed", "could not load model", "rpc error", "Canceled", "HTTP 500", "Connection error"])
+                    if effective_mode == "local":
+                        raise
+                    # In hybrid: attempt cloud fallback for the phase
+                    if is_load_error and settings.cloud_api_key_list:
+                        try:
+                            cloud_model = CloudLLMService._resolve_model("iso_analysis")
+                            cloud_res = CloudLLMService._call_open_claude(messages, temperature, max_tokens=MIN_MAX_TOKENS, model=cloud_model, task_type="iso_analysis")
+                            cloud_res["provider"] = cloud_res.get("provider", "open-claude") + "-fallback"
+                            return cloud_res
+                        except Exception as ce:
+                            errors.append(f"Cloud fallback: {ce}")
+                            logger.error(f"[Assessment] Cloud fallback failed after LocalAI error: {ce}")
+            else:
+                # cloud mode only
+                return CloudLLMService._call_open_claude(messages, temperature, max_tokens=MIN_MAX_TOKENS, task_type=task_type)
+
+            raise Exception("; ".join(errors))
+
         # ── Xác định task_type + model_name cho từng Phase ──────────────────
         # Phase 1: SecurityLM — phân tích GAP kỹ thuật (domain-specific)
         # Phase 2: Meta-Llama — format báo cáo (general language model)
@@ -377,11 +469,12 @@ class ChatService:
                     chunk_gap_items = None
                     for attempt in range(3):
                         try:
-                            chunk_result = CloudLLMService.chat_completion(
+                            chunk_result = _try_phase(
                                 messages=chunk_messages,
                                 temperature=0.2,
                                 local_model=p1_model or settings.SECURITY_MODEL_NAME,
-                                task_type=p1_task_type
+                                task_type=p1_task_type,
+                                priority=True,
                             )
                             if result_p1 is None:
                                 result_p1 = chunk_result
@@ -396,6 +489,11 @@ class ChatService:
 
                     if chunk_gap_items:
                         all_gap_items.extend(chunk_gap_items)
+                    elif chunk_gap_items is None:
+                        # All LLM attempts failed — infer gaps from control metadata as fallback
+                        logger.warning(f"[Assessment] Chunk '{cat_name}' all attempts failed — using inferred gaps")
+                        for ctrl in missing_in_cat[:10]:
+                            all_gap_items.append(infer_gap_from_control(ctrl, cat_name))
 
                 raw_analysis = gap_items_to_markdown(all_gap_items)
                 logger.info(f"[Assessment] All chunks complete — {len(all_gap_items)} total gaps, raw: {len(raw_analysis)} chars")
@@ -406,11 +504,12 @@ class ChatService:
                     {"role": "system", "content": security_prompt},
                     {"role": "user", "content": user_msg},
                 ]
-                result_p1 = CloudLLMService.chat_completion(
+                result_p1 = _try_phase(
                     messages=messages_p1,
                     temperature=0.3,
                     local_model=p1_model or settings.SECURITY_MODEL_NAME,
-                    task_type=p1_task_type
+                    task_type=p1_task_type,
+                    priority=True,
                 )
                 raw_analysis = result_p1.get("content", "")
 
@@ -451,11 +550,12 @@ class ChatService:
                 f"Tổ chức: {org_name} | Ngành: {industry} | Tiêu chuẩn: {std_name} | {today}\n\n"
                 f"--- DỮ LIỆU ĐẦU VÀO ---\n{raw_analysis_p2}{weight_summary}"
             )
-            result_p2 = CloudLLMService.chat_completion(
+            result_p2 = _try_phase(
                 messages=[{"role": "user", "content": formatting_prompt}],
                 temperature=0.5,
                 local_model=p2_model or settings.MODEL_NAME,
-                task_type=p2_task_type
+                task_type=p2_task_type,
+                priority=False,
             )
             markdown_report = result_p2.get("content", "")
 

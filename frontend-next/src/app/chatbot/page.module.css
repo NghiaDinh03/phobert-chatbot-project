@@ -1,3 +1,53 @@
+.aiBadgeRow {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    margin-top: 4px;
+}
+
+.aiBadge {
+    display: inline-flex;
+    align-items: center;
+    padding: 2px 10px;
+    border-radius: 999px;
+    font-size: 0.65rem;
+    font-weight: 600;
+    letter-spacing: 0.3px;
+    border: 1px solid transparent;
+}
+
+.badgeLocal {
+    background: rgba(16, 185, 129, 0.15);
+    border-color: rgba(16, 185, 129, 0.4);
+    color: var(--accent-green);
+}
+
+.badgeHybrid {
+    background: rgba(59, 130, 246, 0.12);
+    border-color: rgba(59, 130, 246, 0.3);
+    color: var(--accent-blue);
+}
+
+.badgeWarn {
+    background: rgba(239, 68, 68, 0.12);
+    border-color: rgba(239, 68, 68, 0.3);
+    color: var(--accent-red);
+}
+
+.aiBadgeNote {
+    font-size: 0.62rem;
+    color: var(--text-dim);
+}
+
+.aiWarning {
+    font-size: 0.7rem;
+    color: var(--accent-red);
+    background: rgba(239, 68, 68, 0.12);
+    border: 1px solid rgba(239, 68, 68, 0.3);
+    padding: 2px 8px;
+    border-radius: 999px;
+}
+
 .layout {
     display: flex;
     height: calc(100vh - 56px);
@@ -323,6 +373,7 @@
         opacity: 0;
         transform: translateY(4px);
     }
+
     to {
         opacity: 1;
         transform: translateY(0);
@@ -422,6 +473,8 @@
     width: 100%;
     margin: 0.4rem 0;
     font-size: 0.82rem;
+    overflow-x: auto;
+    display: block;
 }
 
 .md th,
@@ -461,6 +514,32 @@
     letter-spacing: 0.2px;
 }
 
+.sourcesList {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+    margin-top: 4px;
+}
+
+.sourceItem {
+    font-size: 0.7rem;
+    color: var(--accent-blue);
+    background: rgba(59, 130, 246, 0.12);
+    border: 1px solid rgba(59, 130, 246, 0.2);
+    padding: 2px 8px;
+    border-radius: 999px;
+    text-decoration: none;
+}
+
+.sourceItem:hover {
+    background: rgba(59, 130, 246, 0.2);
+}
+
+.sourceMore {
+    font-size: 0.7rem;
+    color: var(--text-dim);
+}
+
 .typingWrap {
     display: flex;
     align-items: center;
@@ -491,12 +570,14 @@
 }
 
 @keyframes pulse {
+
     0%,
     60%,
     100% {
         opacity: 0.3;
         transform: scale(0.85);
     }
+
     30% {
         opacity: 1;
         transform: scale(1);
@@ -508,6 +589,9 @@
     color: var(--text-dim);
     animation: statusFade 0.3s ease;
     white-space: nowrap;
+    max-width: 240px;
+    overflow: hidden;
+    text-overflow: ellipsis;
 }
 
 @keyframes statusFade {
@@ -515,6 +599,7 @@
         opacity: 0;
         transform: translateX(-4px);
     }
+
     to {
         opacity: 1;
         transform: translateX(0);
@@ -589,6 +674,7 @@
 }
 
 @media (max-width: 640px) {
+
     .topBar,
     .chatArea,
     .inputBar {

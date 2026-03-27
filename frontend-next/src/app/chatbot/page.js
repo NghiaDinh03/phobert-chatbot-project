@@ -6,12 +6,12 @@ import remarkGfm from 'remark-gfm'
 import styles from './page.module.css'
 
 const SUGGESTIONS = [
-    { icon: '📋', text: 'ISO 27001 là gì?' },
-    { icon: '🔍', text: 'TCVN 14423 quy định gì?' },
-    { icon: '💡', text: 'Làm sao triển khai ISMS?' },
-    { icon: '✅', text: 'Cách đánh giá rủi ro ATTT' },
-    { icon: '🌐', text: 'Tin tức bảo mật mới nhất' },
-    { icon: '🛡️', text: 'Xu hướng an ninh mạng 2026' }
+    { icon: '📋', text: 'ISO 27001:2022 có gì mới so với 2013?' },
+    { icon: '🛡️', text: 'TCVN 11930 yêu cầu kỹ thuật gì?' },
+    { icon: '💡', text: 'Cách triển khai ISMS cho doanh nghiệp nhỏ' },
+    { icon: '🔴', text: 'Các lỗ hổng bảo mật nguy hiểm nhất 2026' },
+    { icon: '🌐', text: 'Tin tức an ninh mạng mới nhất' },
+    { icon: '👤', text: 'Tác giả của CyberAI là ai?' },
 ]
 
 const SESSIONS_KEY = 'phobert_chat_sessions'
@@ -62,6 +62,38 @@ export default function ChatbotPage() {
     const [sidebar, setSidebar] = useState(false)
     const [ready, setReady] = useState(false)
     const mountedRef = useRef(true)
+    const [aiMode, setAiMode] = useState({ mode: 'unknown', details: null })
+
+    useEffect(() => {
+        let cancelled = false
+        async function fetchAiMode() {
+            try {
+                const res = await fetch('/api/system/ai-status')
+                if (!res.ok) return
+                const data = await res.json()
+                if (cancelled) return
+                const modelStatus = data?.model_guard || {}
+                const missing = Object.entries(modelStatus).filter(([, status]) => status !== 'present')
+                const modeLabel = data?.mode_label === 'local-only'
+                    ? 'Local-only'
+                    : data?.mode_label === 'local-first'
+                        ? 'Local-first'
+                        : 'Cloud-first'
+
+                let badgeTone = 'badgeHybrid'
+                if (modeLabel === 'Local-only' || modeLabel === 'Local-first') badgeTone = 'badgeLocal'
+                if (!data.local_only_mode && data?.open_claude?.status?.startsWith('error')) badgeTone = 'badgeWarn'
+                if (missing.length > 0 || data?.localai?.status?.startsWith('unreachable')) badgeTone = 'badgeWarn'
+
+                setAiMode({ mode: modeLabel, badgeTone, missing, details: data })
+            } catch (e) {
+                if (!cancelled) setAiMode(prev => ({ ...prev, mode: 'Không xác định', badgeTone: 'badgeWarn' }))
+            }
+        }
+        fetchAiMode()
+        const timer = setInterval(fetchAiMode, 10000)
+        return () => { cancelled = true; clearInterval(timer) }
+    }, [])
     const endRef = useRef(null)
     const inputRef = useRef(null)
 
@@ -244,7 +276,8 @@ export default function ChatbotPage() {
                         time: now(),
                         searchUsed: finalData.search_used,
                         ragUsed: finalData.rag_used,
-                        webSources: finalData.web_sources
+                        webSources: finalData.web_sources,
+                        sources: finalData.sources
                     }
                     const final = [...next, botMsg]
                     directSaveSession(id, final)
@@ -265,7 +298,8 @@ export default function ChatbotPage() {
                     time: now(),
                     searchUsed: data.search_used,
                     ragUsed: data.rag_used,
-                    webSources: data.web_sources
+                    webSources: data.web_sources,
+                    sources: data.sources
                 }
                 const final = [...next, botMsg]
                 directSaveSession(id, final)
@@ -349,7 +383,20 @@ export default function ChatbotPage() {
                         </button>
                         <div>
                             <h1 className={styles.pageTitle}>CyberAI Assistant</h1>
-                            <p className={styles.pageSub}>ISO 27001 · TCVN 14423 · RAG · Web Search</p>
+                            <p className={styles.pageSub}>ISO 27001 · TCVN 11930 · RAG ChromaDB · Web Search</p>
+                            <div className={styles.aiBadgeRow}>
+                                <span className={`${styles.aiBadge} ${styles[aiMode.badgeTone || 'badgeHybrid']}`}>
+                                    {aiMode.mode}
+                                </span>
+                                {aiMode.missing?.length > 0 && (
+                                    <span className={styles.aiBadgeNote}>
+                                        Thiếu: {aiMode.missing.map(([name]) => name).join(', ')}
+                                    </span>
+                                )}
+                                {aiMode.details && (!aiMode.details.models_ready || aiMode.missing?.length > 0) && (
+                                    <span className={styles.aiWarning}>⚠ LocalAI thiếu model hoặc chưa sẵn sàng</span>
+                                )}
+                            </div>
                         </div>
                     </div>
                     <div className={styles.topRight}>
@@ -383,6 +430,16 @@ export default function ChatbotPage() {
                                         ) : m.content}
                                         {m.searchUsed && <span className={styles.badge}>🌐 Web Search</span>}
                                         {m.ragUsed && <span className={styles.badge}>📚 RAG</span>}
+                                        {m.ragUsed && m.sources?.length > 0 && (
+                                            <div className={styles.sourcesList}>
+                                                {m.sources.slice(0, 4).map((src, idx) => (
+                                                    <a key={idx} href={src.startsWith('http') ? src : '#'} target="_blank" rel="noreferrer" className={styles.sourceItem}>
+                                                        🔗 {src}
+                                                    </a>
+                                                ))}
+                                                {m.sources.length > 4 && <span className={styles.sourceMore}>…</span>}
+                                            </div>
+                                        )}
                                         <span className={styles.time}>{m.time}</span>
                                     </div>
                                     {m.role === 'user' && <div className={styles.avatarUser}>👤</div>}

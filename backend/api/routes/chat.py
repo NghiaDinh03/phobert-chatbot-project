@@ -3,6 +3,7 @@
 from fastapi import APIRouter, HTTPException
 from fastapi.responses import StreamingResponse
 from pydantic import BaseModel, Field
+from core.config import settings
 from services.chat_service import ChatService
 from typing import Optional
 import json
@@ -77,4 +78,8 @@ async def get_chat_history(session_id: str):
 
 @router.get("/chat/health")
 async def chat_health():
-    return ChatService.health_check()
+    base = ChatService.health_check()
+    from services.model_guard import ModelGuard
+    base["model_guard"] = ModelGuard.status()
+    base["local_only_mode"] = settings.LOCAL_ONLY_MODE
+    return base

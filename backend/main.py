@@ -89,6 +89,8 @@ def on_startup():
     logger.info(f"   CORS origins: {settings.cors_origins_list}")
     logger.info(f"   CPU threads (torch): {settings.TORCH_THREADS}")
 
+    from services.model_guard import ModelGuard
+    ModelGuard.refresh()
     from services.news_service import start_bg_worker
     start_bg_worker()
 

@@ -17,26 +17,48 @@ def build_chunk_prompt(cat_name: str, cat_controls: list, implemented: list,
                        sys_summary: str, std_name: str, rag_ctx: str = "") -> str:
     missing = [c for c in cat_controls if c["id"] not in implemented]
     present = [c for c in cat_controls if c["id"] in implemented]
+    # Cap at 15 missing controls per chunk to keep prompt < 1200 tokens
     missing_str = "\n".join(
-        f"  ❌ {c['id']} [{c.get('weight','medium').upper()}] {c.get('label','')}"
-        for c in missing[:20]
+        f"❌{c['id']}[{c.get('weight','m').upper()[0]}]{c.get('label','')[:40]}"
+        for c in missing[:15]
     )
-    present_str = ", ".join(c["id"] for c in present[:15])
-    rag_section = f"\nTÀI LIỆU THAM CHIẾU {std_name}:\n{rag_ctx[:600]}\n" if rag_ctx else ""
+    present_str = ", ".join(c["id"] for c in present[:12])
+    # RAG: 350 chars max to leave room for controls list
+    rag_section = f"\nREF:{rag_ctx[:350]}\n" if rag_ctx else ""
+    # sys_summary: keep most critical fields only, cap at 400 chars
     return (
-        f"Auditor {std_name} — Category: {cat_name}\n"
-        f"Tuân thủ tổng: {pct}% ({sc}/{mx})\n"
-        f"{rag_section}\n"
-        f"CONTROLS ĐÃ ĐẠT: {present_str or 'Không có'}\n"
-        f"CONTROLS CHƯA ĐẠT:\n{missing_str or 'Tất cả đã đạt'}\n\n"
-        f"THÔNG TIN HỆ THỐNG:\n{sys_summary[:700]}\n\n"
-        f"NHIỆM VỤ: Với mỗi control CHƯA ĐẠT trong nhóm '{cat_name}', "
-        f"trả về JSON array (chỉ JSON, không text thêm):\n"
-        f'[{{"id":"CTL.XX","severity":"critical|high|medium|low",'
-        f'"likelihood":1-5,"impact":1-5,"risk":1-25,'
-        f'"gap":"mô tả GAP ngắn","recommendation":"1 câu khuyến nghị"}}]\n'
-        f"Nếu tất cả đã đạt, trả về: []"
+        f"ISO Auditor — {std_name} | {cat_name} | Tuân thủ:{pct}%({sc}/{mx})\n"
+        f"HỆ THỐNG:{sys_summary[:400]}\n"
+        f"{rag_section}"
+        f"ĐÃ ĐẠT:{present_str or 'none'}\n"
+        f"CHƯA ĐẠT:\n{missing_str or 'all done'}\n\n"
+        f"Trả về JSON array cho mỗi control CHƯA ĐẠT (chỉ JSON):\n"
+        f'[{{"id":"XX","severity":"critical|high|medium|low",'
+        f'"likelihood":3,"impact":4,"risk":12,'
+        f'"gap":"lỗ hổng","recommendation":"hành động"}}]\n'
+        f"Nếu tất cả đạt: []"
     )
+
+
+def infer_gap_from_control(ctrl: dict, cat_name: str) -> dict:
+    """Fallback: infer a gap item from control metadata when SecurityLM fails."""
+    sev_map = {"critical": "critical", "high": "high", "medium": "medium", "low": "low"}
+    w = ctrl.get("weight", "medium")
+    sev = sev_map.get(w, "medium")
+    l_map = {"critical": 4, "high": 3, "medium": 2, "low": 1}
+    i_map = {"critical": 4, "high": 3, "medium": 2, "low": 1}
+    likelihood = l_map.get(w, 2)
+    impact = i_map.get(w, 2)
+    return {
+        "id": ctrl["id"],
+        "category": cat_name,
+        "severity": sev,
+        "likelihood": likelihood,
+        "impact": impact,
+        "risk": likelihood * impact,
+        "gap": f"{ctrl.get('label', ctrl['id'])} chưa được triển khai",
+        "recommendation": "Triển khai và tài liệu hóa biện pháp kiểm soát này",
+    }
 
 
 def validate_chunk_output(content: str, cat_name: str) -> Optional[List[Dict]]:

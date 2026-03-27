@@ -662,3 +662,48 @@ English Term (Nghĩa tiếng Việt)
 - `WAF (Web Application Firewall - Tường lửa ứng dụng web)`
 - `HA (High Availability - Tính sẵn sàng cao)`
 - `Phishing (Lừa đảo qua email)`, `Ransomware (Mã độc tống tiền)`, `Data Leak (Rò rỉ dữ liệu)`
+
+---
+
+## Cải tiến 27/03/2026 — Tự rà quét và nâng cấp
+
+### Assessment Pipeline — Compact Prompts + Fallback
+- `build_chunk_prompt()` rút gọn: prompt từ ~1500 → ~800 tokens, sys_summary[:400], RAG[:350]
+- `infer_gap_from_control()` — khi SecurityLM thất bại tất cả 3 attempt, tự suy ra GAP từ metadata control (weight → severity, likelihood, impact)
+- Không bao giờ trả về báo cáo rỗng: luôn có ít nhất 1 GAP per failed category
+
+### Chatbot UX
+- Suggestion chips: sửa "TCVN 14423" → "TCVN 11930", thêm "Tác giả CyberAI là ai?" (test author_profile RAG)
+- pageSub: sửa "TCVN 14423" → "TCVN 11930 · RAG ChromaDB · Web Search"
+- welcomeSub cập nhật đúng tiêu chuẩn
+
+### News History UX — 7 ngày, không xóa
+- History sidebar: thêm date filter (group by ngày) + thêm card UI khớp với news cards
+- Mỗi bài lịch sử: hiển thị giờ, nguồn, audio play button, summary toggle
+- Label: "Lưu trữ không xóa tự động" để user biết data an toàn
+
+### Storage Analysis — News JSON
+**Hiện tại:** mỗi bài = 1 JSON file ~2-10KB trong `/data/summaries/`
+**Vấn đề:** 7 ngày × 30 bài × 3 category = ~630 JSON files + MP3 audio
+**Ước tính disk:**
+  - JSON: 630 × 5KB = ~3MB (không đáng kể)
+  - MP3: 630 × 200KB = ~126MB (đây là vấn đề chính)
+**Khuyến nghị (không thay đổi format để tránh break hiện tại):**
+  - MP3 đã là compressed format — không cần gzip thêm
+  - JSON files nhỏ, không cần compress
+  - Thêm disk monitoring API (`/api/system/disk`) để user biết sử dụng bao nhiêu
+  - Policy: giữ 7 ngày, KHÔNG auto-delete; admin có thể dọn thủ công qua analytics
+  - Tương lai: có thể dùng MessagePack thay JSON cho summaries (giảm ~30%)
+
+### controls_catalog.py (đã hoàn thành)
+- ISO 27001:2022 (93 controls, 4 categories) — server-side catalog
+- TCVN 11930:2017 (34 controls, 5 categories) — chunked analysis hoạt động đúng
+- `calc_compliance()`, `build_weight_breakdown()`, `get_categories()`, `get_flat_controls()` — tái sử dụng ở cả assessment và benchmark
+
+### assessment_helpers.py (đã hoàn thành)
+- `build_chunk_prompt()` — compact, < 800 tokens/chunk
+- `validate_chunk_output()` — parse JSON array từ SecurityLM, retry-safe
+- `gap_items_to_markdown()` — Risk Register table từ structured gaps
+- `infer_gap_from_control()` — fallback khi LLM thất bại
+- `compress_for_phase2()` — trim raw_analysis > 2500 chars cho Llama 8B
+- `build_sys_summary()` — compact system info cho chunk prompt
