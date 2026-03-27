@@ -771,6 +771,99 @@
     line-height: 1.5;
 }
 
+/* ── History Inline Tab ──────────────────────── */
+
+.historyInline {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+}
+
+.historyInlineHeader {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 0.75rem;
+    font-size: 0.8rem;
+    color: var(--text-dim);
+    padding-bottom: 0.5rem;
+    border-bottom: 1px solid var(--border);
+}
+
+.historyInlineFilters {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+    align-items: flex-end;
+}
+
+.historyInlineCatFilter {
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    color: var(--text-secondary);
+    cursor: pointer;
+    font-family: inherit;
+    font-size: 0.78rem;
+    padding: 5px 10px;
+    outline: none;
+}
+
+.historyInlineGrid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(340px, 1fr));
+    gap: 0.75rem;
+}
+
+.historyInlineCard {
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 0.85rem 1rem;
+    transition: border-color 0.15s;
+    display: flex;
+    flex-direction: column;
+    gap: 0.35rem;
+}
+
+.historyInlineCard:hover {
+    border-color: var(--border-active);
+}
+
+.historyInlineCardTop {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 0.5rem;
+}
+
+.historyInlineTitle {
+    font-size: 0.82rem;
+    font-weight: 600;
+    color: var(--text-secondary);
+    text-decoration: none;
+    line-height: 1.4;
+    flex: 1;
+}
+
+.historyInlineTitle:hover {
+    color: var(--accent-blue);
+    text-decoration: underline;
+}
+
+@media (max-width: 640px) {
+    .historyInlineGrid {
+        grid-template-columns: 1fr;
+    }
+    .historyInlineHeader {
+        flex-direction: column;
+    }
+    .historyInlineFilters {
+        align-items: flex-start;
+    }
+}
+
 /* ── History enhancements ────────────────────── */
 
 .historyHeaderSub {

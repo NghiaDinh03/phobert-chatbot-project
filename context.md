@@ -665,6 +665,46 @@ English Term (Nghĩa tiếng Việt)
 
 ---
 
+## Tự đánh giá 3 tính năng chính (27/03/2026)
+
+### 1. Chatbot AI
+**Thuật toán:** RAG (ChromaDB cosine, top_k=5) + keyword routing (model_router.py) + optional DuckDuckGo web search
+**Lưu trữ:** localStorage sessions (client) + `/data/sessions/` JSON (24h TTL)
+**Input/Output:** text → route_model() → ChromaDB/search/general → CloudLLM (primary) / LocalAI (fallback) → markdown response
+**LocalAI:** fallback khi cloud fail; busy check khi news đang chạy
+**Đánh giá:** ✅ Hoạt động tốt. RAG có 221 chunks từ 21 tài liệu tiêu chuẩn. Author profile có trong ChromaDB.
+**Cần cải thiện:** LocalAI path dùng sync call, không phải true streaming → user thấy delay dài
+
+### 2. Đánh giá Hệ thống theo Tiêu chuẩn
+**Thuật toán:** 2-phase: SecurityLM 7B chunked (4 categories × ~800 tokens) → Meta-Llama/Cloud format report
+**Lưu trữ:** JSON per assessment (`/data/assessments/`), json_data field (risk_summary, weight_breakdown, top_gaps)
+**Input/Output:** form (controls + infra) → BackgroundTask → poll 10s → Markdown report + dashboard JSON
+**LocalAI:** chunked analysis, health check trước khi gọi, auto-fallback local→hybrid→cloud
+**Đánh giá:** ✅ Pipeline hoạt động. TCVN 11930 chunked đã được fix (controls_catalog.py). Fallback infer_gap khi LLM fail.
+**Cần cải thiện:** SecurityLM output validation cần test thực tế với model 7B; JSON parsing regex cần test edge cases
+
+### 3. Tin tức (News Aggregator + TTS)
+**Thuật toán:** RSS → scrape (trafilatura/BS4) → clean noise → AI translate (Cloud) → Edge-TTS → cache JSON+MP3
+**Lưu trữ:** JSON per article + MP3, ~130MB/7 ngày. Không auto-delete.
+**Input/Output:** RSS URL → article text → translated Vietnamese + audio
+**Lọc nội dung:** `_is_noise_paragraph()` loại bỏ nav/promo/related; cutoff markers tìm phần "Related Articles" và cắt trước khi gửi AI
+**Đánh giá:** ✅ Hoạt động. Cải thiện noise filter. History tab inline, filter theo ngày mặc định là hôm nay.
+**Cần cải thiện:**
+- Dedicated TTS summary prompt — hiện tại AI translate toàn bộ bài, TTS đọc quá dài (5-15 phút); cần thêm bước tạo summary 3-5 câu riêng cho TTS
+- Scraper vẫn có thể lấy related article text từ một số trang — cần test với các domain cụ thể
+
+### Storage Format Analysis
+| Format | Size/article | Pros | Cons |
+|--------|-------------|------|------|
+| JSON (hiện tại) | ~5KB | Đơn giản, debug dễ | Nhiều file nhỏ |
+| JSONL + gzip | ~2KB/day | Giảm 60% disk, 1 file/ngày | Phức tạp, breaking change |
+| MessagePack | ~3KB | Nhỏ hơn JSON 30% | Cần thư viện, không human-readable |
+| **Kết luận** | - | Giữ JSON hiện tại | JSON files nhỏ, tổng ~3MB; MP3 mới là vấn đề chính (~126MB) |
+
+**Khuyến nghị:** Giữ JSON, thêm option compress audio cũ (MP3 > 30 ngày) vào zip archive — tiết kiệm đến 70% dung lượng audio.
+
+---
+
 ## Cải tiến 27/03/2026 — Tự rà quét và nâng cấp
 
 ### Assessment Pipeline — Compact Prompts + Fallback

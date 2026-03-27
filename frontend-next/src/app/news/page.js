@@ -29,7 +29,7 @@ export default function NewsPage() {
     const [reprocessing, setReprocessing] = useState({}) // { [url]: boolean }
     const [playingHistoryId, setPlayingHistoryId] = useState(null)
     const historyAudioRef = useRef(null)
-    const [historyDateFilter, setHistoryDateFilter] = useState('all')
+    const [historyDateFilter, setHistoryDateFilter] = useState(() => new Date().toLocaleDateString('vi-VN'))
     const [diskInfo, setDiskInfo] = useState(null)
 
     const fetchHistory = useCallback(async (cat = 'all') => {
@@ -370,9 +370,6 @@ export default function NewsPage() {
                     <span className={styles.subtitle}>Tổng hợp tin tức thị trường, chứng khoán và an ninh mạng giúp AI phân tích</span>
                 </div>
                 <div className={styles.headerRight}>
-                    <button className={styles.refreshBtn} onClick={() => setShowHistory(true)} style={{ marginRight: '10px' }}>
-                        🕒 Lịch sử 7 ngày
-                    </button>
                     {aiStatus !== 'Đang rảnh' && (
                         <div className={styles.aiMonitor}>
                             <span className={styles.pulse}></span>
@@ -411,15 +408,25 @@ export default function NewsPage() {
                             <button
                                 key={cat.id}
                                 className={`${styles.tab} ${activeTab === cat.id ? styles.tabActive : ''}`}
-                                onClick={() => setActiveTab(cat.id)}
+                                onClick={() => { setActiveTab(cat.id); if (cat.id !== 'history') setShowHistory(false) }}
                             >
                                 <span className={styles.tabIcon}>{cat.icon}</span>
                                 <span className={styles.tabName}>{cat.name}</span>
                             </button>
                         ))}
+                        <button
+                            className={`${styles.tab} ${activeTab === 'history' ? styles.tabActive : ''}`}
+                            onClick={() => {
+                                setActiveTab('history')
+                                if (historyData.length === 0) fetchHistory(historyTab)
+                            }}
+                        >
+                            <span className={styles.tabIcon}>📚</span>
+                            <span className={styles.tabName}>Lịch sử 7 ngày</span>
+                        </button>
                     </div>
 
-                    <button
+                    {activeTab !== 'history' && <button
                         className={styles.playAllBtn}
                         onClick={() => {
                             if (isPlayAll) {
@@ -438,12 +445,92 @@ export default function NewsPage() {
                         }}
                     >
                         {isPlayAll ? '⏹️ Dừng phát' : '▶️ Phát tất cả'}
-                    </button>
+                    </button>}
                 </div>
             )}
 
             <div className={styles.content}>
-                {(loading && !isSearchMode) ? (
+                {/* ── History Tab Content ─────────────────── */}
+                {activeTab === 'history' && !isSearchMode ? (
+                    <div className={styles.historyInline}>
+                        <div className={styles.historyInlineHeader}>
+                            <span>{historyData.length} bài trong 7 ngày · Lưu trữ không xóa tự động</span>
+                            <div className={styles.historyInlineFilters}>
+                                <select
+                                    className={styles.historyInlineCatFilter}
+                                    value={historyTab}
+                                    onChange={e => { setHistoryTab(e.target.value); fetchHistory(e.target.value) }}
+                                >
+                                    <option value="all">Tất cả danh mục</option>
+                                    {CATEGORIES.map(c => <option key={c.id} value={c.id}>{c.icon} {c.name}</option>)}
+                                </select>
+                                {(() => {
+                                    const dates = [...new Set(historyData.map(h => { try { return new Date(h.added_at).toLocaleDateString('vi-VN') } catch { return '' } }).filter(Boolean))]
+                                    return dates.length > 1 ? (
+                                        <div className={styles.historyDateFilter}>
+                                            <button className={`${styles.hdateBtn} ${historyDateFilter === 'all' ? styles.active : ''}`} onClick={() => setHistoryDateFilter('all')}>Tất cả</button>
+                                            {dates.slice(0, 7).map(d => (
+                                                <button key={d} className={`${styles.hdateBtn} ${historyDateFilter === d ? styles.active : ''}`} onClick={() => setHistoryDateFilter(d)}>{d.slice(0, 5)}</button>
+                                            ))}
+                                        </div>
+                                    ) : null
+                                })()}
+                            </div>
+                        </div>
+                        {historyLoading ? (
+                            <div className={styles.loadingWrap}><div className={styles.spinner} /><p>Đang tải lịch sử...</p></div>
+                        ) : historyData.length === 0 ? (
+                            <div className={styles.emptyWrap}><p>Chưa có lịch sử trong 7 ngày qua</p></div>
+                        ) : (
+                            <div className={styles.historyInlineGrid}>
+                                {historyData.filter(h => {
+                                    if (historyDateFilter === 'all') return true
+                                    try { return new Date(h.added_at).toLocaleDateString('vi-VN') === historyDateFilter } catch { return false }
+                                }).map((hItem, idx) => (
+                                    <div key={idx} className={styles.historyInlineCard}>
+                                        <div className={styles.historyInlineCardTop}>
+                                            <a href={hItem.url} target="_blank" rel="noopener noreferrer" className={styles.historyInlineTitle}>
+                                                {hItem.title_vi || hItem.title}
+                                            </a>
+                                            {hItem.audio_cached === true && hItem.hash && (
+                                                <button
+                                                    className={`${styles.historyPlayBtn} ${playingHistoryId === hItem.hash ? styles.historyPlayBtnActive : ''}`}
+                                                    onClick={() => {
+                                                        if (audioRef.current && !audioRef.current.paused) {
+                                                            audioRef.current.pause()
+                                                            setAudioData(prev => { const n={...prev}; for(let k in n){if(n[k]?.status==='playing')n[k].status='ready'}; return n })
+                                                            playStateRef.current.currentUrl = null
+                                                        }
+                                                        const audioUrl = `/api/news/audio/${hItem.hash}.mp3`
+                                                        if (playingHistoryId === hItem.hash) {
+                                                            if (historyAudioRef.current.paused) historyAudioRef.current.play()
+                                                            else historyAudioRef.current.pause()
+                                                            setPlayingHistoryId(historyAudioRef.current.paused ? null : hItem.hash)
+                                                            return
+                                                        }
+                                                        historyAudioRef.current.src = audioUrl
+                                                        historyAudioRef.current.play()
+                                                        setPlayingHistoryId(hItem.hash)
+                                                    }}
+                                                >{playingHistoryId === hItem.hash && historyAudioRef.current && !historyAudioRef.current.paused ? '⏸️' : '🔊'}</button>
+                                            )}
+                                        </div>
+                                        <div className={styles.historyItemMeta}>
+                                            <span className={styles.historyItemDate}>{(() => { try { return new Date(hItem.added_at).toLocaleString('vi-VN', {hour:'2-digit',minute:'2-digit',day:'2-digit',month:'2-digit'}) } catch { return '' } })()}</span>
+                                            {hItem.source && <span className={styles.historyItemSource}>{hItem.source}</span>}
+                                        </div>
+                                        {hItem.summary_text && (
+                                            <details className={styles.historySummary}>
+                                                <summary className={styles.historySummaryToggle}>📝 Xem tóm tắt AI</summary>
+                                                <p className={styles.historySummaryText}>{hItem.summary_text}</p>
+                                            </details>
+                                        )}
+                                    </div>
+                                ))}
+                            </div>
+                        )}
+                    </div>
+                ) : (loading && !isSearchMode) ? (
                     <div className={styles.loadingWrap}>
                         <div className={styles.spinner} />
                         <p>Đang tải tin tức...</p>

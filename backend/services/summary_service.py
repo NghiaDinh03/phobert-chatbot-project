@@ -136,21 +136,40 @@ def _get_domain(url: str) -> str:
 
 
 def _is_noise_paragraph(text: str) -> bool:
-    """Return True if paragraph is likely navigation/promo noise rather than article content."""
+    """Return True if paragraph is navigation/promo/related-article noise."""
     noise_patterns = [
-        r"^(đọc thêm|xem thêm|see also|read more|related|related:)",
-        r"^(share|chia sẻ|theo dõi|follow us|subscribe)",
-        r"^(quảng cáo|advertisement|sponsored)",
-        r"(click here|nhấn vào đây|đăng ký ngay|tải app)",
+        # Related/suggested content
+        r"^(đọc thêm|xem thêm|see also|read more|related[:\s]|related articles|you (may|might) (also )?(like|enjoy|want))",
+        r"^(bài viết (liên quan|đề xuất)|chủ đề liên quan|topics?:|tags?:)",
+        r"(more stories|more from|explore more|trending now|popular now|also read)",
+        # Social/share/subscribe
+        r"^(share|chia sẻ|theo dõi|follow us|subscribe|sign up|newsletter|get the latest)",
+        r"(follow .{0,30} on (twitter|facebook|instagram|linkedin|youtube))",
+        # Ads/promo
+        r"^(quảng cáo|advertisement|sponsored|paid content|partner content|presented by)",
+        r"(click here|nhấn vào đây|đăng ký ngay|tải app|download now|get started)",
+        # Legal/copyright
         r"^copyright\s*©",
         r"all rights reserved",
+        r"^©\s*\d{4}",
+        # Navigation artifacts
+        r"^(home|trang chủ|menu|navigation|skip to content)",
+        r"^(previous|next|newer|older|← back|next →)",
+        # Cookie/GDPR banners
+        r"(cookie|we use cookies|privacy policy|terms of (use|service))",
+        # Empty or whitespace only
+        r"^\s*$",
     ]
     low = text.lower().strip()
     for pat in noise_patterns:
         if re.search(pat, low):
             return True
-    # Very short lines that look like menu items
-    if len(text) < 25 and not re.search(r"\d", text):
+    # Very short lines that look like menu items or tags
+    if len(text.strip()) < 30 and not re.search(r"[\d%$€£¥]", text):
+        return True
+    # Lines that are mostly uppercase (likely headers/nav)
+    alpha = [c for c in text if c.isalpha()]
+    if alpha and sum(1 for c in alpha if c.isupper()) / len(alpha) > 0.7 and len(text) < 60:
         return True
     return False
 
@@ -396,9 +415,23 @@ class SummaryService:
                 text = scrape_article(url)
                 if text and len(text) >= 300:
                     logger.info(f"[ProcessArticle] Step 1 OK — scraped {len(text)} chars (attempt {attempt+1})")
-                    if len(text) > 30000:
-                        logger.info(f"[ProcessArticle] Step 1 — truncating from {len(text)} to 30000 chars")
-                        text = text[:30000]
+                    # Truncate at known "related articles" section markers to avoid feeding noise to AI
+                    _related_cutoff_markers = [
+                        "\n\nRelated Articles", "\n\nRelated:", "\n\nSee Also",
+                        "\n\nRead More", "\n\nYou May Also Like", "\n\nMore Stories",
+                        "\n\nBài viết liên quan", "\n\nXem thêm:", "\n\nĐọc thêm:",
+                        "\n\nChủ đề liên quan", "\n\nTopics:", "\n\nTags:",
+                        "More from this author", "More on this topic",
+                    ]
+                    for marker in _related_cutoff_markers:
+                        idx = text.find(marker)
+                        if idx > 500:
+                            logger.info(f"[ProcessArticle] Step 1 — trimmed at '{marker.strip()}' ({idx} chars kept)")
+                            text = text[:idx]
+                            break
+                    if len(text) > 12000:
+                        logger.info(f"[ProcessArticle] Step 1 — truncating from {len(text)} to 12000 chars")
+                        text = text[:12000]
                     break
                 else:
                     logger.warning(f"[ProcessArticle] Step 1 — insufficient content ({len(text) if text else 0} chars), attempt {attempt+1}/2")
@@ -449,7 +482,7 @@ class SummaryService:
                     "2. GIỮ NGUYÊN 100%: tên người, tổ chức, số liệu, ngày tháng, mã CVE, "
                     "địa chỉ IP, tên phần mềm, tên sản phẩm, tên quốc gia.\n"
                     "3. KHÔNG rút gọn, KHÔNG tóm tắt — dịch ĐẦY ĐỦ từng đoạn.\n"
-                    "4. Bỏ qua: menu điều hướng, quảng cáo, nút bấm, footer, link đăng ký.\n"
+                    "4. Bỏ qua và KHÔNG dịch: menu điều hướng, quảng cáo, nút bấm, footer, link đăng ký, danh sách bài viết đề xuất/liên quan.\n"
                     "5. Văn phong báo chí chuyên nghiệp, phù hợp đọc radio.\n"
                     "6. CHỈ dùng văn bản thuần — KHÔNG dùng ký tự: *, #, [], (), **.\n"
                     "7. CHỈ trả về bản dịch — KHÔNG thêm bất kỳ ghi chú hay giải thích nào.\n"
@@ -470,7 +503,7 @@ class SummaryService:
                     "1. Dòng đầu tiên: tiêu đề bài báo.\n"
                     "2. GIỮ NGUYÊN 100%: tên người, tổ chức, số liệu, ngày tháng, dẫn chứng.\n"
                     "3. KHÔNG rút gọn, KHÔNG tóm tắt — giữ ĐẦY ĐỦ nội dung.\n"
-                    "4. Bỏ qua: HTML, code, quảng cáo, menu, footer, link rác.\n"
+                    "4. Bỏ qua và KHÔNG đưa vào: HTML, code, quảng cáo, menu, footer, link rác, danh sách bài viết liên quan.\n"
                     "5. Văn phong tự nhiên, phù hợp đọc radio.\n"
                     "6. CHỈ dùng văn bản thuần — KHÔNG dùng ký tự: *, #, [], (), **.\n"
                     "7. CHỈ trả về bài biên tập — KHÔNG thêm bất kỳ ghi chú hay giải thích nào.\n"

@@ -1,5 +1,5 @@
 {
-  "timestamp": 1774594516.992047,
+  "timestamp": 1774622086.2178092,
   "translations": {
     "bf3df4f12aa4": "'Chúng tôi đang sống một cuộc sống đơn giản: Tôi là một ngư dân và vợ tôi là một y tá. Chúng tôi đã nghỉ hưu với $ 6 triệu. Đây là cách chúng tôi đã làm nó.",
     "e0d9f05a391e": "Tôi 59 tuổi. Vợ tôi và tôi đã mua một ngôi nhà thứ hai với giá 484.000 đô la với lãi suất 6,2%. Đây sẽ là một cống về hưu của chúng tôi?",
@@ -354,6 +354,32 @@
     "0c225b7caa97": "PayPal Holdings (PYPL) công bố sự ra mắt của PayPal USD trên 70 thị trường",
     "e7c198c13875": "Pfizer Inc. (PFE) công bố kết quả đầu dòng tích cực từ giai đoạn 3 TALAPRO-3 nghiên cứu TALZENNA®",
     "19666bd3e5ac": "Goldman Sachs hạ cấp Magnum Ice Cream Company (MICC) để bán từ Neutral - Heres Tại sao",
-    "3735c21265a0": "Diageo plc (DEO) bị hạ cấp để giữ từ mua - Heres Tại sao"
+    "3735c21265a0": "Diageo plc (DEO) bị hạ cấp để giữ từ mua - Heres Tại sao",
+    "90b3077b88af": "Tiền thưởng trung bình của Phố Wall gấp ba lần thu nhập điển hình của hộ gia đình Mỹ",
+    "2195b1364115": "Tại sao các nhà đầu tư nên đặt 10% tiền của họ trong vàng, nói chiến lược gia này",
+    "03a61b6f420b": "'Anh ấy dường như không cảnh giác lắm: CPA mới của chúng tôi cho biết chúng tôi nợ tiền hoàn thuế $ 443, nhưng chúng tôi thực sự phải trả $ 637. Chúng ta có sa thải anh ta không?",
+    "6b7bb2797f91": "Anh trai tôi nói rằng luật sư có thể đưa anh ta vào viện dưỡng lão Medicaid ở Florida, mặc dù anh ta có nhiều tài sản. Đây có phải là một scam không?",
+    "c013ea83472a": "Các nhà phân tích của Goldman cho biết có một con đường rõ ràng để cổ phiếu Mỹ tăng vào tháng tới sau khi các tổ chức giảm nợ công.",
+    "514ae45108ad": "Mickey Rourke đổ lỗi 'vấn đề nghiêm trọng' với tài sản LA nơi anh ta bị đuổi",
+    "954de461d66a": "Wells Fargo Autograph Card review: Không rườm rà và phần thưởng cao",
+    "fd69fab613a2": "Wells Fargo Active Cash Card review: Không giới hạn 2% tiền mặt trở lại và 0% giới thiệu APR",
+    "0aabaf8d4517": "Thẻ tín dụng tốt nhất để mua sắm trên Amazon cho tháng 3 năm 2026: Tăng mua hàng Amazon của bạn với phần thưởng có giá trị",
+    "5595660de03e": "AARP® Travel Rewards Mastercard® từ Barclays review: Một thẻ phần thưởng vững chắc không chỉ dành cho người cao niên",
+    "3678c3116b1c": "Thẻ tín dụng hoàn tiền mặt tốt nhất cho tháng 3 năm 2026",
+    "6a43b56a1441": "Thuế biệt thự là gì, và chúng hoạt động như thế nào?",
+    "6be2e4f3e9d9": "Phụ huynh có khoản vay sinh viên có thể rơi vào tình trạng vỡ nợ nếu họ không thực hiện các bước sớm",
+    "e185cacd939d": "Tôi có 1.000 đô la nợ thẻ tín dụng. Có ổn không khi tiết kiệm cho một ngôi nhà thay vì trả hết?",
+    "47259bfc9c92": "Trẻ em dưới 13 tuổi hiện có thể giao dịch cổ phiếu mà không cần sự chấp thuận của cha mẹ. Làm thế nào để thông minh về nó, theo các chuyên gia.",
+    "564094ccae91": "Chiến tranh Iran quét sạch 100 tỷ đô la từ cổ phiếu xa xỉ",
+    "e2490174782b": "Tài khoản PayPal của tôi nhận được tiền từ Philippines với hai số điện thoại được liệt kê. Tôi gọi cho họ. Sai lầm lớn.",
+    "186a45cbeddc": "Sự không chắc chắn xung quanh An sinh xã hội, thuế và chăm sóc sức khoẻ có hại cho các hộ gia đình - và nền kinh tế",
+    "909cec2fc356": "Infiniti hy vọng chiếc SUV mới có thể xoay chuyển vận may ở Mỹ",
+    "9edee08843e7": "Người Mỹ đang 'xem xét nghiêm túc' việc mang lại màn hình ghế sau cho hạm đội thân hẹp, trong việc cải tiến trên chuyến bay",
+    "9dd8776c8fb3": "Do Nhân vật chính trị liệu (PTGX) Thuốc Derisked có tiềm năng bom tấn?",
+    "e47e9309d60a": "Toà phúc thẩm Hoa Kỳ làm mất hiệu lực phán quyết trị giá 16,1 tỷ đô la chống lại Argentina về việc bắt giữ YPF",
+    "057246ee8b96": "Thu nhập của AI Builder thổi qua lượt xem. Cổ phiếu tăng vọt 34%.",
+    "b092974f8802": "Cổ phiếu khai thác vàng 2 sẵn sàng toả sáng sau khi điều chỉnh đó",
+    "9604063ca83a": "Nike chứng khoán đấu tranh mạnh mẽ như Wall Street Eyes thu nhập, Trung Quốc tiến bộ",
+    "97296c673074": "Báo cáo phân tích: Paychex Inc"
   }
 }
