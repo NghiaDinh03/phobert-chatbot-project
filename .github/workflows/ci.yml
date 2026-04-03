@@ -7,7 +7,7 @@ on:
     branches: [main, develop]
 
 jobs:
-  # ── Job 1: Backend linting and type checking ──────────────────────────────
+  # ── Job 1: Backend linting ────────────────────────────────────────────────
   backend-lint:
     name: Backend Lint & Type Check
     runs-on: ubuntu-latest
@@ -20,18 +20,25 @@ jobs:
           cache: pip
 
       - name: Install lint dependencies
-        run: pip install ruff mypy types-requests
+        run: pip install ruff
 
       - name: Lint with ruff
-        run: cd backend && ruff check .
+        run: cd backend && ruff check . --select E,W,F --ignore E501,W503
+        # E501 = line too long (many AI prompts are long strings, skip)
+        # W503 = line break before binary operator (style preference)
 
       - name: Type check (non-blocking)
-        run: cd backend && mypy . --ignore-missing-imports || true
+        run: pip install mypy types-requests && cd backend && mypy . --ignore-missing-imports || true
 
   # ── Job 2: Backend tests ──────────────────────────────────────────────────
   backend-test:
     name: Backend Tests
     runs-on: ubuntu-latest
+    env:
+      # Provide a valid JWT secret so config.py passes validation in test env
+      JWT_SECRET: ci-test-secret-key-32chars-minimum
+      DEBUG: "true"
+      DATA_PATH: /tmp/cyberai-test-data
     steps:
       - uses: actions/checkout@v4
 

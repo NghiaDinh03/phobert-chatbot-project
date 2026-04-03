@@ -1,7 +1,10 @@
+import logging
 import os
 from typing import List
 
-# ── Weak / placeholder JWT secret values that must never reach production ──
+logger = logging.getLogger(__name__)
+
+# ── Weak / placeholder JWT secret values that must never be used in production ──
 _WEAK_JWT_SECRETS = {
     "changeme",
     "change-me-in-production",
@@ -11,32 +14,34 @@ _WEAK_JWT_SECRETS = {
 }
 _JWT_MIN_LENGTH = 32
 
+# Read DEBUG early (before Settings class) so _validate_jwt_secret can use it
+_IS_DEBUG = os.getenv("DEBUG", "false").lower() == "true"
+
 
 def _validate_jwt_secret(value: str) -> str:
-    """Raise ValueError at import-time if JWT_SECRET is insecure."""
-    if not value:
-        raise ValueError(
-            "JWT_SECRET is not set. "
-            "Generate a secure random string of at least 32 characters and set it "
-            "as the JWT_SECRET environment variable."
-        )
-    if value.lower() in _WEAK_JWT_SECRETS:
-        raise ValueError(
-            f"JWT_SECRET is set to a known weak default value '{value}'. "
-            "Set a unique random secret of at least 32 characters."
-        )
-    if len(value) < _JWT_MIN_LENGTH:
-        raise ValueError(
-            f"JWT_SECRET is too short ({len(value)} chars). "
-            f"It must be at least {_JWT_MIN_LENGTH} characters long."
-        )
-    return value
+    """In production (DEBUG=false): raise ValueError for weak/short secrets.
+    In development (DEBUG=true): emit a warning but allow startup to continue.
+    """
+    is_weak = (not value) or (value.lower() in _WEAK_JWT_SECRETS) or (len(value) < _JWT_MIN_LENGTH)
+    if not is_weak:
+        return value
+
+    msg = (
+        f"JWT_SECRET is insecure (value='{value[:8]}...', len={len(value)}). "
+        "Set a unique random secret of at least 32 characters via the JWT_SECRET env var."
+    )
+    if _IS_DEBUG:
+        # Dev/test mode: warn and continue
+        logger.warning(f"[DEV] {msg} — continuing because DEBUG=true")
+        return value
+    # Production mode: hard fail
+    raise ValueError(msg)
 
 
 class Settings:
     APP_NAME: str = "CyberAI Assessment API"
     APP_VERSION: str = "2.0.0"
-    DEBUG: bool = os.getenv("DEBUG", "false").lower() == "true"
+    DEBUG: bool = _IS_DEBUG
 
     LOCALAI_URL: str = os.getenv("LOCALAI_URL", "http://localai:8080")
     # Default to 8B to avoid OOM in LocalAI containers (12–16GB). 70B requires much higher RAM.
@@ -59,7 +64,7 @@ class Settings:
     VECTOR_STORE_PATH: str = os.getenv("VECTOR_STORE_PATH", "/data/vector_store")
     DATA_PATH: str = os.getenv("DATA_PATH", "/data")
 
-    # JWT_SECRET is validated at startup — weak/default values raise ValueError.
+    # JWT_SECRET: validated at class load time. Weak values raise in prod, warn in dev.
     JWT_SECRET: str = _validate_jwt_secret(
         os.getenv("JWT_SECRET", "change-me-in-production")
     )

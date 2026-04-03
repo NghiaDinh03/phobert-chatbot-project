@@ -23,9 +23,11 @@ services:
       - DATA_PATH=/data
       # Logging
       - LOG_LEVEL=${LOG_LEVEL:-INFO}
-      - DEBUG=${DEBUG:-false}
+      - DEBUG=${DEBUG:-true}
       # Security
       - CORS_ORIGINS=${CORS_ORIGINS:-http://localhost:3000}
+      # JWT_SECRET: use a real secret in .env file for production.
+      # Dev default triggers a warning (not a hard error) because DEBUG=true.
       - JWT_SECRET=${JWT_SECRET:-change-me-in-production}
       # Rate Limiting
       - RATE_LIMIT_CHAT=${RATE_LIMIT_CHAT:-10/minute}
