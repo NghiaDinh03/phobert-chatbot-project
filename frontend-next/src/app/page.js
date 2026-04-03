@@ -52,11 +52,11 @@ export default function HomePage() {
                 <SystemStats />
             </section>
 
-            <section style={{ marginTop: '2.5rem' }}>
+            <section className={styles.modulesSection}>
                 <p className="section-title">🧩 Modules</p>
                 <div className={styles.features}>
                     {FEATURES.map((f, i) => (
-                        <Link key={i} href={f.href} className={styles.card}>
+                        <Link key={i} href={f.href} className={styles.card} aria-label={`${f.title} — ${f.desc}`}>
                             <div className={styles.cardAccent} style={{ background: f.color }} />
                             <div className={styles.cardBody}>
                                 <div className={styles.cardTop}>

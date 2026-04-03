@@ -39,6 +39,10 @@
     font-weight: 600;
 }
 
+.modulesSection {
+    margin-top: 2.5rem;
+}
+
 .features {
     display: flex;
     flex-direction: column;
@@ -54,7 +58,6 @@
     border-radius: var(--radius-lg);
     overflow: hidden;
     transition: border-color 0.18s ease, box-shadow 0.18s ease, transform 0.18s ease;
-    cursor: pointer;
     box-shadow: var(--shadow-sm);
     text-decoration: none;
     animation: cardSlideIn 0.3s ease both;
