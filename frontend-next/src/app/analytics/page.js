@@ -133,7 +133,6 @@ export default function AnalyticsPage() {
     const [searchResults, setSearchResults] = useState(null)
     const [searching, setSearching] = useState(false)
     const [showFiles, setShowFiles] = useState(false)
-    const [cacheStats, setCacheStats] = useState(null)
     const [standards, setStandards] = useState({ builtin: [], custom: [] })
     const [stdLoading, setStdLoading] = useState(false)
     const [stdUploading, setStdUploading] = useState(false)
@@ -303,10 +302,6 @@ export default function AnalyticsPage() {
                     const chromaRes = await fetch('/api/iso27001/chromadb/stats')
                     if (chromaRes.ok) setChromaStats(await chromaRes.json())
                 } catch { }
-                try {
-                    const cacheRes = await fetch('/api/system/cache-stats')
-                    if (cacheRes.ok) setCacheStats(await cacheRes.json())
-                } catch { }
                 setServices({
                     backend: { status: backendReady ? 'Running' : 'Offline', ready: backendReady },
                     localai: { status: localaiReady ? 'Ready' : 'Offline', ready: localaiReady },
@@ -334,12 +329,11 @@ export default function AnalyticsPage() {
         'var(--accent-red)'
 
     const SERVICE_ROWS = [
-        { name: 'FastAPI Backend', detail: `Core API Service · Port: 8000 · v1.0.0`, ready: services?.backend?.ready, status: services?.backend?.status },
-        { name: 'LocalAI Engine', detail: `Model Server · Port: 8080 · CPU Mode`, ready: services?.localai?.ready, status: services?.localai?.status },
-        { name: 'ChromaDB', detail: `Vector Database · RAG ISO 27001 · cosine space`, ready: services?.backend?.ready, status: services?.backend?.status },
-        { name: 'VinAI Translate', detail: `Vietnamese NLP · Parameters: 135M`, ready: true, status: 'Active' },
-        { name: 'Llama 3.1 8B', detail: `LLM (General/Summary) · Quant: Q4_K_M · 4.9GB`, ready: services?.localai?.ready, loading: !services?.localai?.ready },
-        { name: 'SecurityLLM 7B', detail: `LLM (ISO Assessor) · Quant: Q4_K_M · 4.4GB`, ready: services?.localai?.ready, loading: !services?.localai?.ready },
+        { name: 'FastAPI Backend', detail: 'Core API Service · Port 8000', ready: services?.backend?.ready, status: services?.backend?.status },
+        { name: 'LocalAI Engine', detail: 'Model Server · Port 8080 · CPU Mode', ready: services?.localai?.ready, status: services?.localai?.status },
+        { name: 'ChromaDB', detail: 'Vector Database · RAG · cosine similarity', ready: services?.backend?.ready, status: services?.backend?.status },
+        { name: 'Llama 3.1 8B', detail: 'LLM General · Q4_K_M · 4.9 GB', ready: services?.localai?.ready, loading: !services?.localai?.ready },
+        { name: 'SecurityLLM 7B', detail: 'LLM ISO Assessor · Q4_K_M · 4.4 GB', ready: services?.localai?.ready, loading: !services?.localai?.ready },
     ]
 
     return (
@@ -607,40 +601,6 @@ export default function AnalyticsPage() {
                     </section>
 
                     <section className={styles.section}>
-                        <p className="section-title">💾 Cache Monitor</p>
-                        {cacheStats ? (
-                            <div className="grid-3">
-                                {[
-                                    {
-                                        label: 'Translation Cache',
-                                        val: cacheStats?.translations?.files ?? 0,
-                                        unit: `files · ${((cacheStats?.translations?.size_bytes ?? 0) / 1024 / 1024).toFixed(2)} MB`
-                                    },
-                                    {
-                                        label: 'Summary Cache',
-                                        val: cacheStats?.summaries?.files ?? 0,
-                                        unit: `files · ${((cacheStats?.summaries?.size_bytes ?? 0) / 1024 / 1024).toFixed(2)} MB`
-                                    },
-                                    {
-                                        label: 'Total Storage',
-                                        val: ((cacheStats?.total_size_bytes ?? 0) / 1024 / 1024).toFixed(2),
-                                        unit: 'MB · auto-cleared every 2h',
-                                        highlight: true
-                                    },
-                                ].map((c, i) => (
-                                    <div key={i} className={`${styles.configCard} ${c.highlight ? styles.configCardHighlight : ''}`}>
-                                        <div className={styles.configLabel}>{c.label}</div>
-                                        <div className={styles.configValue}>{c.val}</div>
-                                        <div className={styles.configUnit}>{c.unit}</div>
-                                    </div>
-                                ))}
-                            </div>
-                        ) : (
-                            <div className={styles.loading}>Loading cache stats...</div>
-                        )}
-                    </section>
-
-                    <section className={styles.section}>
                         <p className="section-title">🕒 Assessment History</p>
                         <div className={styles.tableContainer}>
                             <table className={styles.table}>
@@ -687,8 +647,8 @@ export default function AnalyticsPage() {
                                             <td colSpan="6" className={styles.tableEmpty}>
                                                 <div className={styles.emptyState}>
                                                     <span className={styles.emptyStateIcon}>📋</span>
-                                                    <p className={styles.emptyStateText}>Chọn một đánh giá để xem phân tích</p>
-                                                    <p className={styles.emptyStateHint}>Chưa có đánh giá nào. Tạo đánh giá mới từ trang Assessment.</p>
+                                                    <p className={styles.emptyStateText}>No assessments yet</p>
+                                                    <p className={styles.emptyStateHint}>Run an assessment from the <Link href="/form-iso">Assessment</Link> page to see results here.</p>
                                                 </div>
                                             </td>
                                         </tr>
@@ -701,23 +661,6 @@ export default function AnalyticsPage() {
                     <section className={styles.section}>
                         <p className="section-title">🗺️ Compliance Gap Heatmap</p>
                         <ComplianceHeatmap assessments={assessments} />
-                    </section>
-
-                    <section className={styles.section}>
-                        <p className="section-title">⚙️ System Configuration</p>
-                        <div className="grid-3">
-                            {[
-                                { label: 'Context Size', val: '8192', unit: 'tokens' },
-                                { label: 'Max Tokens', val: 'Unlimited', unit: 'no limit' },
-                                { label: 'Threads', val: '8', unit: 'CPU threads' },
-                            ].map((c, i) => (
-                                <div key={i} className={styles.configCard}>
-                                    <div className={styles.configLabel}>{c.label}</div>
-                                    <div className={styles.configValue}>{c.val}</div>
-                                    <div className={styles.configUnit}>{c.unit}</div>
-                                </div>
-                            ))}
-                        </div>
                     </section>
 
                     <section className={styles.section}>
