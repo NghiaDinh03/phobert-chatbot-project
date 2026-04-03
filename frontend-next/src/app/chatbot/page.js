@@ -221,11 +221,24 @@ export default function ChatbotPage() {
         }
     }
 
-    const copyMessage = useCallback((msgId, text) => {
+    const copyMessage = useCallback((id, text) => {
         navigator.clipboard.writeText(text).then(() => {
-            setCopiedMsgId(msgId)
+            setCopiedMsgId(id)
             setTimeout(() => setCopiedMsgId(null), 2000)
-        }).catch(() => {})
+        }).catch(() => {
+            try {
+                const ta = document.createElement('textarea');
+                ta.value = text;
+                ta.style.position = 'fixed';
+                ta.style.opacity = '0';
+                document.body.appendChild(ta);
+                ta.select();
+                document.execCommand('copy');
+                document.body.removeChild(ta);
+                setCopiedMsgId(id);
+                setTimeout(() => setCopiedMsgId(null), 2000);
+            } catch { /* copy not available */ }
+        })
     }, [])
 
     const updateSessions = useCallback((messages, id) => {
@@ -332,15 +345,14 @@ export default function ChatbotPage() {
                         sources: finalData.sources,
                         // _streaming and _id intentionally absent — finalised message
                     }
-                    // Replace the streaming placeholder with the complete finalised message
-                    const final = [
-                        ...next,
-                        botMsg,
-                    ]
-                    directSaveSession(id, final)
+                    // Replace the streaming placeholder in-place by its _id
                     if (mountedRef.current) {
-                        setMsgs(final)
-                        updateSessions(final, id)
+                        setMsgs(prev => {
+                            const final = prev.map(m => m._id === pendingMsgId ? botMsg : m)
+                            directSaveSession(id, final)
+                            updateSessions(final, id)
+                            return final
+                        })
                         lsDel(PENDING_KEY)
                     }
                 } else {
@@ -393,6 +405,7 @@ export default function ChatbotPage() {
         setMsgs([])
         lsDel(SESSIONS_KEY)
         lsDel(ACTIVE_KEY)
+        lsDel(PENDING_KEY)
     }
 
     const activeModelInfo = CLOUD_MODELS.find(m => m.id === selectedModel) || CLOUD_MODELS[0]
@@ -479,7 +492,7 @@ export default function ChatbotPage() {
                                     'ISO 27001 vs SOC 2',
                                     ...SUGGESTIONS.slice(0, 3).map(s => s.text)
                                 ].map((text, i) => (
-                                    <button key={i} className={styles.chip} onClick={() => setInput(text)}>
+                                    <button key={i} className={styles.chip} onClick={() => setInput(text)} aria-label={text}>
                                         {text}
                                     </button>
                                 ))}
