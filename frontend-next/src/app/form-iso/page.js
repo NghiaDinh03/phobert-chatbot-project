@@ -9,6 +9,8 @@ import styles from './page.module.css'
 import { ASSESSMENT_STANDARDS, calcWeightedScore, calcCategoryBreakdown, WEIGHT_SCORE, mergeCustomStandard } from '../../data/standards'
 import { CONTROL_DESCRIPTIONS } from '../../data/controlDescriptions'
 import { ASSESSMENT_TEMPLATES } from '../../data/templates'
+import StepProgress from '@/components/StepProgress'
+import { Shield, ChevronRight, ChevronLeft } from 'lucide-react'
 
 const POLL_INTERVAL = 10000
 
@@ -1056,6 +1058,7 @@ export default function FormISOPage() {
 
             {activeTab === 'form' && (
                 <div className={styles.formWrap}>
+                    <StepProgress currentStep={step} />
                     {form.org_name && (
                         <div className={styles.draftBanner}>
                             <span className={styles.draftBannerDot} />
@@ -1104,19 +1107,19 @@ export default function FormISOPage() {
 
                     <div className={styles.stepActions}>
                         <button className={styles.btnSecondary} onClick={prevStep} disabled={step === 1 || loading}>
-                            ← Quay lại
+                            <ChevronLeft size={15} style={{ verticalAlign: 'middle' }} /> Quay lại
                         </button>
 
                         {step < 4 ? (
                             <button className={styles.btnPrimary} onClick={nextStep} disabled={step === 1 && !form.org_name}>
-                                Tiếp theo →
+                                Tiếp theo <ChevronRight size={15} style={{ verticalAlign: 'middle' }} />
                             </button>
                         ) : (
                             <button className={styles.btnSubmit} onClick={submit} disabled={loading || !form.org_name}>
                                 {loading ? (
                                     <><span className={styles.spinner} /> Đang xử lý ...</>
                                 ) : (
-                                    '🤖 Bắt đầu Đánh giá'
+                                    <><Shield size={16} style={{ marginRight: '6px', verticalAlign: 'middle' }} />Bắt đầu Đánh giá</>
                                 )}
                             </button>
                         )}

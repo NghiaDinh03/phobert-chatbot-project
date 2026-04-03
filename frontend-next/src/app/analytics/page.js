@@ -9,6 +9,7 @@ import Link from 'next/link'
 import styles from './page.module.css'
 import { useToast } from '@/components/Toast'
 import { SkeletonCard, SkeletonTable } from '@/components/Skeleton'
+import { BarChart2, BookOpen, FlaskConical, Trash2, RefreshCw } from 'lucide-react'
 
 function SvgGauge({ percent, size = 96, color = 'var(--accent-blue)' }) {
     const r = (size - 12) / 2
@@ -348,13 +349,13 @@ export default function AnalyticsPage() {
                     className={`${styles.mainTab} ${activeMainTab === 'dashboard' ? styles.mainTabActive : ''}`}
                     onClick={() => setActiveMainTab('dashboard')}
                 >
-                    📊 Dashboard
+                    <BarChart2 size={14} style={{ marginRight: '5px', verticalAlign: 'middle' }} />Dashboard
                 </button>
                 <button
                     className={`${styles.mainTab} ${activeMainTab === 'standards' ? styles.mainTabActive : ''}`}
                     onClick={() => setActiveMainTab('standards')}
                 >
-                    📋 Standards
+                    <BookOpen size={14} style={{ marginRight: '5px', verticalAlign: 'middle' }} />Standards
                 </button>
                 <button
                     className={`${styles.mainTab} ${activeMainTab === 'benchmark' ? styles.mainTabActive : ''}`}
@@ -366,7 +367,7 @@ export default function AnalyticsPage() {
                         }
                     }}
                 >
-                    🧪 Benchmark AI
+                    <FlaskConical size={14} style={{ marginRight: '5px', verticalAlign: 'middle' }} />Benchmark AI
                 </button>
                 <span className={styles.mainTabSpacer} />
                 <Link href="/form-iso" className={styles.mainTabLink}>← Assessment</Link>
@@ -454,8 +455,8 @@ export default function AnalyticsPage() {
 
                     <div className={styles.stdSection}>
                         <div className={styles.stdSectionHeader}>
-                            <h2 className={styles.stdSectionTitle}>Standards Library</h2>
-                            <button className={styles.stdBtnOutline} onClick={fetchStandards} disabled={stdLoading}>Refresh</button>
+                            <h2 className={styles.stdSectionTitle}><BookOpen size={15} style={{ marginRight: '6px', verticalAlign: 'middle' }} />Standards Library</h2>
+                            <button className={styles.stdBtnOutline} onClick={fetchStandards} disabled={stdLoading}><RefreshCw size={13} style={{ marginRight: '4px', verticalAlign: 'middle' }} />Refresh</button>
                         </div>
 
                         {stdLoading ? (
@@ -514,8 +515,8 @@ export default function AnalyticsPage() {
                                                 )}
                                                 <div className={styles.stdCardActions}>
                                                     <button className={styles.stdBtnSmall} onClick={() => handleStdDetail(std.id)}>Detail</button>
-                                                    <button className={styles.stdBtnSmall} onClick={() => handleStdReindex(std.id)}>Re-index</button>
-                                                    <button className={`${styles.stdBtnSmall} ${styles.stdBtnDanger}`} onClick={() => handleStdDelete(std.id)}>Delete</button>
+                                                    <button className={styles.stdBtnSmall} onClick={() => handleStdReindex(std.id)}><RefreshCw size={11} style={{ marginRight: '3px', verticalAlign: 'middle' }} />Re-index</button>
+                                                    <button className={`${styles.stdBtnSmall} ${styles.stdBtnDanger}`} onClick={() => handleStdDelete(std.id)}><Trash2 size={11} style={{ marginRight: '3px', verticalAlign: 'middle' }} />Delete</button>
                                                 </div>
                                                 <div className={styles.stdCardDate}>
                                                     {std.created_at ? new Date(std.created_at).toLocaleDateString('vi-VN') : '—'}
@@ -637,7 +638,7 @@ export default function AnalyticsPage() {
                                                 <td><code className={styles.codeId}>{a.id.split('-')[0]}</code></td>
                                                 <td style={{ textAlign: 'right' }}>
                                                     <button className={styles.deleteBtn} onClick={(e) => checkDeleteWarning(a.id, e)} title="Delete assessment">
-                                                        ×
+                                                        <Trash2 size={13} />
                                                     </button>
                                                 </td>
                                             </tr>
@@ -754,7 +755,7 @@ export default function AnalyticsPage() {
                                                     showToast('Error: ' + e.message, 'error')
                                                 } finally { setReindexing(false) }
                                             }}
-                                        >{reindexing ? 'Reindexing...' : 'Reindex'}</button>
+                                        >{reindexing ? 'Reindexing...' : <><RefreshCw size={13} style={{ marginRight: '4px', verticalAlign: 'middle' }} />Reindex</>}</button>
                                     </div>
                                 </div>
                             </div>

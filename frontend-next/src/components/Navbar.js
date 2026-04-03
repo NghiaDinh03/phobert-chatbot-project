@@ -5,13 +5,14 @@ import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 import { useTheme } from './ThemeProvider'
 import styles from './Navbar.module.css'
+import { Home, MessageSquare, Shield, BookOpen, BarChart2 } from 'lucide-react'
 
 const NAV_ITEMS = [
-    { href: '/', label: 'Home' },
-    { href: '/chatbot', label: 'AI Chat' },
-    { href: '/form-iso', label: 'Assessment' },
-    { href: '/standards', label: 'Standards' },
-    { href: '/analytics', label: 'Analytics' },
+    { href: '/', label: 'Home', icon: Home },
+    { href: '/chatbot', label: 'AI Chat', icon: MessageSquare },
+    { href: '/form-iso', label: 'Assessment', icon: Shield },
+    { href: '/standards', label: 'Standards', icon: BookOpen },
+    { href: '/analytics', label: 'Analytics', icon: BarChart2 },
 ]
 
 const TIMEZONES = [
@@ -93,6 +94,7 @@ export default function Navbar() {
                             href={item.href}
                             className={`${styles.navLink} ${pathname === item.href ? styles.navLinkActive : ''}`}
                         >
+                            <item.icon size={15} style={{ marginRight: '4px', verticalAlign: 'middle' }} />
                             {item.label}
                         </Link>
                     ))}

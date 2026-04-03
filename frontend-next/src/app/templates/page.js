@@ -6,6 +6,7 @@ import Link from 'next/link'
 import styles from './page.module.css'
 import { ASSESSMENT_TEMPLATES } from '../../data/templates'
 import { ASSESSMENT_STANDARDS } from '../../data/standards'
+import { Filter, Zap } from 'lucide-react'
 
 export default function TemplatesMonitorPage() {
     const router = useRouter()
@@ -41,6 +42,7 @@ export default function TemplatesMonitorPage() {
             </div>
 
             <div className={styles.filterBar}>
+                <Filter size={14} style={{ color: 'var(--text-dim)', alignSelf: 'center' }} />
                 <button
                     className={`${styles.filterBtn} ${filter === 'all' ? styles.filterActive : ''}`}
                     onClick={() => setFilter('all')}
@@ -128,6 +130,7 @@ export default function TemplatesMonitorPage() {
 
                             <div className={styles.cardFooter}>
                                 <button className={styles.useBtn} onClick={() => selectTemplate(tpl)} aria-label={`Analyze ${tpl.name}`}>
+                                    <Zap size={13} style={{ marginRight: '5px', verticalAlign: 'middle' }} />
                                     Analyze this system →
                                 </button>
                             </div>

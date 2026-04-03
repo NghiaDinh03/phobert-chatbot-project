@@ -5,6 +5,7 @@ import Link from 'next/link'
 import styles from './page.module.css'
 import { useToast } from '@/components/Toast'
 import { SkeletonTable } from '@/components/Skeleton'
+import { Search, Upload, Trash2, Shield, Database, Lock, Heart, CreditCard, CheckSquare, FileText } from 'lucide-react'
 
 function FormatGuidePanel({ onClose }) {
     const [tab, setTab] = useState('json')
@@ -364,6 +365,17 @@ export default function StandardsPage() {
     const WEIGHT_COLOR = { critical: '#f87171', high: '#fbbf24', medium: '#4f8ef7', low: '#7d8fa3' }
     const WEIGHT_LABEL = { critical: 'Critical', high: 'High', medium: 'Medium', low: 'Low' }
 
+    const STD_ICON_MAP = (id = '') => {
+        const u = id.toUpperCase()
+        if (u.includes('ISO')) return <Shield size={16} className={styles.cardIcon} />
+        if (u.includes('NIST')) return <Database size={16} className={styles.cardIcon} />
+        if (u.includes('GDPR')) return <Lock size={16} className={styles.cardIcon} />
+        if (u.includes('HIPAA')) return <Heart size={16} className={styles.cardIcon} />
+        if (u.includes('PCI')) return <CreditCard size={16} className={styles.cardIcon} />
+        if (u.includes('SOC')) return <CheckSquare size={16} className={styles.cardIcon} />
+        return <FileText size={16} className={styles.cardIcon} />
+    }
+
     return (
         <div className="page-container">
             <div className={styles.header}>
@@ -409,7 +421,7 @@ export default function StandardsPage() {
                             <p className={styles.dropText}>Drop JSON / YAML file here</p>
                             <p className={styles.dropHint}>or</p>
                             <label className={styles.btnPrimary}>
-                                Select file
+                                <Upload size={14} style={{ marginRight: '5px', verticalAlign: 'middle' }} />Select file
                                 <input type="file" accept=".json,.yaml,.yml" onChange={onFileSelect} hidden />
                             </label>
                             <p className={styles.dropMeta}>.json, .yaml, .yml · Max 2MB</p>
@@ -477,6 +489,7 @@ export default function StandardsPage() {
                 </div>
 
                 <div className={styles.searchBarWrap}>
+                    <Search size={15} className={styles.searchIcon} />
                     <input
                         type="text"
                         className={styles.searchBar}
@@ -518,13 +531,13 @@ export default function StandardsPage() {
                             </button>
                         </div>
                         <div className={styles.standardGrid}>
-                            {filteredBuiltin.map(std => (
-                                <div key={std.id} className={styles.standardCard}>
-                                    <div className={styles.cardHeader}>
-                                        <span className={styles.cardBadge}>Built-in</span>
-                                        <span className={styles.cardVersion}>{std.version}</span>
-                                    </div>
-                                    <h4 className={styles.cardName}>{std.name}</h4>
+                             {filteredBuiltin.map(std => (
+                                 <div key={std.id} className={`${styles.standardCard} card-hover ${styles.cardAccent}`}>
+                                     <div className={styles.cardHeader}>
+                                         <span className={styles.cardBadge}>Built-in</span>
+                                         <span className={styles.cardVersion}>{std.version}</span>
+                                     </div>
+                                     <h4 className={styles.cardName}>{STD_ICON_MAP(std.id)}{std.name}</h4>
                                     <p className={styles.cardDesc}>{std.description}</p>
                                     <div className={styles.cardStats}>
                                         <span>{std.total_controls} controls</span>
@@ -547,12 +560,12 @@ export default function StandardsPage() {
                         ) : filteredCustom.length === 0 ? null : (
                             <div className={styles.standardGrid}>
                                 {filteredCustom.map(std => (
-                                    <div key={std.id} className={`${styles.standardCard} ${styles.standardCardCustom}`}>
+                                    <div key={std.id} className={`${styles.standardCard} ${styles.standardCardCustom} card-hover`}>
                                         <div className={styles.cardHeader}>
                                             <span className={`${styles.cardBadge} ${styles.cardBadgeCustom}`}>Custom</span>
                                             <span className={styles.cardVersion}>{std.version}</span>
                                         </div>
-                                        <h4 className={styles.cardName}>{std.name}</h4>
+                                        <h4 className={styles.cardName}>{STD_ICON_MAP(std.id)}{std.name}</h4>
                                         <p className={styles.cardDesc}>{std.description || 'No description'}</p>
                                         <div className={styles.cardStats}>
                                             <span>{std.total_controls} controls</span>
@@ -581,7 +594,7 @@ export default function StandardsPage() {
                                                     <button className={styles.btnSmall} onClick={() => setConfirmDeleteId(null)}>Cancel</button>
                                                 </>
                                             ) : (
-                                                <button className={`${styles.btnSmall} ${styles.btnDanger}`} onClick={() => handleDelete(std.id)}>Delete</button>
+                                                <button className={`${styles.btnSmall} ${styles.btnDanger}`} onClick={() => handleDelete(std.id)}><Trash2 size={11} style={{ marginRight: '3px', verticalAlign: 'middle' }} />Delete</button>
                                             )}
                                         </div>
                                         <div className={styles.cardMeta}>
