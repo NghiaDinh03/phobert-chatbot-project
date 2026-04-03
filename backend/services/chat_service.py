@@ -1,5 +1,6 @@
 """Chat Service — Conversation routing with session memory and Cloud-first strategy."""
 
+import asyncio
 import re
 import logging
 import threading
@@ -117,8 +118,9 @@ class ChatService:
         return messages
 
     @staticmethod
-    def generate_response(message: str, session_id: str = "default",
-                          model_override: str = None, prefer_cloud: bool = True) -> Dict[str, Any]:
+    async def generate_response(message: str, session_id: str = "default",
+                                model_override: str = None, prefer_cloud: bool = True,
+                                background_tasks=None) -> Dict[str, Any]:
         message = sanitize_user_input(message)
         guard_error = ChatService._local_only_guard()
         if guard_error:
@@ -134,13 +136,13 @@ class ChatService:
 
             if use_rag:
                 vs = ChatService.get_vector_store()
-                results = vs.search(message, top_k=5)
+                results = await asyncio.to_thread(vs.search, message, 5)
                 if results:
                     context = "\n\n---\n\n".join([r["text"] for r in results])
                     sources = [r.get("source", "") for r in results]
 
             if use_search:
-                search_results = WebSearch.search(message, max_results=5)
+                search_results = await asyncio.to_thread(WebSearch.search, message, 5)
                 if search_results:
                     search_context = WebSearch.format_context(search_results)
                     web_sources = [{"title": r["title"], "url": r["url"]} for r in search_results]
@@ -149,7 +151,8 @@ class ChatService:
             history = ss.get_context_messages(session_id, max_messages=10)
             messages = ChatService._build_messages(message, routing, context, search_context, history)
 
-            result = CloudLLMService.chat_completion(
+            result = await asyncio.to_thread(
+                CloudLLMService.chat_completion,
                 messages=messages,
                 temperature=0.7,
                 local_model=model_name,
@@ -158,9 +161,14 @@ class ChatService:
             )
             response_text = ChatService.clean_response(result["content"]) if result.get("content") else ""
 
-            ss.add_message(session_id, "user", message)
-            if response_text:
-                ss.add_message(session_id, "assistant", response_text)
+            if background_tasks is not None:
+                background_tasks.add_task(ss.add_message, session_id, "user", message)
+                if response_text:
+                    background_tasks.add_task(ss.add_message, session_id, "assistant", response_text)
+            else:
+                ss.add_message(session_id, "user", message)
+                if response_text:
+                    ss.add_message(session_id, "assistant", response_text)
 
             return {
                 "response": response_text or "Model không trả về response. Vui lòng thử lại.",

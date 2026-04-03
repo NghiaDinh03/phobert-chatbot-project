@@ -1,5 +1,6 @@
 ﻿"""Vector Store — Semantic chunking with header hierarchy and cosine similarity scoring."""
 
+import asyncio
 import chromadb
 import os
 import re
@@ -150,6 +151,9 @@ class VectorStore:
 
         docs.sort(key=lambda x: x["score"], reverse=True)
         return docs
+
+    async def search_async(self, query: str, top_k: int = 5, domain: str = "iso_documents") -> list:
+        return await asyncio.to_thread(self.search, query, top_k, domain)
 
     def multi_query_search(self, query: str, top_k: int = 5, domain: str = "iso_documents") -> list:
         queries = [query]

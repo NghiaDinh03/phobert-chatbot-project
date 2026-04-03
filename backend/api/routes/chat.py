@@ -1,6 +1,6 @@
 ﻿"""Chat API Routes — Streaming, history, and session management."""
 
-from fastapi import APIRouter, HTTPException, Request
+from fastapi import APIRouter, BackgroundTasks, HTTPException, Request
 from fastapi.responses import StreamingResponse
 from pydantic import BaseModel, Field
 from core.config import settings
@@ -39,15 +39,16 @@ class ChatResponse(BaseModel):
 
 
 @router.post("/chat", response_model=ChatResponse)
-async def chat(http_request: Request, request: ChatRequest):
+async def chat(http_request: Request, request: ChatRequest, background_tasks: BackgroundTasks):
     if not request.message.strip():
         raise HTTPException(status_code=400, detail="Message cannot be empty")
     try:
-        return ChatService.generate_response(
+        return await ChatService.generate_response(
             message=request.message.strip(),
             session_id=request.session_id,
             model_override=request.model,
             prefer_cloud=request.prefer_cloud,
+            background_tasks=background_tasks,
         )
     except HTTPException:
         raise

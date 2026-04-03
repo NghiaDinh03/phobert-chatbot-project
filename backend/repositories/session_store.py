@@ -1,5 +1,6 @@
 """Persistent Session Store — File-based with auto-expiry TTL."""
 
+import asyncio
 import json
 import os
 import time
@@ -76,6 +77,9 @@ class SessionStore:
         history = self.get_history(session_id)
         recent = history[-max_messages:] if len(history) > max_messages else history
         return [{"role": m["role"], "content": m["content"]} for m in recent]
+
+    async def add_message_async(self, session_id: str, role: str, content: str):
+        await asyncio.to_thread(self.add_message, session_id, role, content)
 
     def clear_history(self, session_id: str):
         data = self.load(session_id)
