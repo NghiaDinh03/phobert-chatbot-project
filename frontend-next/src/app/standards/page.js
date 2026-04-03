@@ -218,6 +218,8 @@ export default function StandardsPage() {
     const [detailLoading, setDetailLoading] = useState(false)
     const [showFormatGuide, setShowFormatGuide] = useState(false)
     const [searchQuery, setSearchQuery] = useState('')
+    const [confirmDeleteId, setConfirmDeleteId] = useState(null)
+    const [reindexingId, setReindexingId] = useState(null)
 
     const fetchStandards = useCallback(async () => {
         try {
@@ -235,6 +237,12 @@ export default function StandardsPage() {
     }, [])
 
     useEffect(() => { fetchStandards() }, [fetchStandards])
+
+    useEffect(() => {
+        const handler = e => { if (e.key === 'Escape') setShowFormatGuide(false); };
+        document.addEventListener('keydown', handler);
+        return () => document.removeEventListener('keydown', handler);
+    }, []);
 
     const handleUpload = async (file) => {
         if (!file) return
@@ -274,7 +282,7 @@ export default function StandardsPage() {
     }
 
     const handleDelete = async (standardId) => {
-        if (!confirm(`Confirm delete standard "${standardId}"? This action cannot be undone.`)) return
+        if (confirmDeleteId !== standardId) { setConfirmDeleteId(standardId); return; }
         try {
             const res = await fetch(`/api/standards/${standardId}`, { method: 'DELETE' })
             if (res.ok) {
@@ -282,11 +290,14 @@ export default function StandardsPage() {
                 if (selectedStandard?.id === standardId) setSelectedStandard(null)
             }
         } catch (e) {
-            console.error('Delete failed:', e)
+            showToast(`Delete failed: ${e.message}`, 'error')
+        } finally {
+            setConfirmDeleteId(null)
         }
     }
 
     const handleReindex = async (standardId) => {
+        if (reindexingId) return; setReindexingId(standardId);
         try {
             const res = await fetch(`/api/standards/${standardId}/index`, { method: 'POST' })
             const data = await res.json()
@@ -297,6 +308,8 @@ export default function StandardsPage() {
             }
         } catch (e) {
             showToast(`Error: ${e.message}`, 'error')
+        } finally {
+            setReindexingId(null)
         }
     }
 
@@ -309,7 +322,7 @@ export default function StandardsPage() {
                 setSelectedStandard(data)
             }
         } catch (e) {
-            console.error('Failed to load standard detail:', e)
+            showToast(`Failed to load standard detail: ${e.message}`, 'error')
         } finally {
             setDetailLoading(false)
         }
@@ -327,7 +340,7 @@ export default function StandardsPage() {
             a.click()
             URL.revokeObjectURL(url)
         } catch (e) {
-            console.error('Download failed:', e)
+            showToast(`Download failed: ${e.message}`, 'error')
         }
     }
 
@@ -467,7 +480,7 @@ export default function StandardsPage() {
                     <input
                         type="text"
                         className={styles.searchBar}
-                        placeholder="Tìm kiếm tiêu chuẩn..."
+                        placeholder="Search standards..."
                         value={searchQuery}
                         onChange={e => setSearchQuery(e.target.value)}
                     />
@@ -525,7 +538,7 @@ export default function StandardsPage() {
                             ))}
                         </div>
 
-                        <h3 className={styles.groupTitle} style={{ marginTop: '1.25rem' }}>Custom Standards (Uploaded)</h3>
+                        <h3 className={`${styles.groupTitle} ${styles.groupTitleSpaced}`}>Custom Standards (Uploaded)</h3>
                         {filteredCustom.length === 0 && !q ? (
                             <div className={styles.emptyBox}>
                                 <p>No custom standards yet.</p>
@@ -557,8 +570,19 @@ export default function StandardsPage() {
                                         )}
                                         <div className={styles.cardActions}>
                                             <button className={styles.btnSmall} onClick={() => handleViewDetail(std.id)}>Detail</button>
-                                            <button className={styles.btnSmall} onClick={() => handleReindex(std.id)}>Re-index</button>
-                                            <button className={`${styles.btnSmall} ${styles.btnDanger}`} onClick={() => handleDelete(std.id)}>Delete</button>
+                                            <button
+                                                className={styles.btnSmall}
+                                                onClick={() => handleReindex(std.id)}
+                                                disabled={reindexingId === std.id}
+                                            >{reindexingId === std.id ? 'Indexing…' : 'Re-index'}</button>
+                                            {confirmDeleteId === std.id ? (
+                                                <>
+                                                    <button className={`${styles.btnSmall} ${styles.btnDanger}`} onClick={() => handleDelete(std.id)}>Confirm</button>
+                                                    <button className={styles.btnSmall} onClick={() => setConfirmDeleteId(null)}>Cancel</button>
+                                                </>
+                                            ) : (
+                                                <button className={`${styles.btnSmall} ${styles.btnDanger}`} onClick={() => handleDelete(std.id)}>Delete</button>
+                                            )}
                                         </div>
                                         <div className={styles.cardMeta}>
                                             <span>{std.created_at ? new Date(std.created_at).toLocaleDateString('vi-VN') : '—'}</span>

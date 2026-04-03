@@ -74,6 +74,10 @@
     letter-spacing: 0.8px;
 }
 
+.groupTitleSpaced {
+    margin-top: 1.25rem;
+}
+
 .btnPrimary {
     display: inline-flex;
     align-items: center;
