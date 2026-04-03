@@ -15,12 +15,16 @@ const POLL_INTERVAL = 10000
 const WEIGHT_LABEL = { critical: 'Tối quan trọng', high: 'Quan trọng', medium: 'Trung bình', low: 'Thấp' }
 const WEIGHT_COLOR = { critical: 'var(--accent-red)', high: 'var(--accent-amber,#f59e0b)', medium: 'var(--accent-blue)', low: 'var(--text-dim)' }
 
+function escHtml(s) {
+  return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;')
+}
+
 function SvgGauge({ percent, size = 110, color = 'var(--accent-blue)' }) {
     const r = (size - 14) / 2
     const circ = 2 * Math.PI * r
     const dash = (Math.min(Math.max(percent, 0), 100) / 100) * circ
     return (
-        <svg width={size} height={size} viewBox={`0 0 ${size} ${size}`} style={{ transform: 'rotate(-90deg)' }}>
+        <svg width={size} height={size} viewBox={`0 0 ${size} ${size}`} style={{ transform: 'rotate(-90deg)' }} role="img" aria-label={`${percent}% compliance score`}>
             <circle cx={size / 2} cy={size / 2} r={r} fill="none" stroke="var(--border)" strokeWidth="7" />
             <circle
                 cx={size / 2} cy={size / 2} r={r}
@@ -76,6 +80,11 @@ export default function FormISOPage() {
         setEvidenceUploading(controlId)
         const fileList = Array.from(files)
         for (const file of fileList) {
+            if (file.size > 10 * 1024 * 1024) {
+                alert('File too large. Maximum size is 10MB.')
+                setEvidenceUploading(null)
+                return
+            }
             const formData = new FormData()
             formData.append('file', file)
             try {
@@ -1438,7 +1447,7 @@ export default function FormISOPage() {
     <span>${currentStandard.name} &nbsp;·&nbsp; ${form.implemented_controls.length}/${totalControls} Controls đạt &nbsp;·&nbsp; Điểm trọng số: ${weightedScore.achieved}/${weightedScore.maxScore}</span>
   </div>
 </div>
-${(result.report || '').replace(/^(#{1,6})\s+(.+)$/gm, (m, h, t) => `<h${h.length}>${t}</h${h.length}>`).replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>').replace(/\*(.+?)\*/g, '<em>$1</em>').replace(/^[-•]\s+(.+)$/gm, '<li>$1</li>').replace(/(<li>.*<\/li>\n?)+/gs, s => `<ul>${s}</ul>`).replace(/^---+$/gm, '<hr>').replace(/\n\n/g, '</p><p>').replace(/^(?!<[hul]|<\/[hul]|<hr)(.+)$/gm, (m) => m.startsWith('<') ? m : m)}
+${escHtml(result.report || '')}
 </body></html>`
                                     const w = window.open('', '_blank')
                                     if (w) { w.document.write(reportHtml); w.document.close() }

@@ -420,6 +420,7 @@
 }
 
 .btnSecondary:hover:not(:disabled) {
+    background: rgba(255, 255, 255, 0.05);
     background: color-mix(in srgb, var(--text-primary) 5%, transparent);
     border-color: var(--border-active, var(--border));
     color: var(--text-primary);
@@ -442,6 +443,7 @@
 }
 
 .btnPrimary {
+    background: rgba(79, 142, 247, 0.12);
     background: color-mix(in srgb, var(--accent-blue) 12%, transparent);
     border: 1px solid color-mix(in srgb, var(--accent-blue) 25%, transparent);
     color: var(--accent-blue);
