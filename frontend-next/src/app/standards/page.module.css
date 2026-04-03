@@ -861,7 +861,7 @@
     background: var(--bg-card);
     border: 1px solid var(--border);
     border-radius: 8px;
-    padding: 9px 36px 9px 14px;
+    padding: 9px 36px 9px 34px;
     color: var(--text-primary);
     font-size: 0.84rem;
     font-family: inherit;
@@ -933,3 +933,7 @@
     .formatGuideCompare { grid-template-columns: 1fr; }
     .formatGuideCompareArrow { margin-top: 0; transform: rotate(90deg); }
 }
+
+.cardIcon { margin-right: 8px; vertical-align: middle; color: var(--accent-blue); }
+.cardAccent { border-left: 3px solid var(--accent-blue); padding-left: 12px; }
+.searchIcon { position: absolute; left: 10px; top: 50%; transform: translateY(-50%); color: var(--text-dim); pointer-events: none; }
