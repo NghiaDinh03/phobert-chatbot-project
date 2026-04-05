@@ -143,12 +143,6 @@ def ai_status():
     }
 
 
-# ---------------------------------------------------------------------------
-# Static catalogue of platform models.  Entries from models.json (workspace
-# root) are merged with the hard-coded local/cloud models so the endpoint
-# always returns something even when the JSON file is absent.
-# ---------------------------------------------------------------------------
-
 _BUILTIN_MODELS = [
     {
         "id": "vinallama",

@@ -28,10 +28,8 @@ except ImportError:
     logger.warning("slowapi not installed — rate limiting disabled")
 
 
-# ── Lifespan: startup + graceful shutdown (Improvement 6) ──────────────────
 @asynccontextmanager
 async def lifespan(app: FastAPI):
-    # ── STARTUP ────────────────────────────────────────────────────────────
     logger.info("CyberAI Platform starting up...")
 
     # Validate settings; emit warnings for any soft issues
@@ -57,10 +55,8 @@ async def lifespan(app: FastAPI):
     except Exception as exc:
         logger.warning(f"Session cleanup error on startup: {exc}")
 
-    # Hand control to the application
     yield
 
-    # ── SHUTDOWN ───────────────────────────────────────────────────────────
     logger.info("Graceful shutdown initiated...")
 
     try:
@@ -83,7 +79,6 @@ async def lifespan(app: FastAPI):
     logger.info("Shutdown complete.")
 
 
-# ── Application factory ────────────────────────────────────────────────────
 app = FastAPI(
     title=settings.APP_NAME,
     description=(
@@ -109,7 +104,6 @@ app.add_middleware(
 )
 
 
-# ── Middleware: Prometheus metrics (Phase 5) ───────────────────────────────
 @app.middleware("http")
 async def record_metrics(request: Request, call_next):
     """Track request count and duration for every HTTP request.
@@ -137,7 +131,6 @@ async def record_metrics(request: Request, call_next):
     return response
 
 
-# ── Middleware: Request ID (Improvement 1) ─────────────────────────────────
 @app.middleware("http")
 async def add_request_id(request: Request, call_next):
     """Propagate or generate a unique request ID for every HTTP request.
@@ -155,7 +148,6 @@ async def add_request_id(request: Request, call_next):
     return response
 
 
-# ── Middleware: Request body size guard ────────────────────────────────────
 @app.middleware("http")
 async def limit_request_size(request: Request, call_next):
     # Allow larger uploads for documents, standards, and evidence files
@@ -183,8 +175,6 @@ async def limit_request_size(request: Request, call_next):
             )
     return await call_next(request)
 
-
-# ── Exception handlers: sanitized responses (Improvement 3) ───────────────
 
 @app.exception_handler(AppException)
 async def app_exception_handler(request: Request, exc: AppException):
@@ -251,14 +241,11 @@ async def not_found_handler(request: Request, exc):
     )
 
 
-# ── Routers (Improvement 2: /api/v1 + legacy /api for backward compat) ─────
 from api.routes import chat, document, health, iso27001, system, standards, benchmark  # noqa: E402
 from api.routes.metrics import router as metrics_router  # noqa: E402
 
-# Prometheus scrape endpoint — mounted at root so it's at /metrics (not /api/metrics)
 app.include_router(metrics_router, prefix="", tags=["Observability"])
 
-# Versioned routes  — /api/v1/…
 app.include_router(health.router,     prefix="/api/v1", tags=["Health v1"])
 app.include_router(chat.router,       prefix="/api/v1", tags=["Chat v1"])
 app.include_router(document.router,   prefix="/api/v1", tags=["Documents v1"])
@@ -267,7 +254,6 @@ app.include_router(standards.router,  prefix="/api/v1", tags=["Standards v1"])
 app.include_router(system.router,     prefix="/api/v1", tags=["System v1"])
 app.include_router(benchmark.router,  prefix="/api/v1", tags=["Benchmark v1"])
 
-# Legacy routes — /api/… (backward compatibility, no deprecation break)
 app.include_router(health.router,     prefix="/api", tags=["Health"])
 app.include_router(chat.router,       prefix="/api", tags=["Chat"])
 app.include_router(document.router,   prefix="/api", tags=["Documents"])
@@ -277,7 +263,6 @@ app.include_router(system.router,     prefix="/api", tags=["System"])
 app.include_router(benchmark.router,  prefix="/api", tags=["Benchmark"])
 
 
-# ── Dataset generation endpoints ───────────────────────────────────────────
 from fastapi import BackgroundTasks as _BT  # noqa: E402
 
 
@@ -321,8 +306,6 @@ async def dataset_status():
     meta["file_size_kb"] = size_kb
     return {"status": "ready", **meta}
 
-
-# ── Root + health shortcuts ────────────────────────────────────────────────
 
 @app.get("/")
 def root():

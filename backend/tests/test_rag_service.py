@@ -26,10 +26,6 @@ def _make_doc(score: float, text: str = "sample text", file: str = "test.md") ->
     return {"score": score, "text": text, "file": file, "doc_title": "Test Doc", "source": file}
 
 
-# ═══════════════════════════════════════════════════════════════════════════════
-# 1. Threshold constant
-# ═══════════════════════════════════════════════════════════════════════════════
-
 class TestRAGConfidenceThresholdConstant:
     def test_threshold_value_is_0_35(self):
         """Phase 3 requirement: confidence threshold must be exactly 0.35."""
@@ -45,10 +41,6 @@ class TestRAGConfidenceThresholdConstant:
     def test_threshold_is_below_one(self):
         assert RAG_CONFIDENCE_THRESHOLD < 1.0
 
-
-# ═══════════════════════════════════════════════════════════════════════════════
-# 2. _filter_by_confidence() unit tests
-# ═══════════════════════════════════════════════════════════════════════════════
 
 class TestFilterByConfidence:
     def test_empty_list_returns_empty(self):
@@ -106,10 +98,6 @@ class TestFilterByConfidence:
         assert result[0] is doc
 
 
-# ═══════════════════════════════════════════════════════════════════════════════
-# 3. Prometheus RAG_QUERIES counter integration
-# ═══════════════════════════════════════════════════════════════════════════════
-
 class TestRAGQueriesCounter:
     def test_hit_label_incremented_when_results_pass(self):
         """When at least one chunk passes the threshold, 'hit' counter increments."""
@@ -156,10 +144,6 @@ class TestRAGQueriesCounter:
         assert len(result) == 1
 
 
-# ═══════════════════════════════════════════════════════════════════════════════
-# 4. RAGService.retrieve_context()
-# ═══════════════════════════════════════════════════════════════════════════════
-
 class TestRAGServiceRetrieveContext:
     @patch("services.rag_service.VectorStore")
     def test_returns_empty_string_when_no_results(self, MockVS):
@@ -197,10 +181,6 @@ class TestRAGServiceRetrieveContext:
         assert "keep this" in result
         assert "drop this" not in result
 
-
-# ═══════════════════════════════════════════════════════════════════════════════
-# 5. RAGService.retrieve_with_sources()
-# ═══════════════════════════════════════════════════════════════════════════════
 
 class TestRAGServiceRetrieveWithSources:
     @patch("services.rag_service.VectorStore")

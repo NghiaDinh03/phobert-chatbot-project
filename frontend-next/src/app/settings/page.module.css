@@ -1,0 +1,158 @@
+.header {
+    padding: 1.5rem 0 2rem;
+}
+
+.title {
+    font-size: 1.55rem;
+    font-weight: 700;
+    margin-bottom: 0.3rem;
+    letter-spacing: -0.4px;
+    color: var(--text-primary);
+}
+
+.subtitle {
+    color: var(--text-muted);
+    font-size: 0.85rem;
+}
+
+.section {
+    margin-bottom: 2rem;
+    animation: sectionFadeIn 0.3s ease both;
+}
+
+@keyframes sectionFadeIn {
+    from { opacity: 0; transform: translateY(10px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+.sectionTitle {
+    font-size: 0.88rem;
+    font-weight: 600;
+    color: var(--text-primary);
+    margin-bottom: 0.75rem;
+    display: flex;
+    align-items: center;
+    gap: 7px;
+    letter-spacing: -0.1px;
+}
+
+.card {
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-lg);
+    padding: 1.25rem;
+    box-shadow: var(--shadow-sm);
+}
+
+.languageOptions {
+    display: flex;
+    gap: 0.75rem;
+}
+
+.languageOption {
+    flex: 1;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 0.85rem 1rem;
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    background: transparent;
+    cursor: pointer;
+    transition: var(--transition);
+    font-family: inherit;
+    text-align: left;
+}
+
+.languageOption:hover {
+    background: var(--bg-muted);
+    border-color: var(--border-light);
+}
+
+.languageOptionActive {
+    background: var(--blue-subtle);
+    border-color: var(--border-active);
+}
+
+.languageOptionActive .langLabel {
+    color: var(--accent-blue);
+}
+
+.radioCircle {
+    width: 16px;
+    height: 16px;
+    border-radius: 50%;
+    border: 2px solid var(--border-light);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    transition: border-color 0.15s ease;
+}
+
+.radioCircleActive {
+    border-color: var(--accent-blue);
+}
+
+.radioDot {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background: var(--accent-blue);
+    transform: scale(0);
+    transition: transform 0.15s ease;
+}
+
+.radioDotActive {
+    transform: scale(1);
+}
+
+.langInfo {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+}
+
+.langLabel {
+    font-size: 0.85rem;
+    font-weight: 600;
+    color: var(--text-primary);
+    transition: color 0.15s ease;
+}
+
+.langSub {
+    font-size: 0.75rem;
+    color: var(--text-dim);
+}
+
+.savedIndicator {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    margin-top: 0.75rem;
+    padding: 5px 12px;
+    border-radius: 6px;
+    font-size: 0.78rem;
+    font-weight: 500;
+    color: var(--accent-green);
+    background: var(--green-subtle);
+    animation: fadeIn 0.25s ease;
+}
+
+@keyframes fadeIn {
+    from { opacity: 0; transform: translateY(-4px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+.note {
+    margin-top: 1rem;
+    font-size: 0.78rem;
+    color: var(--text-dim);
+    line-height: 1.5;
+}
+
+@media (max-width: 480px) {
+    .languageOptions {
+        flex-direction: column;
+    }
+}

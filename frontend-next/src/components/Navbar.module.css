@@ -203,6 +203,25 @@
     50% { opacity: 0.35; }
 }
 
+.settingsBtn {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 32px;
+    height: 28px;
+    border-radius: 7px;
+    background: var(--bg-muted);
+    border: 1px solid var(--border);
+    color: var(--text-muted);
+    transition: background 0.15s ease, border-color 0.15s ease, color 0.15s ease;
+}
+
+.settingsBtn:hover {
+    background: var(--hover);
+    border-color: var(--border-active);
+    color: var(--accent-blue);
+}
+
 .themeToggle {
     display: flex;
     align-items: center;

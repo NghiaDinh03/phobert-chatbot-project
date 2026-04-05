@@ -1,242 +1,326 @@
-# context.md — Đề xuất Cải thiện cho Đồ án Tốt nghiệp
+# context.md — Improvement Proposals & Session Log
 
-> Tài liệu này tổng hợp các đề xuất cải thiện dựa trên phản hồi của thầy Tô Nguyễn Nhật Quang (16/03/2026), phân tích lý do cần thiết, vấn đề hiện tại, và giải pháp cụ thể cho từng điểm.
+> This document tracks improvement proposals based on thesis advisor feedback (Tô Nguyễn Nhật Quang, 2026-03-16), completed work sessions, and forward-looking proposals for SaaS scaling.
 
 ---
 
-## Mục lục
+## Table of Contents
 
-- [1. Giảm bớt phần lý thuyết, đưa thuật toán liên quan](#1-giảm-bớt-phần-lý-thuyết-đưa-thuật-toán-liên-quan)
-- [2. Phần AI chưa sâu — So sánh mô hình](#2-phần-ai-chưa-sâu--so-sánh-mô-hình)
-- [3. Chưa có dataset chuẩn](#3-chưa-có-dataset-chuẩn)
+- [Session Log](#session-log)
+- [1. Reduce theory, add algorithms](#1-reduce-theory-add-algorithms)
+- [2. AI depth — Model comparison](#2-ai-depth--model-comparison)
+- [3. No standardized dataset](#3-no-standardized-dataset)
 - [4. Production architecture, User testing, Real enterprise data](#4-production-architecture-user-testing-real-enterprise-data)
+- [Priority Summary](#priority-summary)
+- [Improvement Proposals — Short-term](#improvement-proposals--short-term)
+- [Improvement Proposals — SaaS Scaling](#improvement-proposals--saas-scaling)
 
 ---
 
-## 1. Giảm bớt phần lý thuyết, đưa thuật toán liên quan
+## Session Log
 
-### Vấn đề hiện tại
+### 2026-04-05 — Documentation Overhaul & Code Cleanup
 
-Phần lý thuyết trong báo cáo quá dài, trình bày nhiều khái niệm chung (định nghĩa ISO 27001, lịch sử ISMS, tổng quan AI) mà chưa gắn kết trực tiếp với hệ thống đã xây dựng. Thiếu mô tả thuật toán cụ thể mà hệ thống sử dụng.
+#### 1. README Restructuring
 
-### Tại sao cần thiết
+| File | Change | Result |
+|------|--------|--------|
+| [`README.md`](README.md) | Slimmed from 684 → 155 lines | Numbered sections: Quick Start, Features (table), Architecture (mermaid), Env Variables (table), Docs links (table) |
+| [`README_vi.md`](README_vi.md) | Slimmed from 896 → 155 lines | Same structure in Vietnamese, docs links route to `docs/vi/` where available |
 
-Đồ án tốt nghiệp cần thể hiện năng lực kỹ thuật — thuật toán và quyết định thiết kế quan trọng hơn lý thuyết nền. Giám khảo đánh giá cao khi sinh viên **chứng minh hiểu sâu** qua việc mô tả chính xác thuật toán đã triển khai.
+#### 2. Backend Comment Cleanup
 
-### Giải pháp đề xuất
+Stripped banner separators, tutorial comments, and section headers from 9 files (106 lines removed). 28 files were already clean and skipped. Zero functional changes — only comment/decoration removal.
 
-**A. Thay thế lý thuyết chung bằng mô tả thuật toán cụ thể của hệ thống:**
+| Modified File | Type of Removal |
+|---------------|----------------|
+| [`main.py`](backend/main.py) | Banner separators, section headers |
+| [`iso27001.py`](backend/api/routes/iso27001.py) | Tutorial comments |
+| [`metrics.py`](backend/api/routes/metrics.py) | Section headers |
+| [`system.py`](backend/api/routes/system.py) | Banner separators |
+| [`config.py`](backend/core/config.py) | Section headers |
+| [`chat_service.py`](backend/services/chat_service.py) | Tutorial comments, banners |
+| [`test_chat_service.py`](backend/tests/test_chat_service.py) | Section headers |
+| [`test_iso27001_routes.py`](backend/tests/test_iso27001_routes.py) | Banner separators |
+| [`test_rag_service.py`](backend/tests/test_rag_service.py) | Section headers |
 
-| Thuật toán | File nguồn | Mô tả kỹ thuật cần bổ sung |
-|-----------|-----------|---------------------------|
-| Header-aware Chunking | `backend/repositories/vector_store.py` dòng 30–77 | Thuật toán phân đoạn văn bản nhận biết cấu trúc tiêu đề markdown (#, ##, ###), giữ ngữ cảnh phân cấp khi chunk. Chunk size = 600 chars, overlap = 150 chars, natural break detection tránh cắt giữa bảng/danh sách. |
-| Multi-query Expansion | `backend/repositories/vector_store.py` dòng 158–175 | Mở rộng truy vấn tự động: thêm tiền tố `tiêu chuẩn` cho truy vấn chứa "iso"/"tcvn", thay thế từ đồng nghĩa (`đánh giá` → `kiểm toán`). Tìm kiếm union + loại bỏ trùng lặp bằng `(source, chunk_index)`. |
-| Hybrid Intent Classification | `backend/services/model_router.py` dòng 146–214 | 2 tầng: (1) Semantic — ChromaDB cosine similarity trên 60+ intent templates, (2) Keyword fallback — regex pattern matching 80+ từ khóa ISO + search. Threshold-based routing đến security/general/search model. |
-| Weighted Compliance Scoring | `backend/services/assessment_helpers.py` dòng 10, 168–184 | Trọng số: critical=4, high=3, medium=2, low=1. Công thức: `Score = Σ(w_i × implemented_i) / Σ(w_i) × 100%`. Risk scoring: `R = L × I` (thang 1–5). |
-| Severity Normalization | `backend/services/assessment_helpers.py` dòng 137–165 | Thuật toán chuẩn hóa phân bố severity khi mô hình 7B đánh >70% critical. Sắp xếp theo risk score giảm dần, áp phân bố: 25% critical, 25% high, 30% medium, 20% low. |
-| Anti-hallucination Filter | `backend/services/assessment_helpers.py` dòng 67–110 | Xác thực output JSON từ SecurityLLM: kiểm tra control ID có trong catalog đã biết, clamp giá trị (likelihood 1–5, impact 1–5, risk 1–25), cắt văn bản ≤200 ký tự/trường. |
-| API Key Round-robin + Cooldown | `backend/services/cloud_llm_service.py` dòng 39–52 | Xoay vòng key với cooldown 30s khi gặp 429. Fallback chain 5 mô hình × N keys = tối đa 5N lần thử. |
+#### 3. Algorithm Documentation
 
-**B. Mô tả toán học ngắn gọn cho báo cáo:**
+Created [`docs/en/algorithms.md`](docs/en/algorithms.md) — comprehensive doc covering 7 algorithms extracted from actual source code:
+
+| # | Algorithm | Key Parameters |
+|---|-----------|---------------|
+| 1 | RAG Retrieval | ChromaDB cosine similarity, chunk_size=600, overlap=150, threshold=0.35 |
+| 2 | Model Routing | Hybrid semantic+keyword, 68 intent templates, confidence threshold 0.6 |
+| 3 | Weighted Compliance Scoring | critical=4, high=3, medium=2, low=1, tiers at 80/50/25% |
+| 4 | Risk Register Scoring | Likelihood×Impact, 1–25 range, 3-retry LLM generation |
+| 5 | Severity Normalization | 7B bias detection at >70% critical, redistribution to 25/25/30/20% |
+| 6 | Input Safety Guard | 7 regex patterns, HTTP 400 rejection, special token stripping |
+| 7 | Cloud LLM Fallback Chain | 5-model chain, 30s rate-limit cooldown, 3-mode assessment |
+
+**Addresses advisor feedback:** Section 1 (replace theory with algorithms).
+
+#### 4. Model Benchmark Document
+
+Created [`docs/en/benchmark.md`](docs/en/benchmark.md) — comparison of 4 models:
+
+| Model | Type | Purpose |
+|-------|------|---------|
+| Gemma 3n E4B | Ollama (local) | Security assessment |
+| Llama 3.1 8B | LocalAI (local) | General chat |
+| Gemini 3 Flash | Cloud API | Fast fallback |
+| Gemini 3 Pro | Cloud API | High-quality fallback |
+
+Includes test categories (Vietnamese quality, ISO 27001 knowledge, latency, throughput, resource usage, cost), reproducible curl commands, recommendation matrix, and decision flow diagram. Projected values marked with ᵖ superscript.
+
+**Addresses advisor feedback:** Section 2 (model comparison depth).
+
+#### 5. Enterprise Case Studies
+
+Created [`docs/en/case_studies.md`](docs/en/case_studies.md) — 470-line research document:
+
+| Aspect | Detail |
+|--------|--------|
+| Coverage | Real ISO 27001 / TCVN 11930 implementations |
+| Sectors | Banking (5 case studies), Healthcare, Government, Technology |
+| Sources | 30 cited sources with URLs |
+| Key finding | 8/10 top Vietnamese banks certified, driven by SBV Circular 09/2020 |
+
+**Addresses advisor feedback:** Section 4c (enterprise data / case study).
+
+---
+
+## 1. Reduce theory, add algorithms
+
+> **Status: ✅ Documentation created** — [`docs/en/algorithms.md`](docs/en/algorithms.md) covers all 7 algorithms. Thesis report chapter still needs rewriting to incorporate this content.
+
+### Current Problem
+
+Thesis theory section is too long, presents general concepts (ISO 27001 definitions, ISMS history, AI overview) without connecting to the built system. Missing specific algorithm descriptions.
+
+### Why It Matters
+
+The thesis must demonstrate technical competence — algorithms and design decisions matter more than background theory. Examiners value students who **prove deep understanding** through precise algorithm descriptions.
+
+### Proposed Solution
+
+**A. Replace general theory with system-specific algorithm descriptions:**
+
+| Algorithm | Source File | Technical Description |
+|-----------|------------|----------------------|
+| Header-aware Chunking | [`vector_store.py`](backend/repositories/vector_store.py:30) | Markdown heading-aware text segmentation (#, ##, ###), preserves hierarchical context. chunk_size=600, overlap=150, natural break detection avoids splitting tables/lists. |
+| Multi-query Expansion | [`vector_store.py`](backend/repositories/vector_store.py:158) | Automatic query expansion: adds `tiêu chuẩn` prefix for "iso"/"tcvn" queries, synonym substitution (`đánh giá` → `kiểm toán`). Union search + dedup by `(source, chunk_index)`. |
+| Hybrid Intent Classification | [`model_router.py`](backend/services/model_router.py:146) | 2-tier: (1) Semantic — ChromaDB cosine similarity on 60+ intent templates, (2) Keyword fallback — regex pattern matching 80+ ISO keywords + search. Threshold-based routing to security/general/search model. |
+| Weighted Compliance Scoring | [`assessment_helpers.py`](backend/services/assessment_helpers.py:10) | Weights: critical=4, high=3, medium=2, low=1. Formula: `Score = Σ(w_i × implemented_i) / Σ(w_i) × 100%`. Risk: `R = L × I` (1–5 scale). |
+| Severity Normalization | [`assessment_helpers.py`](backend/services/assessment_helpers.py:137) | Normalizes severity distribution when 7B model assigns >70% critical. Sorts by risk score descending, applies: 25% critical, 25% high, 30% medium, 20% low. |
+| Anti-hallucination Filter | [`assessment_helpers.py`](backend/services/assessment_helpers.py:67) | Validates SecurityLLM JSON output: checks control IDs against known catalog, clamps values (likelihood 1–5, impact 1–5, risk 1–25), truncates text ≤200 chars/field. |
+| API Key Round-robin + Cooldown | [`cloud_llm_service.py`](backend/services/cloud_llm_service.py:39) | Key rotation with 30s cooldown on 429. Fallback chain: 5 models × N keys = max 5N attempts. |
+
+**B. Mathematical notation for thesis report:**
 
 ```
 Cosine Similarity: sim(q, d) = (q · d) / (||q|| × ||d||)
-  → ChromaDB lưu distance = 1 - sim, hệ thống chuyển: score = 1 - distance
-  → Ngưỡng tin cậy: score ≥ 0.35 (tương đương distance ≤ 0.65)
+  → ChromaDB stores distance = 1 - sim, system converts: score = 1 - distance
+  → Confidence threshold: score ≥ 0.35 (equivalent to distance ≤ 0.65)
 
 Weighted Compliance:
   W = Σ(w_i × c_i) / Σ(w_i) × 100%
-  Trong đó: w_i ∈ {4, 3, 2, 1} (critical/high/medium/low)
-            c_i ∈ {0, 1} (chưa triển khai / đã triển khai)
+  Where: w_i ∈ {4, 3, 2, 1} (critical/high/medium/low)
+         c_i ∈ {0, 1} (not implemented / implemented)
 
 Risk Score:
   R = L × I, L ∈ [1,5], I ∈ [1,5], R ∈ [1,25]
 ```
 
-**Ước tính công việc:** 2–3 ngày viết lại chương lý thuyết.
+**Remaining effort:** 2–3 days to rewrite thesis theory chapter using [`algorithms.md`](docs/en/algorithms.md) as source.
 
 ---
 
-## 2. Phần AI chưa sâu — So sánh mô hình
+## 2. AI depth — Model comparison
 
-### Vấn đề hiện tại
+> **Status: ✅ Documentation created** — [`docs/en/benchmark.md`](docs/en/benchmark.md) has the comparison framework with projected values. Live benchmark testing still needed.
 
-Báo cáo chưa có phần so sánh hiệu năng các mô hình AI (LocalAI vs Ollama vs Cloud), chưa đo lường chất lượng output, chưa giải thích tại sao chọn mô hình cụ thể cho từng tác vụ.
+### Current Problem
 
-### Tại sao cần thiết
+Report lacks AI model performance comparison (LocalAI vs Ollama vs Cloud), no output quality measurements, no justification for model selection per task.
 
-Đồ án sử dụng 6+ mô hình nhưng không có dữ liệu thực nghiệm chứng minh lựa chọn mô hình là hợp lý. Giám khảo sẽ hỏi: *"Tại sao dùng SecurityLLM cho GAP mà không dùng Llama? Tại sao 8B mà không phải 12B?"*
+### Why It Matters
 
-### Giải pháp đề xuất
+The project uses 6+ models but has no empirical data proving model choices are sound. Examiners will ask: *"Why SecurityLLM for GAP and not Llama? Why 8B and not 12B?"*
 
-**A. Benchmark so sánh mô hình (có thể triển khai ngay):**
+### Proposed Solution
 
-Hệ thống đã có endpoint `GET /benchmark`. Cần chạy benchmark thực tế và ghi nhận kết quả:
+**A. Model benchmark (framework ready, needs live data):**
 
-| Thí nghiệm | Mô hình | Metric đo |
-|------------|---------|-----------|
-| GAP Analysis quality | SecurityLLM 7B vs Llama 8B vs gemini-3-flash | Precision/Recall trên 20 test cases ISO 27001 |
-| Response latency | LocalAI vs Ollama vs Cloud | P50, P95, P99 latency (từ Prometheus histogram) |
-| Token throughput | LocalAI (6 threads) vs Ollama | tokens/second trên cùng prompt |
-| JSON format compliance | SecurityLLM 7B | % output parse được JSON hợp lệ (hiện đã log) |
-| Severity accuracy | SecurityLLM 7B | % severity đúng vs expert annotation |
-| RAG retrieval quality | ChromaDB cosine | Precision@5, Recall@5 trên 30 câu hỏi ISO |
+| Experiment | Models | Metrics |
+|-----------|--------|---------|
+| GAP Analysis quality | SecurityLLM 7B vs Llama 8B vs gemini-3-flash | Precision/Recall on 20 ISO 27001 test cases |
+| Response latency | LocalAI vs Ollama vs Cloud | P50, P95, P99 latency (from Prometheus histogram) |
+| Token throughput | LocalAI (6 threads) vs Ollama | tokens/second on same prompt |
+| JSON format compliance | SecurityLLM 7B | % valid JSON output (already logged) |
+| Severity accuracy | SecurityLLM 7B | % correct severity vs expert annotation |
+| RAG retrieval quality | ChromaDB cosine | Precision@5, Recall@5 on 30 ISO questions |
 
-**B. Bảng so sánh mẫu (điền sau khi chạy benchmark):**
-
-```markdown
-| Metric                  | SecurityLLM 7B | Llama 3.1 8B | Gemma 3n E4B | gemini-3-flash |
-|-------------------------|---------------|-------------|-------------|---------------|
-| GAP JSON parse rate     | __%           | __%         | __%         | __%           |
-| Avg response time       | __s           | __s         | __s         | __s           |
-| Severity accuracy       | __%           | __%         | __%         | __%           |
-| RAM usage (peak)        | __ GB         | __ GB       | __ GB       | N/A           |
-| Tokens/second           | __            | __          | __          | __            |
-| Cost per 1K tokens      | $0 (local)    | $0 (local)  | $0 (local)  | $__           |
-```
-
-**C. Script benchmark cần xây dựng:**
+**B. Benchmark script needed:**
 
 File: `scripts/benchmark_models.py`
-- Input: 20–30 cặp (prompt, expected_output) từ `data/knowledge_base/sample_training_pairs.jsonl`
-- Chạy qua từng model endpoint
-- Đo: latency, token count, JSON validity, severity match
-- Output: bảng kết quả markdown + JSON
+- Input: 20–30 pairs (prompt, expected_output) from [`sample_training_pairs.jsonl`](data/knowledge_base/sample_training_pairs.jsonl)
+- Run through each model endpoint
+- Measure: latency, token count, JSON validity, severity match
+- Output: markdown table + JSON results
 
-**Ước tính công việc:** 3–5 ngày (viết script benchmark + chạy + phân tích kết quả + viết báo cáo).
+**Remaining effort:** 3–5 days (write benchmark script + run + analyze + write report).
 
 ---
 
-## 3. Chưa có dataset chuẩn
+## 3. No standardized dataset
 
-### Vấn đề hiện tại
+> **Status: ⏳ Not started**
 
-Hệ thống không có dataset chuẩn hóa để đánh giá chất lượng. File `data/knowledge_base/sample_training_pairs.jsonl` chỉ là mẫu nhỏ, chưa đủ để làm benchmark nghiêm túc. Không có ground truth cho GAP analysis output.
+### Current Problem
 
-### Tại sao cần thiết
+No standardized dataset for quality evaluation. [`sample_training_pairs.jsonl`](data/knowledge_base/sample_training_pairs.jsonl) is a small sample, insufficient for serious benchmarking. No ground truth for GAP analysis output.
 
-Không có dataset = không thể đánh giá khách quan chất lượng AI. Giám khảo kỹ thuật sẽ yêu cầu: *"Làm sao biết hệ thống đánh giá đúng? Accuracy bao nhiêu?"*
+### Why It Matters
 
-### Giải pháp đề xuất
+No dataset = no objective quality evaluation. Technical examiners will require: *"How do you know the system evaluates correctly? What's the accuracy?"*
 
-**A. Xây dựng CyberAI Evaluation Dataset (ưu tiên cao):**
+### Proposed Solution
 
-| Tập dữ liệu | Kích thước | Nội dung | Nguồn |
-|-------------|-----------|---------|-------|
-| RAG QA Pairs | 100 cặp | Câu hỏi ISO/TCVN + câu trả lời kỳ vọng + tài liệu nguồn | Tự tạo từ 21 tài liệu |
-| GAP Analysis Ground Truth | 30 cases | Hệ thống giả lập (controls implemented) + expert-annotated gaps | Tham khảo ISO auditor |
-| Intent Classification | 200 câu | Message + expected intent (security/general/search) | Tự tạo + crowd-source |
-| Prompt Injection | 50 câu | Injection attempts + expected block/pass | OWASP LLM Top 10 |
+**A. Build CyberAI Evaluation Dataset (high priority):**
 
-**B. Cấu trúc dataset đề xuất:**
+| Dataset | Size | Content | Source |
+|---------|------|---------|--------|
+| RAG QA Pairs | 100 pairs | ISO/TCVN questions + expected answers + source docs | Self-created from 21 documents |
+| GAP Analysis Ground Truth | 30 cases | Simulated systems (controls implemented) + expert-annotated gaps | ISO auditor reference |
+| Intent Classification | 200 sentences | Message + expected intent (security/general/search) | Self-created + crowd-source |
+| Prompt Injection | 50 sentences | Injection attempts + expected block/pass | OWASP LLM Top 10 |
+
+**B. Proposed dataset structure:**
 
 ```
 data/evaluation/
-├── rag_qa_pairs.jsonl          # {"question": "...", "answer": "...", "sources": [...]}
-├── gap_analysis_cases.jsonl    # {"system_info": {...}, "controls": [...], "expected_gaps": [...]}
-├── intent_classification.jsonl # {"message": "...", "expected_intent": "security"}
-├── prompt_injection.jsonl      # {"message": "...", "should_block": true}
-└── README.md                   # Dataset documentation
+├── rag_qa_pairs.jsonl
+├── gap_analysis_cases.jsonl
+├── intent_classification.jsonl
+├── prompt_injection.jsonl
+└── README.md
 ```
 
-**C. Quy trình đánh giá:**
+**C. Evaluation pipeline:**
 
-```
-1. Chạy RAG QA → tính BLEU/ROUGE hoặc cosine similarity với câu trả lời kỳ vọng
-2. Chạy GAP Analysis → so sánh severity + control IDs với ground truth
-3. Chạy Intent Classification → tính accuracy, F1-score
-4. Chạy Prompt Injection → tính True Positive Rate, False Positive Rate
-```
+1. Run RAG QA → compute BLEU/ROUGE or cosine similarity with expected answers
+2. Run GAP Analysis → compare severity + control IDs with ground truth
+3. Run Intent Classification → compute accuracy, F1-score
+4. Run Prompt Injection → compute True Positive Rate, False Positive Rate
 
-**D. Tool hỗ trợ tạo dataset:**
+**D. Tool support:**
 
-Hệ thống đã có `backend/services/dataset_generator.py` — có thể mở rộng để:
-- Sinh QA pairs tự động từ 21 tài liệu markdown
-- Tạo GAP analysis test cases từ `data/knowledge_base/controls.json`
-- Xuất định dạng JSONL chuẩn
+[`dataset_generator.py`](backend/services/dataset_generator.py) can be extended to auto-generate QA pairs from 21 markdown documents, create GAP analysis test cases from [`controls.json`](data/knowledge_base/controls.json), and export standard JSONL format.
 
-**Ước tính công việc:** 5–7 ngày (tạo dataset 100+ entries + viết evaluation script + chạy + phân tích).
+**Estimated effort:** 5–7 days (create 100+ entry dataset + write evaluation script + run + analyze).
 
 ---
 
 ## 4. Production architecture, User testing, Real enterprise data
 
-### Vấn đề hiện tại
+> **Status: 🔶 Partially addressed** — Case studies created ([`case_studies.md`](docs/en/case_studies.md)). Production deployment and user testing remain.
 
-Hệ thống chạy ở chế độ phát triển (`docker-compose.yml`). Chưa có:
-- Triển khai production thực tế với monitoring end-to-end
-- User testing với người dùng thực (IT auditor, security officer)
-- Dữ liệu doanh nghiệp thực (chỉ dùng dữ liệu giả lập)
+### Current Problem
 
-### Tại sao cần thiết
+System runs in development mode (`docker-compose.yml`). Missing:
+- Real production deployment with end-to-end monitoring
+- User testing with real users (IT auditors, security officers)
+- Real enterprise data (only simulated data used)
 
-Đồ án đạt điểm cao hơn khi chứng minh hệ thống **hoạt động thực tế**, không chỉ ở môi trường lab. User testing cho thấy tính ứng dụng thực tiễn.
+### Why It Matters
 
-### Giải pháp đề xuất
+Thesis scores higher when proving the system **works in practice**, not just in a lab environment. User testing demonstrates real-world applicability.
 
-**A. Production Architecture (có thể triển khai — 2–3 ngày):**
+### Proposed Solution
 
-Đã có sẵn `docker-compose.prod.yml` và `nginx/nginx.conf`. Cần:
+**A. Production Architecture (deployable — 2–3 days):**
 
-| Hạng mục | Trạng thái | Cần làm |
-|---------|-----------|---------|
-| Docker Compose production | ✅ Có | Kiểm tra lại, test trên VPS |
-| Nginx reverse proxy + TLS | ✅ Có file cấu hình | Triển khai với Let's Encrypt |
-| Prometheus metrics | ✅ Có endpoint | Thêm `prometheus.yml` + Grafana dashboard |
-| Health checks | ✅ Có cho 4 services | Đã cấu hình trong docker-compose |
-| Resource limits | ✅ Có | Backend 6GB, LocalAI 12GB, Ollama 12GB |
-| Backup strategy | ✅ Có `scripts/backup.sh` | Test restore procedure |
-| **Chưa có:** Grafana dashboard | ❌ | Tạo dashboard JSON import cho 5 metrics |
-| **Chưa có:** Alert rules | ❌ | Thêm Alertmanager rules (CPU >80%, RAM >90%) |
-| **Chưa có:** CI/CD pipeline | ❌ | GitHub Actions: lint + test + build + deploy |
+Existing assets: `docker-compose.prod.yml` and [`nginx.conf`](nginx/nginx.conf).
 
-**B. User Testing (cần 5–7 ngày):**
+| Item | Status | Action Needed |
+|------|--------|--------------|
+| Docker Compose production | ✅ Ready | Test on VPS |
+| Nginx reverse proxy + TLS | ✅ Config exists | Deploy with Let's Encrypt |
+| Prometheus metrics | ✅ Endpoint exists | Add `prometheus.yml` + Grafana dashboard |
+| Health checks | ✅ 4 services | Configured in docker-compose |
+| Resource limits | ✅ Set | Backend 6GB, LocalAI 12GB, Ollama 12GB |
+| Backup strategy | ✅ [`backup.sh`](scripts/backup.sh) | Test restore procedure |
+| Grafana dashboard | ❌ Missing | Create dashboard JSON for 5 metrics |
+| Alert rules | ❌ Missing | Add Alertmanager rules (CPU >80%, RAM >90%) |
+| CI/CD pipeline | ❌ Missing | GitHub Actions: lint + test + build + deploy |
 
-| Bước | Nội dung | Deliverable |
+**B. User Testing (5–7 days):**
+
+| Step | Content | Deliverable |
 |------|---------|-------------|
-| 1 | Tuyển 5–10 người thử (IT staff, auditor, sinh viên ATTT) | Danh sách testers |
-| 2 | Tạo kịch bản test: 3 scenarios (chat, assessment, standard upload) | Test script document |
-| 3 | Deploy lên VPS, cấp URL public | Production URL |
-| 4 | Thu thập feedback: SUS (System Usability Scale) questionnaire | SUS score (target ≥ 68) |
-| 5 | Đo metrics thực: response time, error rate, completion rate | Performance report |
-| 6 | Phân tích + viết chương User Testing trong báo cáo | 5–8 trang |
+| 1 | Recruit 5–10 testers (IT staff, auditors, infosec students) | Tester list |
+| 2 | Create test scenarios: 3 scenarios (chat, assessment, standard upload) | Test script document |
+| 3 | Deploy to VPS, provide public URL | Production URL |
+| 4 | Collect feedback: SUS (System Usability Scale) questionnaire | SUS score (target ≥ 68) |
+| 5 | Measure real metrics: response time, error rate, completion rate | Performance report |
+| 6 | Analyze + write User Testing chapter in thesis | 5–8 pages |
 
-**Kịch bản test mẫu:**
-```
-Scenario 1: "Bạn là IT Manager của công ty 100 nhân viên. Hãy sử dụng chatbot 
-để hỏi về yêu cầu ISO 27001 cho kiểm soát truy cập."
+**C. Real Enterprise Data (alternatives):**
 
-Scenario 2: "Hãy thực hiện đánh giá ISO 27001 cho hệ thống của công ty bạn 
-(50 servers, có firewall, chưa có SIEM). Chọn controls đã triển khai và xem báo cáo."
+| Approach | Feasibility | Description |
+|----------|-------------|-------------|
+| Anonymized real company data | Medium | Contact IT firms for anonymized data |
+| High-quality simulated data | High | Create 5 detailed company profiles + assessment results |
+| Public case studies | ✅ Done | [`case_studies.md`](docs/en/case_studies.md) — 30 cited sources |
+| Lab environment simulation | High | Set up lab (10 VMs, AD, firewall) → real assessment |
 
-Scenario 3: "Tải lên một tiêu chuẩn bảo mật tùy chỉnh (file JSON mẫu được cung cấp) 
-và kiểm tra nó xuất hiện trong danh sách tiêu chuẩn."
-```
-
-**C. Real Enterprise Data (hạn chế — giải pháp thay thế):**
-
-Dữ liệu doanh nghiệp thực nhạy cảm, khó thu thập cho đồ án. Giải pháp thay thế:
-
-| Phương án | Khả thi | Mô tả |
-|----------|---------|-------|
-| Dữ liệu ẩn danh từ công ty thực | Trung bình | Liên hệ công ty IT, xin dữ liệu đã ẩn danh |
-| Dữ liệu giả lập chất lượng cao | Cao | Tạo 5 company profiles chi tiết + assessment results |
-| Case study công khai | Cao | Dùng breach reports công khai (VN-CERT, NIST NVD) |
-| Lab environment simulation | Cao | Dựng hệ thống lab (10 VMs, AD, firewall) → đánh giá thực |
-
-**Ước tính tổng:** 10–15 ngày cho cả 3 hạng mục (A + B + C).
+**Remaining effort:** 8–12 days for production deployment + user testing.
 
 ---
 
-## Tóm tắt Ưu tiên
+## Priority Summary
 
-| # | Đề xuất | Độ khó | Thời gian | Tác động đến điểm |
-|---|---------|--------|-----------|-------------------|
-| 1 | Viết lại chương lý thuyết → thuật toán | Thấp | 2–3 ngày | ⭐⭐⭐⭐ Cao |
-| 2 | Benchmark so sánh mô hình | Trung bình | 3–5 ngày | ⭐⭐⭐⭐⭐ Rất cao |
-| 3 | Xây dựng evaluation dataset | Trung bình | 5–7 ngày | ⭐⭐⭐⭐⭐ Rất cao |
-| 4a | Production deployment + Grafana | Thấp | 2–3 ngày | ⭐⭐⭐ Trung bình |
-| 4b | User testing (5+ người) | Trung bình | 5–7 ngày | ⭐⭐⭐⭐⭐ Rất cao |
-| 4c | Enterprise data / case study | Cao | 3–5 ngày | ⭐⭐⭐ Trung bình |
+| # | Proposal | Difficulty | Time | Impact | Status |
+|---|----------|-----------|------|--------|--------|
+| 1 | Rewrite theory chapter → algorithms | Low | 2–3 days | ⭐⭐⭐⭐ High | ✅ Doc created, thesis chapter pending |
+| 2 | Model comparison benchmark | Medium | 3–5 days | ⭐⭐⭐⭐⭐ Very high | ✅ Doc created, live data pending |
+| 3 | Build evaluation dataset | Medium | 5–7 days | ⭐⭐⭐⭐⭐ Very high | ⏳ Not started |
+| 4a | Production deployment + Grafana | Low | 2–3 days | ⭐⭐⭐ Medium | ⏳ Not started |
+| 4b | User testing (5+ people) | Medium | 5–7 days | ⭐⭐⭐⭐⭐ Very high | ⏳ Not started |
+| 4c | Enterprise data / case study | High | 3–5 days | ⭐⭐⭐ Medium | ✅ Done |
 
-**Khuyến nghị thứ tự thực hiện:** 1 → 2 → 3 → 4b → 4a → 4c
+**Recommended execution order:** 3 → 4b → 4a → 2 (live data) → 1 (thesis rewrite)
+
+---
+
+## Improvement Proposals — Short-term
+
+> Next sprint priorities following the 2026-04-05 session.
+
+| # | Proposal | Description | Effort |
+|---|----------|-------------|--------|
+| 1 | Live benchmark testing | Run actual curl tests against deployed models, replace projected values in [`benchmark.md`](docs/en/benchmark.md) with measured data | 2–3 days |
+| 2 | Vietnamese translations for new docs | Create `docs/vi/algorithms.md`, `docs/vi/benchmark.md`, `docs/vi/case_studies.md` | 1–2 days |
+| 3 | Frontend case studies page | New `/case-studies` route displaying research findings from [`case_studies.md`](docs/en/case_studies.md) | 2–3 days |
+| 4 | Assessment template expansion | Add banking-specific (SBV Circular 09/2020) and healthcare templates to [`controls_catalog.py`](backend/services/controls_catalog.py) | 2–3 days |
+| 5 | Unit test coverage | Tests for [`assessment_helpers.py`](backend/services/assessment_helpers.py), [`model_router.py`](backend/services/model_router.py), [`controls_catalog.py`](backend/services/controls_catalog.py) | 3–4 days |
+
+---
+
+## Improvement Proposals — SaaS Scaling
+
+> Medium-term roadmap for evolving the platform from thesis project to production SaaS.
+
+| # | Proposal | Description | Complexity |
+|---|----------|-------------|-----------|
+| 1 | Multi-tenancy | Tenant isolation in ChromaDB (separate collections per org), JWT claims for tenant routing | High |
+| 2 | PostgreSQL migration | Replace file-based assessment storage ([`data/assessments/`](data/assessments)) with PostgreSQL for concurrent access | Medium |
+| 3 | Authentication service | OAuth2/OIDC integration (Keycloak or Auth0), role-based access (auditor/admin/viewer) | High |
+| 4 | API rate limiting per tenant | Tiered plans (free/pro/enterprise) with different rate limits via [`limiter.py`](backend/core/limiter.py) | Medium |
+| 5 | Assessment versioning | Git-like version history for assessments, diff view between versions | Medium |
+| 6 | Webhook notifications | Notify external systems on assessment completion, compliance threshold alerts | Low |
+| 7 | Export formats | PDF report generation, Excel/CSV export, SIEM integration (CEF/LEEF format) | Medium |
+| 8 | Horizontal scaling | Kubernetes deployment with HPA, Redis for session/cache, load balancer health checks | High |
+| 9 | Billing integration | Stripe/payment gateway, usage-based billing for cloud model API calls | High |
+| 10 | Compliance dashboard | Real-time compliance posture across multiple standards, trend analysis | Medium |

@@ -28,18 +28,10 @@ from main import app
 client = TestClient(app, raise_server_exceptions=False)
 
 
-# ═══════════════════════════════════════════════════════════════════════════════
-# Helpers
-# ═══════════════════════════════════════════════════════════════════════════════
-
 def _get_assessment(assessment_id: str):
     """GET /api/v1/iso27001/assessments/{assessment_id}"""
     return client.get(f"/api/v1/iso27001/assessments/{assessment_id}")
 
-
-# ═══════════════════════════════════════════════════════════════════════════════
-# 1. Valid IDs — must NOT return 400 (may return 404 if record absent)
-# ═══════════════════════════════════════════════════════════════════════════════
 
 class TestValidAssessmentIds:
     def test_uuid_style_id_accepted(self):
@@ -69,10 +61,6 @@ class TestValidAssessmentIds:
         assert response.status_code != 400
 
 
-# ═══════════════════════════════════════════════════════════════════════════════
-# 2. Path traversal attacks — must return 400
-# ═══════════════════════════════════════════════════════════════════════════════
-
 class TestPathTraversalProtection:
     def test_dotdot_slash_blocked(self):
         """Classic ../ path traversal must be rejected."""
@@ -101,10 +89,6 @@ class TestPathTraversalProtection:
         assert response.status_code == 400
 
 
-# ═══════════════════════════════════════════════════════════════════════════════
-# 3. Null-byte injection — must return 400
-# ═══════════════════════════════════════════════════════════════════════════════
-
 class TestNullByteInjection:
     def test_null_byte_url_encoded_blocked(self):
         """Null byte (%00) in the ID must be rejected."""
@@ -116,10 +100,6 @@ class TestNullByteInjection:
         response = _get_assessment("id\x00malicious")
         assert response.status_code == 400
 
-
-# ═══════════════════════════════════════════════════════════════════════════════
-# 4. Special characters / shell metacharacters — must return 400 or 422
-# ═══════════════════════════════════════════════════════════════════════════════
 
 class TestSpecialCharacterBlocking:
     def test_angle_brackets_blocked(self):
@@ -165,10 +145,6 @@ class TestSpecialCharacterBlocking:
         response = _get_assessment("id with space")
         assert response.status_code in (400, 422)
 
-
-# ═══════════════════════════════════════════════════════════════════════════════
-# 5. Edge cases
-# ═══════════════════════════════════════════════════════════════════════════════
 
 class TestEdgeCases:
     def test_empty_id_blocked(self):

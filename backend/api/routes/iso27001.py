@@ -504,10 +504,6 @@ async def chromadb_search(query: dict):
         return {"status": "error", "message": str(e)}
 
 
-# ═══════════════════════════════════════════════════════════
-# EVIDENCE UPLOAD — per control
-# ═══════════════════════════════════════════════════════════
-
 @router.post("/iso27001/evidence/{control_id}")
 async def upload_evidence(control_id: str, file: UploadFile = File(...)):
     """Upload evidence file for a specific control."""
@@ -655,10 +651,6 @@ async def preview_evidence(control_id: str, filename: str):
         "download_url": f"/api/iso27001/evidence/{control_id}/{filename}"
     }
 
-
-# ═══════════════════════════════════════════════════════════
-# PDF EXPORT — server-side
-# ═══════════════════════════════════════════════════════════
 
 @router.post("/iso27001/assessments/{assessment_id}/export-pdf")
 async def export_pdf(assessment_id: str):

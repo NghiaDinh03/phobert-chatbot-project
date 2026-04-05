@@ -5,7 +5,7 @@ import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 import { useTheme } from './ThemeProvider'
 import styles from './Navbar.module.css'
-import { Home, MessageSquare, Shield, BookOpen, BarChart2, Sun, Moon } from 'lucide-react'
+import { Home, MessageSquare, Shield, BookOpen, BarChart2, Sun, Moon, Settings } from 'lucide-react'
 
 const NAV_ITEMS = [
     { href: '/', label: 'Home', icon: Home },
@@ -13,6 +13,7 @@ const NAV_ITEMS = [
     { href: '/form-iso', label: 'Assessment', icon: Shield },
     { href: '/standards', label: 'Standards', icon: BookOpen },
     { href: '/analytics', label: 'Analytics', icon: BarChart2 },
+    { href: '/settings', label: 'Settings', icon: Settings },
 ]
 
 const TIMEZONES = [
@@ -117,6 +118,15 @@ export default function Navbar() {
                     </div>
 
                     {mounted && (
+                        <>
+                        <Link
+                            href="/settings"
+                            className={styles.settingsBtn}
+                            aria-label="Settings"
+                            title="Settings"
+                        >
+                            <Settings size={16} strokeWidth={1.8} />
+                        </Link>
                         <button
                             className={styles.themeToggle}
                             onClick={toggle}
@@ -127,6 +137,7 @@ export default function Navbar() {
                                 ? <Sun size={16} strokeWidth={1.8} />
                                 : <Moon size={16} strokeWidth={1.8} />}
                         </button>
+                        </>
                     )}
                 </div>
             </div>

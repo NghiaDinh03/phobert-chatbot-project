@@ -26,8 +26,6 @@ logger = logging.getLogger(__name__)
 
 router = APIRouter()
 
-# ── Metric definitions ────────────────────────────────────────────────────────
-
 REQUEST_COUNT = Counter(
     "cyberai_requests_total",
     "Total HTTP requests processed by the CyberAI API",
@@ -57,8 +55,6 @@ ASSESSMENTS_TOTAL = Gauge(
     "Total number of assessment records persisted on disk",
 )
 
-
-# ── Metrics endpoint ──────────────────────────────────────────────────────────
 
 @router.get(
     "/metrics",

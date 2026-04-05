@@ -6,7 +6,7 @@ import Link from 'next/link'
 import styles from './page.module.css'
 import { ASSESSMENT_TEMPLATES } from '../../data/templates'
 import { ASSESSMENT_STANDARDS } from '../../data/standards'
-import { Filter, Zap } from 'lucide-react'
+import { Filter, Zap, ExternalLink, Info } from 'lucide-react'
 
 export default function TemplatesMonitorPage() {
     const router = useRouter()
@@ -35,9 +35,9 @@ export default function TemplatesMonitorPage() {
                 <div className={styles.headerMeta}>
                     <Link href="/form-iso" className={styles.backBtn}>← Assessment</Link>
                 </div>
-                <h1 className={styles.title}>Template Library</h1>
+                <h1 className={styles.title}>Real-World System Templates</h1>
                 <p className={styles.subtitle}>
-                    Real-world network architecture templates for testing the RAG Auditor pipeline.
+                    Infrastructure profiles based on real Vietnamese enterprises with verified ISO 27001 / TCVN 11930 certifications. Each template includes cited sources.
                 </p>
             </div>
 
@@ -84,11 +84,30 @@ export default function TemplatesMonitorPage() {
                             <div className={styles.cardBody}>
                                 <p className={styles.cardDesc}>{tpl.description}</p>
 
+                                {tpl.source && (
+                                    <div className={styles.sourceRow}>
+                                        <Info size={11} className={styles.sourceIcon} />
+                                        <span className={styles.sourceText}>
+                                            {tpl.sourceUrl ? (
+                                                <a
+                                                    href={tpl.sourceUrl}
+                                                    target="_blank"
+                                                    rel="noopener noreferrer"
+                                                    className={styles.sourceLink}
+                                                >
+                                                    {tpl.source}
+                                                    <ExternalLink size={10} style={{ marginLeft: '4px', verticalAlign: 'middle' }} />
+                                                </a>
+                                            ) : tpl.source}
+                                        </span>
+                                    </div>
+                                )}
+
                                 <div className={styles.statsRow}>
                                     {[
-                                        { num: tpl.data.organization.employees, label: 'Employees' },
-                                        { num: tpl.data.infrastructure.servers, label: 'Servers' },
-                                        { num: tpl.data.organization.it_staff, label: 'IT/Sec' },
+                                        { num: tpl.data.organization.employees?.toLocaleString(), label: 'Employees' },
+                                        { num: tpl.data.infrastructure.servers?.toLocaleString(), label: 'Servers' },
+                                        { num: tpl.data.organization.it_staff?.toLocaleString(), label: 'IT/Sec' },
                                     ].map(s => (
                                         <div key={s.label} className={styles.statBox}>
                                             <span className={styles.statNum}>{s.num}</span>
@@ -102,7 +121,7 @@ export default function TemplatesMonitorPage() {
                                         { label: 'Cloud', value: tpl.data.infrastructure.cloud?.split(',')[0]?.split('(')[0]?.trim() || 'None' },
                                         { label: 'Firewall', value: tpl.data.infrastructure.firewalls?.split(',')[0]?.trim() || 'None' },
                                         { label: 'SIEM', value: tpl.data.infrastructure.siem?.split(',')[0]?.split('+')[0]?.trim() || 'None' },
-                                        { label: 'VPN', value: tpl.data.infrastructure.vpn },
+                                        { label: 'Status', value: tpl.data.compliance.iso_status?.split('(')[0]?.trim() || '—' },
                                     ].map(m => (
                                         <div key={m.label} className={styles.metaItem}>
                                             <span className={styles.metaLabel}>{m.label}</span>

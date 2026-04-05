@@ -439,7 +439,6 @@ class ChatService:
         )
 
 
-        # ── Health check LocalAI before local mode ──────────────────────────
         local_available = False
         if effective_mode in ("local", "hybrid"):
             local_available = CloudLLMService.localai_health_check(
@@ -463,9 +462,8 @@ class ChatService:
                     effective_mode = "cloud"
                     logger.warning("[Assessment] hybrid→cloud fallback (LocalAI unavailable)")
 
-        # ── If LocalAI fails mid-run for hybrid → retry phase with cloud ────
         def _try_phase(messages, temperature, local_model, task_type, priority=False):
-            """Try LocalAI first (if configured), then fallback to cloud if local load fails in hybrid/cloud modes."""
+            """Try LocalAI first, then fallback to cloud if local load fails."""
             errors = []
             # If in hybrid and local is intended
             if effective_mode in ("local", "hybrid"):
@@ -494,9 +492,6 @@ class ChatService:
 
             raise Exception("; ".join(errors))
 
-        # ── Xác định task_type + model_name cho từng Phase ──────────────────
-        # Phase 1: SecurityLM — phân tích GAP kỹ thuật (domain-specific)
-        # Phase 2: Meta-Llama — format báo cáo (general language model)
         if effective_mode == "local":
             p1_task_type = "iso_local"
             p1_model = settings.SECURITY_MODEL_NAME
@@ -610,7 +605,6 @@ class ChatService:
 
             raw_analysis_p2 = compress_for_phase2(raw_analysis)
 
-            # Phase 2: Format report with Risk Register + Structured JSON output
             today = datetime.now(timezone.utc).strftime("%d/%m/%Y")
             org_name = system_data.get("organization", {}).get("name", "Tổ chức")
             industry = system_data.get("organization", {}).get("industry", "")
@@ -711,7 +705,6 @@ class ChatService:
         """
         import re
 
-        # ── Count severity from raw_analysis ─────────────────────────────
         critical_count = len(re.findall(r'🔴|Critical|critical', raw_analysis))
         high_count = len(re.findall(r'🟠|High(?!est)', raw_analysis))
         medium_count = len(re.findall(r'🟡|Medium|medium', raw_analysis))
@@ -726,7 +719,6 @@ class ChatService:
             medium_count = max(0, medium_count // 3)
             low_count = max(0, low_count // 3)
 
-        # ── Weight breakdown from controls ────────────────────────────────
         wb = weight_breakdown or {}
         missing = missing_controls_by_weight or {}
 
@@ -736,7 +728,6 @@ class ChatService:
             impl = bd.get("implemented", 0)
             return round((impl / total * 100), 1) if total > 0 else 0.0
 
-        # ── Compliance tier ───────────────────────────────────────────────
         if percentage >= 80:
             tier = "high"
             tier_label = "Tuân thủ cao"
@@ -750,7 +741,6 @@ class ChatService:
             tier = "critical"
             tier_label = "Không tuân thủ"
 
-        # ── Build top missing controls list ──────────────────────────────
         top_gaps = []
         for sev in ["critical", "high", "medium"]:
             for ctrl_str in (missing.get(sev, []))[:5]:

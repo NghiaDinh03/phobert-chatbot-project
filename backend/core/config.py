@@ -4,7 +4,6 @@ from typing import List
 
 logger = logging.getLogger(__name__)
 
-# ── Weak / placeholder JWT secret values that must never be used in production ──
 _WEAK_JWT_SECRETS = {
     "changeme",
     "change-me-in-production",
