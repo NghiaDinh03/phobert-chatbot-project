@@ -1,12 +1,22 @@
-# CyberAI Assessment Platform
-
-> AI-powered cybersecurity assessment platform with multi-model inference, RAG-enhanced analysis, and ISO 27001 / TCVN 11930 compliance evaluation.
-
-![Python](https://img.shields.io/badge/Python-3.10+-3776AB?logo=python&logoColor=white)
-![Next.js](https://img.shields.io/badge/Next.js-15-000000?logo=next.js&logoColor=white)
-![FastAPI](https://img.shields.io/badge/FastAPI-0.115+-009688?logo=fastapi&logoColor=white)
-![Docker](https://img.shields.io/badge/Docker-Compose-2496ED?logo=docker&logoColor=white)
-![License](https://img.shields.io/badge/License-MIT-yellow.svg)
+<div align="center">
+  <h1>🛡️ CyberAI Assessment Platform</h1>
+  <p><strong>AI-Powered Cybersecurity Assessment · Multi-Model RAG Chatbot · ISO 27001 / TCVN 11930</strong></p>
+  <p>
+    <a href="README.md"><img src="https://img.shields.io/badge/English-README-blue?logo=googletranslate&logoColor=white" /></a>
+    <a href="README_vi.md"><img src="https://img.shields.io/badge/Tiếng_Việt-README-red?logo=googletranslate&logoColor=white" /></a>
+  </p>
+  <p>
+    <img src="https://img.shields.io/badge/Next.js-15.1-black?logo=next.js" />
+    <img src="https://img.shields.io/badge/FastAPI-0.115-009688?logo=fastapi" />
+    <img src="https://img.shields.io/badge/Python-3.11-3776AB?logo=python" />
+    <img src="https://img.shields.io/badge/Docker-Compose-2496ED?logo=docker" />
+    <img src="https://img.shields.io/badge/ChromaDB-Vector_Store-orange" />
+    <img src="https://img.shields.io/badge/Ollama-Gemma_3n_E4B-ff6b35?logo=meta" />
+    <img src="https://img.shields.io/badge/LocalAI-Llama_3.1-8b5cf6" />
+    <img src="https://img.shields.io/badge/Open_Claude-Cloud_LLM-green" />
+    <img src="https://img.shields.io/badge/License-MIT-yellow" />
+  </p>
+</div>
 
 ---
 

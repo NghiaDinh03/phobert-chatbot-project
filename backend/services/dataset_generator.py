@@ -1,9 +1,6 @@
 """Dataset Generator — Auto-create fine-tuning dataset for SecurityLM from:
 1. Completed assessments → Phase 1 training pairs (primary source)
 2. Synthetic assessment pairs (Cloud AI generated)
-
-Note: news-based dataset generation has been removed.
-The news aggregator is now a separate project.
 """
 
 import json
