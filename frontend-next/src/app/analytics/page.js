@@ -292,13 +292,13 @@ export default function AnalyticsPage() {
                     if (aiRes.ok) setAiStatus(await aiRes.json())
                 } catch { }
                 try {
-                    const assessRes = await fetch('/api/iso27001/assessments')
+                    const assessRes = await fetch('/api/iso27001/assessments?page_size=50')
                     if (assessRes.ok) {
                         const assessData = await assessRes.json()
                         setAssessments(Array.isArray(assessData)
                             ? assessData
-                            : Array.isArray(assessData?.assessments)
-                                ? assessData.assessments
+                            : Array.isArray(assessData?.items)
+                                ? assessData.items
                                 : [])
                     }
                 } catch { }
