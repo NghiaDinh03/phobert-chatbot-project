@@ -42,10 +42,11 @@
 }
 
 .brandText {
-    font-size: 0.95rem;
+    font-size: 0.88rem;
     font-weight: 700;
     color: var(--text-primary);
     letter-spacing: -0.4px;
+    white-space: nowrap;
 }
 
 .hamburger {
@@ -322,10 +323,13 @@
 
 @media (max-width: 640px) {
     .inner {
-        padding: 0 1rem;
+        padding: 0 0.75rem;
     }
 
     .brandText {
-        font-size: 0.88rem;
+        font-size: 0.78rem;
+        max-width: 180px;
+        overflow: hidden;
+        text-overflow: ellipsis;
     }
 }

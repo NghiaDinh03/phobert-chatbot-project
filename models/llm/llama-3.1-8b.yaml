@@ -1,22 +1,23 @@
 name: Meta-Llama-3.1-8B-Instruct-Q4_K_M.gguf
-backend: llama
+backend: llama-cpp
 parameters:
   model: Meta-Llama-3.1-8B-Instruct-Q4_K_M.gguf
   temperature: 0.7
   top_p: 0.9
   top_k: 40
-  maxtokens: 2048
+  maxtokens: 256
   f16: true
   threads: 6
-  ctx_size: 8192
+  ctx_size: 4096
   mmap: true
 
 template:
+  chat_message: |
+    <|start_header_id|>{{.RoleName}}<|end_header_id|>
+
+    {{.Content}}<|eot_id|>
   chat: |
-    <|begin_of_text|><|start_header_id|>system<|end_header_id|>
-    {{.System}}<|eot_id|>
-    {{range .Messages}}<|start_header_id|>{{.Role}}<|end_header_id|>
-    {{.Content}}<|eot_id|>{{end}}
+    <|begin_of_text|>{{.Input}}
     <|start_header_id|>assistant<|end_header_id|>
 
 stop_words:

@@ -80,6 +80,8 @@ services:
       - NEXT_PUBLIC_API_URL=${NEXT_PUBLIC_API_URL:-https://yourdomain.com}
       - API_URL=http://backend:8000
       - NODE_ENV=production
+    volumes:
+      - ./docs:/app/docs:ro
     networks:
       - cyberai-network
     depends_on:

@@ -1,23 +1,30 @@
 import './globals.css'
 import Navbar from '@/components/Navbar'
 import ThemeProvider from '@/components/ThemeProvider'
+import LanguageProvider from '@/components/LanguageProvider'
 import { ToastProvider } from '@/components/Toast'
 
 export const metadata = {
-    title: 'CyberAI Assessment Platform - Enterprise Edition',
-    description: 'Nền tảng AI tiên tiến cho đánh giá tuân thủ ISO 27001:2022 & TCVN 14423',
-    icons: { icon: '/favicon.ico' }
+    title: 'CyberAI Assessment Platform',
+    description: 'Advanced AI platform for ISO 27001:2022 & TCVN 14423 compliance assessment',
+    icons: {
+        icon: [
+            { url: '/favicon.svg', type: 'image/svg+xml' },
+        ],
+    }
 }
 
 export default function RootLayout({ children }) {
     return (
-        <html lang="vi">
-            <body>
+        <html lang="en" suppressHydrationWarning>
+            <body suppressHydrationWarning>
                 <ThemeProvider>
-                    <ToastProvider>
-                        <Navbar />
-                        <main>{children}</main>
-                    </ToastProvider>
+                    <LanguageProvider>
+                        <ToastProvider>
+                            <Navbar />
+                            <main>{children}</main>
+                        </ToastProvider>
+                    </LanguageProvider>
                 </ThemeProvider>
             </body>
         </html>

@@ -3,50 +3,53 @@
 import { useState, useEffect } from 'react'
 import Link from 'next/link'
 import SystemStats from '@/components/SystemStats'
+import { useTranslation } from '@/components/LanguageProvider'
 import styles from './page.module.css'
 import { MessageSquare, Shield, LayoutTemplate, BarChart2, BookOpen, Database, Cpu, Clock } from 'lucide-react'
 
-const FEATURES = [
-    {
-        title: 'AI Chat',
-        desc: 'Trợ lý AI tra cứu ISO 27001 và TCVN 11930 với streaming response',
-        tag: 'Streaming',
-        color: '#4f8ef7',
-        href: '/chatbot',
-        icon: MessageSquare
-    },
-    {
-        title: 'Security Assessment',
-        desc: 'Form đánh giá đa tiêu chuẩn với RAG Auditor và Multi-LLM Fallback',
-        tag: 'Multi-LLM',
-        color: '#8b6cf7',
-        href: '/form-iso',
-        icon: Shield
-    },
-    {
-        title: 'Template Library',
-        desc: 'Templates hệ thống mạng thực tế để trải nghiệm và thử nghiệm đánh giá',
-        tag: 'Templates',
-        color: '#34d399',
-        href: '/templates',
-        icon: LayoutTemplate
-    },
-    {
-        title: 'Analytics',
-        desc: 'Giám sát hiệu năng, lịch sử đánh giá và trạng thái dịch vụ real-time',
-        tag: 'Real-time',
-        color: '#22d3ee',
-        href: '/analytics',
-        icon: BarChart2
-    },
-]
-
 export default function HomePage() {
+    const { t, locale } = useTranslation()
     const [stats, setStats] = useState(null)
     const [statsLoading, setStatsLoading] = useState(true)
 
+    const FEATURES = [
+        {
+            title: t('home.featureChat'),
+            desc: t('home.featureChatDesc'),
+            tag: t('home.featureChatTag'),
+            color: '#4f8ef7',
+            href: '/chatbot',
+            icon: MessageSquare
+        },
+        {
+            title: t('home.featureAssessment'),
+            desc: t('home.featureAssessmentDesc'),
+            tag: t('home.featureAssessmentTag'),
+            color: '#8b6cf7',
+            href: '/form-iso',
+            icon: Shield
+        },
+        {
+            title: t('home.featureTemplates'),
+            desc: t('home.featureTemplatesDesc'),
+            tag: t('home.featureTemplatesTag'),
+            color: '#34d399',
+            href: '/templates',
+            icon: LayoutTemplate
+        },
+        {
+            title: t('home.featureAnalytics'),
+            desc: t('home.featureAnalyticsDesc'),
+            tag: t('home.featureAnalyticsTag'),
+            color: '#22d3ee',
+            href: '/analytics',
+            icon: BarChart2
+        },
+    ]
+
     useEffect(() => {
         async function fetchStats() {
+            const dateFmt = locale === 'vi' ? 'vi-VN' : 'en-US'
             try {
                 const [healthRes, assessRes] = await Promise.allSettled([
                     fetch('/api/health'),
@@ -59,9 +62,9 @@ export default function HomePage() {
 
                 const total = assessData?.total ?? (Array.isArray(assessData) ? assessData.length : 0)
                 const lastDate = Array.isArray(assessData) && assessData[0]?.created_at
-                    ? new Date(assessData[0].created_at).toLocaleDateString('vi-VN')
+                    ? new Date(assessData[0].created_at).toLocaleDateString(dateFmt)
                     : assessData?.assessments?.[0]?.created_at
-                        ? new Date(assessData.assessments[0].created_at).toLocaleDateString('vi-VN')
+                        ? new Date(assessData.assessments[0].created_at).toLocaleDateString(dateFmt)
                         : '—'
 
                 setStats({
@@ -77,24 +80,21 @@ export default function HomePage() {
             }
         }
         fetchStats()
-    }, [])
+    }, [locale])
 
     const STAT_ITEMS = [
-        { key: 'assessments', label: 'Total Assessments', icon: MessageSquare },
-        { key: 'chunks', label: 'ChromaDB Chunks', icon: Database },
-        { key: 'models', label: 'Active Models', icon: Cpu },
-        { key: 'lastDate', label: 'Last Assessment', icon: Clock },
+        { key: 'assessments', label: t('home.totalAssessments'), icon: MessageSquare },
+        { key: 'chunks', label: t('home.chromadbChunks'), icon: Database },
+        { key: 'models', label: t('home.activeModels'), icon: Cpu },
+        { key: 'lastDate', label: t('home.lastAssessment'), icon: Clock },
     ]
 
     return (
         <div className="page-container">
             <div className={styles.hero}>
-                <div className={styles.heroLabel}>Platform v2.0 — Cloud LLM + RAG Pipeline</div>
-                <h1 className={styles.heroTitle}>CyberAI Assessment</h1>
-                <p className={styles.heroSub}>
-                    Nền tảng AI đánh giá tuân thủ <strong>ISO 27001:2022</strong> và <strong>TCVN 11930:2017</strong>.
-                    Tích hợp <strong>Multi-LLM Fallback</strong> và <strong>Semantic RAG Search</strong>.
-                </p>
+                <div className={styles.heroLabel}>{t('home.platformVersion')}</div>
+                <h1 className={styles.heroTitle}>{t('home.heroTitle')}</h1>
+                <p className={styles.heroSub} dangerouslySetInnerHTML={{ __html: t('home.heroSub') }} />
             </div>
 
             <div className={styles.statsRow}>
@@ -112,12 +112,12 @@ export default function HomePage() {
             </div>
 
             <section>
-                <p className="section-title">⚡ System Resources</p>
+                <p className="section-title">{t('home.systemResources')}</p>
                 <SystemStats />
             </section>
 
             <section className={styles.modulesSection}>
-                <p className="section-title">🧩 Modules</p>
+                <p className="section-title">{t('home.modules')}</p>
                 <div className={styles.features}>
                     {FEATURES.map((f, i) => (
                         <Link key={i} href={f.href} className={styles.card} aria-label={`${f.title} — ${f.desc}`}>
@@ -137,7 +137,7 @@ export default function HomePage() {
             </section>
 
             <footer className={styles.footer}>
-                CyberAI Assessment Platform · FastAPI · Next.js · Open Claude · © 2026
+                {t('home.footer')}
             </footer>
         </div>
     )

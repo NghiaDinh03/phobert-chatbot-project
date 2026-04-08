@@ -3,12 +3,14 @@
 import { useState, useMemo } from 'react'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
+import { useTranslation } from '@/components/LanguageProvider'
 import styles from './page.module.css'
 import { ASSESSMENT_TEMPLATES } from '../../data/templates'
 import { ASSESSMENT_STANDARDS } from '../../data/standards'
 import { Filter, Zap, ExternalLink, Info } from 'lucide-react'
 
 export default function TemplatesMonitorPage() {
+    const { t } = useTranslation()
     const router = useRouter()
     const [filter, setFilter] = useState('all')
 
@@ -33,11 +35,11 @@ export default function TemplatesMonitorPage() {
         <div className="page-container">
             <div className={styles.header}>
                 <div className={styles.headerMeta}>
-                    <Link href="/form-iso" className={styles.backBtn}>← Assessment</Link>
+                    <Link href="/form-iso" className={styles.backBtn}>{t('templates.backToAssessment')}</Link>
                 </div>
-                <h1 className={styles.title}>Real-World System Templates</h1>
+                <h1 className={styles.title}>{t('templates.pageTitle')}</h1>
                 <p className={styles.subtitle}>
-                    Infrastructure profiles based on real Vietnamese enterprises with verified ISO 27001 / TCVN 11930 certifications. Each template includes cited sources.
+                    {t('templates.pageSubtitle')}
                 </p>
             </div>
 
@@ -105,9 +107,9 @@ export default function TemplatesMonitorPage() {
 
                                 <div className={styles.statsRow}>
                                     {[
-                                        { num: tpl.data.organization.employees?.toLocaleString(), label: 'Employees' },
-                                        { num: tpl.data.infrastructure.servers?.toLocaleString(), label: 'Servers' },
-                                        { num: tpl.data.organization.it_staff?.toLocaleString(), label: 'IT/Sec' },
+                                        { num: tpl.data.organization.employees?.toLocaleString(), label: t('templates.employees') },
+                                        { num: tpl.data.infrastructure.servers?.toLocaleString(), label: t('templates.servers') },
+                                        { num: tpl.data.organization.it_staff?.toLocaleString(), label: t('templates.itSec') },
                                     ].map(s => (
                                         <div key={s.label} className={styles.statBox}>
                                             <span className={styles.statNum}>{s.num}</span>
@@ -132,7 +134,7 @@ export default function TemplatesMonitorPage() {
 
                                 <div className={styles.complianceSection}>
                                     <div className={styles.complianceHeader}>
-                                        <span className={styles.complianceTitle}>Compliance</span>
+                                        <span className={styles.complianceTitle}>{t('templates.compliance')}</span>
                                         <span className={styles.complianceValue}>{implemented}/{total} — {percent}%</span>
                                     </div>
                                     <div className={styles.complianceTrack}>
@@ -148,9 +150,9 @@ export default function TemplatesMonitorPage() {
                             </div>
 
                             <div className={styles.cardFooter}>
-                                <button className={styles.useBtn} onClick={() => selectTemplate(tpl)} aria-label={`Analyze ${tpl.name}`}>
+                                <button className={styles.useBtn} onClick={() => selectTemplate(tpl)} aria-label={`${t('templates.analyzeSystem')} ${tpl.name}`}>
                                     <Zap size={13} style={{ marginRight: '5px', verticalAlign: 'middle' }} />
-                                    Analyze this system →
+                                    {t('templates.analyzeSystem')}
                                 </button>
                             </div>
                         </div>
@@ -158,7 +160,7 @@ export default function TemplatesMonitorPage() {
                 })}
                 {filteredTemplates.length === 0 && (
                     <div className={styles.emptyState}>
-                        <p>No templates available for this standard.</p>
+                        <p>{t('templates.noTemplates')}</p>
                     </div>
                 )}
             </div>

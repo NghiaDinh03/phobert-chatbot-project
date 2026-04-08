@@ -6,6 +6,7 @@ import remarkGfm from 'remark-gfm'
 import {
     Send, Copy, Plus, Trash2, ChevronDown, Bot, User, Loader2
 } from 'lucide-react'
+import { useTranslation } from '@/components/LanguageProvider'
 import styles from './page.module.css'
 
 const MAX_INPUT = 2000
@@ -24,13 +25,19 @@ const CLOUD_MODELS = [
     { id: 'claude-opus-4.5',        label: 'Claude Opus 4.5', provider: 'anthropic', badge: 'Pro' },
     { id: 'claude-opus-4.6',        label: 'Claude Opus 4.6', provider: 'anthropic', badge: 'New' },
     { id: 'claude-sonnet-4',        label: 'Claude Sonnet 4', provider: 'anthropic', badge: 'Fast' },
-    { id: 'gemma3n:e4b',            label: 'Gemma 3n E4B',    provider: 'ollama',    badge: 'Fast' },
-    { id: 'gemma-3-4b-it',          label: 'Gemma 3 4B',      provider: 'ollama',    badge: '2.4GB' },
-    { id: 'gemma-3-12b-it',         label: 'Gemma 3 12B',     provider: 'ollama',    badge: '7GB' },
-    { id: 'gemma-4-31b-it',         label: 'Gemma 4 31B',     provider: 'ollama',    badge: '19GB' },
+    { id: 'gemma4:latest',          label: 'Gemma 4',         provider: 'ollama',    badge: '9.6GB · New' },
+    { id: 'gemma3n:e4b',            label: 'Gemma 3n E4B',    provider: 'ollama',    badge: '4.2GB' },
+    { id: 'gemma3n:e2b',            label: 'Gemma 3n E2B',    provider: 'ollama',    badge: '2.1GB · Fast' },
     { id: 'Meta-Llama-3.1-8B-Instruct-Q4_K_M.gguf', label: 'Llama 3.1 8B',  provider: 'local', badge: '4.7GB' },
     { id: 'SecurityLLM-7B-Q4_K_M.gguf',             label: 'SecurityLLM 7B', provider: 'local', badge: '4.2GB' },
 ]
+
+// Map frontend IDs to Ollama model names for availability checking
+const OLLAMA_ID_MAP = {
+    'gemma4:latest': 'gemma4:latest',
+    'gemma3n:e4b':   'gemma3n:e4b',
+    'gemma3n:e2b':   'gemma3n:e2b',
+}
 
 const LOCAL_MODEL_IDS = new Set(
     CLOUD_MODELS.filter(m => m.provider === 'local' || m.provider === 'ollama').map(m => m.id)
@@ -52,11 +59,7 @@ const PROVIDER_LABEL = {
     ollama: 'Ollama',
 }
 
-const SUGGESTED_PROMPTS = [
-    'Kiểm soát truy cập là gì?',
-    'Giải thích Annex A ISO 27001',
-    'ISO 27001 vs SOC 2 khác nhau thế nào?',
-]
+// Suggested prompts are resolved at render time via t() hook
 
 const SESSIONS_KEY = 'phobert_chat_sessions'
 const ACTIVE_KEY = 'phobert_active_session'
@@ -82,7 +85,7 @@ function lsDel(key) {
 function directSaveSession(sessionId, messages) {
     try {
         const sessions = JSON.parse(localStorage.getItem(SESSIONS_KEY) || '[]')
-        const title = messages[0]?.content?.slice(0, 50) || 'Chat mới'
+        const title = messages[0]?.content?.slice(0, 50) || 'New chat'
         const entry = { id: sessionId, title, time: new Date().toLocaleString('vi-VN'), messages, count: messages.length }
         const idx = sessions.findIndex(x => x.id === sessionId)
         if (idx >= 0) sessions[idx] = entry
@@ -166,9 +169,22 @@ const MessageBubble = memo(function MessageBubble({ m, msgKey, isLastStreaming, 
     )
 })
 
+function isOllamaModelAvailable(modelId, ollamaAvailable) {
+    if (!ollamaAvailable || ollamaAvailable.length === 0) return null // unknown
+    const mapped = OLLAMA_ID_MAP[modelId]
+    if (!mapped) return null
+    // Direct match
+    if (ollamaAvailable.includes(mapped)) return true
+    // Partial match (e.g. "gemma3:4b" matches "gemma3:4b-instruct")
+    const prefix = mapped.split(':')[0] + ':'
+    if (ollamaAvailable.some(a => a.startsWith(prefix))) return true
+    return false
+}
+
 const ModelDropdown = memo(function ModelDropdown({
     selectedModel, modelDropdown, focusedModelIdx,
-    onToggle, onSelect, onKeyDown, modelBtnRef, dropdownRef
+    onToggle, onSelect, onKeyDown, modelBtnRef, dropdownRef,
+    ollamaAvailable
 }) {
     const activeModelInfo = CLOUD_MODELS.find(m => m.id === selectedModel) || CLOUD_MODELS[0]
     return (
@@ -202,11 +218,12 @@ const ModelDropdown = memo(function ModelDropdown({
                         const prevProvider = idx > 0 ? CLOUD_MODELS[idx - 1].provider : null
                         const showOllamaDivider = m.provider === 'ollama' && prevProvider !== 'ollama'
                         const showLocalDivider  = m.provider === 'local'  && prevProvider !== 'local'
+                        const ollamaStatus = m.provider === 'ollama' ? isOllamaModelAvailable(m.id, ollamaAvailable) : null
                         return (
                             <div key={m.id}>
                                 {showOllamaDivider && (
                                     <div className={styles.modelDropdownDivider} style={{ color: PROVIDER_COLORS.ollama }}>
-                                        <span>🦙 Ollama (Gemma 3/4 · 100% Local)</span>
+                                        <span>🦙 Ollama (Gemma 3n · 100% Local)</span>
                                     </div>
                                 )}
                                 {showLocalDivider && (
@@ -221,10 +238,19 @@ const ModelDropdown = memo(function ModelDropdown({
                                     aria-selected={selectedModel === m.id}
                                     className={`${styles.modelOption} ${selectedModel === m.id ? styles.modelOptionActive : ''} ${focusedModelIdx === idx ? styles.modelOptionFocused : ''}`}
                                     onClick={() => onSelect(m.id)}
+                                    title={ollamaStatus === false ? `Not installed — backend will auto-fallback to available Ollama model` : ''}
                                 >
-                                    <span className={styles.modelDot} style={{ background: PROVIDER_COLORS[m.provider] }} />
-                                    <span className={styles.modelOptionName}>{m.label}</span>
-                                    {m.badge && <span className={styles.modelBadge}>{m.badge}</span>}
+                                    <span className={styles.modelDot} style={{
+                                        background: ollamaStatus === false
+                                            ? '#6b7280'
+                                            : PROVIDER_COLORS[m.provider]
+                                    }} />
+                                    <span className={styles.modelOptionName} style={ollamaStatus === false ? { opacity: 0.55 } : undefined}>
+                                        {m.label}
+                                    </span>
+                                    {ollamaStatus === true && <span className={styles.modelBadge} style={{ background: '#059669', color: '#fff' }}>Ready</span>}
+                                    {ollamaStatus === false && <span className={styles.modelBadge} style={{ background: '#6b7280', color: '#fff' }}>Not Pulled</span>}
+                                    {(ollamaStatus === null && m.badge) && <span className={styles.modelBadge}>{m.badge}</span>}
                                     <span className={styles.modelProviderTag} style={{ color: PROVIDER_COLORS[m.provider] }}>
                                         {PROVIDER_LABEL[m.provider] || m.provider}
                                     </span>
@@ -238,7 +264,7 @@ const ModelDropdown = memo(function ModelDropdown({
     )
 })
 
-const SessionList = memo(function SessionList({ sessions, activeId, onOpen, onRemove, onNew, onClose, onClearAll }) {
+const SessionList = memo(function SessionList({ sessions, activeId, onOpen, onRemove, onNew, onClose, onClearAll, t }) {
     const [search, setSearch] = useState('')
 
     const filtered = useMemo(() => {
@@ -253,39 +279,39 @@ const SessionList = memo(function SessionList({ sessions, activeId, onOpen, onRe
     return (
         <>
             <div className={styles.sidebarHeader}>
-                <h3>History</h3>
+                <h3>{t('chatbot.history')}</h3>
                 <div style={{ display: 'flex', gap: 4 }}>
                     {sessions.length > 0 && (
                         <button
                             className={styles.sidebarClose}
                             onClick={onClearAll}
-                            title="Clear all history"
+                            title={t('chatbot.clearAll')}
                             style={{ fontSize: '0.7rem', padding: '4px 8px', borderRadius: 6, background: 'rgba(248,113,113,0.09)', color: 'var(--accent-red)', border: '1px solid rgba(248,113,113,0.2)' }}
                         >
-                            Clear all
+                            {t('chatbot.clearAll')}
                         </button>
                     )}
                     <button className={styles.sidebarClose} onClick={onClose}>✕</button>
                 </div>
             </div>
             <button className={styles.newBtn} onClick={onNew}>
-                <Plus size={13} style={{ marginRight: 4 }} />New Chat
+                <Plus size={13} style={{ marginRight: 4 }} />{t('chatbot.newChatFull')}
             </button>
             {sessions.length > 0 && (
                 <div style={{ padding: '0 0.75rem 0.4rem' }}>
                     <input
                         className={styles.sessionSearch}
                         type="search"
-                        placeholder="Search history…"
+                        placeholder={t('chatbot.searchHistory')}
                         value={search}
                         onChange={e => setSearch(e.target.value)}
-                        aria-label="Search sessions"
+                        aria-label={t('chatbot.searchHistory')}
                     />
                 </div>
             )}
             <div className={styles.sessionList}>
                 {filtered.length === 0 && (
-                    <p className={styles.empty}>{sessions.length === 0 ? 'No conversations yet' : 'No matches'}</p>
+                    <p className={styles.empty}>{sessions.length === 0 ? t('chatbot.noConversations') : t('chatbot.noMatches')}</p>
                 )}
                 {filtered.map(s => (
                     <div
@@ -295,9 +321,9 @@ const SessionList = memo(function SessionList({ sessions, activeId, onOpen, onRe
                     >
                         <div className={styles.sessionInfo}>
                             <div className={styles.sessionTitle}>{s.title}</div>
-                            <div className={styles.sessionMeta}>{s.count} msgs · {s.time}</div>
+                            <div className={styles.sessionMeta}>{s.count} {t('chatbot.msgs')} · {s.time}</div>
                         </div>
-                        <button className={styles.sessionDel} onClick={e => onRemove(e, s.id)} aria-label="Delete session">
+                        <button className={styles.sessionDel} onClick={e => onRemove(e, s.id)} aria-label={t('chatbot.deleteSession')}>
                             <Trash2 size={12} />
                         </button>
                     </div>
@@ -308,6 +334,7 @@ const SessionList = memo(function SessionList({ sessions, activeId, onOpen, onRe
 })
 
 export default function ChatbotPage() {
+    const { t, locale } = useTranslation()
     const [sessions, setSessions] = useState([])
     const [activeId, setActiveId] = useState(null)
     const [msgs, setMsgs] = useState([])
@@ -329,6 +356,8 @@ export default function ChatbotPage() {
     const dropdownRef = useRef(null)
     const prevMsgLenRef = useRef(0)
 
+    const [ollamaAvailable, setOllamaAvailable] = useState([])
+
     useEffect(() => {
         let cancelled = false
         const fetchStatus = async () => {
@@ -341,7 +370,12 @@ export default function ChatbotPage() {
                 let badgeTone = 'badgeHybrid'
                 if (modeLabel !== 'Cloud-first') badgeTone = 'badgeLocal'
                 if (missing.length > 0 || data?.localai?.status?.startsWith('unreachable')) badgeTone = 'badgeWarn'
-                if (!cancelled) setAiStatus({ mode: modeLabel, badgeTone, missing, details: data })
+                if (!cancelled) {
+                    setAiStatus({ mode: modeLabel, badgeTone, missing, details: data })
+                    if (Array.isArray(data?.ollama_models)) {
+                        setOllamaAvailable(data.ollama_models)
+                    }
+                }
             } catch { }
         }
         fetchStatus()
@@ -370,37 +404,18 @@ export default function ChatbotPage() {
                 lsSet(ACTIVE_KEY, pending.sessionId)
             }
         } else if (pending && !pending.done) {
+            // Pending recovery: re-submit message via SSE stream
             setSessions(saved)
             setActiveId(pending.sessionId)
             setMsgs(pending.currentMessages || [])
             setSending(true)
             isSubmitting.current = true
-            const controller = new AbortController()
-            const timeoutId = setTimeout(() => controller.abort(), 600000)
-            fetch('/api/chat', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ message: pending.userMessage, session_id: pending.sessionId, model: LOCAL_MODEL_IDS.has(savedModel) ? savedModel : savedModel, prefer_cloud: !LOCAL_MODEL_IDS.has(savedModel) }),
-                signal: controller.signal
-            })
-                .then(r => r.json())
-                .then(data => {
-                    const content = data.error ? `Lỗi: ${data.response || data.error}` : (data.response || 'Không có phản hồi.')
-                    const final = [...(pending.currentMessages || []), { role: 'assistant', content, time: now() }]
-                    directSaveSession(pending.sessionId, final)
-                    lsDel(PENDING_KEY)
-                    if (mountedRef.current) { setMsgs(final); setSessions(lsGet(SESSIONS_KEY, [])); setSending(false) }
-                })
-                .catch(() => {
-                    const final = [...(pending.currentMessages || []), { role: 'assistant', content: 'Đang chờ model phản hồi...', time: now() }]
-                    directSaveSession(pending.sessionId, final)
-                    lsDel(PENDING_KEY)
-                    if (mountedRef.current) { setMsgs(final); setSessions(lsGet(SESSIONS_KEY, [])); setSending(false) }
-                })
-                .finally(() => {
-                    clearTimeout(timeoutId)
-                    isSubmitting.current = false
-                })
+            lsDel(PENDING_KEY)
+            setSessions(lsGet(SESSIONS_KEY, []))
+            setSending(false)
+            isSubmitting.current = false
+            // Don't re-submit on reload — just clear the pending state to avoid duplicate requests
+            // The user will need to resend if the model was processing
         } else {
             setSessions(saved)
             if (id) {
@@ -482,8 +497,9 @@ export default function ChatbotPage() {
     }, [])
 
     const updateSessions = useCallback((messages, id) => {
+        const dateFmt = locale === 'vi' ? 'vi-VN' : 'en-US'
         setSessions(prev => {
-            const entry = { id, title: messages[0]?.content?.slice(0, 50) || 'Chat mới', time: new Date().toLocaleString('vi-VN'), messages, count: messages.length }
+            const entry = { id, title: messages[0]?.content?.slice(0, 50) || t('chatbot.newChatFull'), time: new Date().toLocaleString(dateFmt), messages, count: messages.length }
             const i = prev.findIndex(x => x.id === id)
             if (i >= 0) { const u = [...prev]; u[i] = entry; return u }
             return [entry, ...prev]
@@ -505,9 +521,9 @@ export default function ChatbotPage() {
         updateSessions(next, id)
         const isLocal = LOCAL_MODEL_IDS.has(selectedModel)
         lsSet(PENDING_KEY, { sessionId: id, userMessage: text.trim(), currentMessages: next, done: false })
-        setStatusText('Đang xử lý...')
+        setStatusText(t('chatbot.processing'))
         const controller = new AbortController()
-        const timeoutId = setTimeout(() => controller.abort(), 600000)
+        const timeoutId = setTimeout(() => controller.abort(), 1800000)
 
         try {
             const res = await fetch('/api/chat', {
@@ -517,22 +533,65 @@ export default function ChatbotPage() {
                 signal: controller.signal
             })
             clearTimeout(timeoutId)
+
+            const contentType = res.headers.get('content-type') || ''
+
             if (!res.ok) {
+                // Try parsing as JSON first, then as SSE error event
+                if (contentType.includes('text/event-stream')) {
+                    const text = await res.text().catch(() => '')
+                    const match = text.match(/data:\s*(\{.*\})/)
+                    if (match) {
+                        try {
+                            const evt = JSON.parse(match[1])
+                            throw new Error(evt?.data?.response || evt?.response || `HTTP ${res.status}`)
+                        } catch (e) { if (e.message !== `HTTP ${res.status}`) throw e }
+                    }
+                    throw new Error(`HTTP ${res.status}`)
+                }
                 const errData = await res.json().catch(() => null)
                 throw new Error(errData?.detail || errData?.response || `HTTP ${res.status}`)
             }
 
-            const contentType = res.headers.get('content-type') || ''
             if (contentType.includes('text/event-stream')) {
                 const reader = res.body.getReader()
                 const decoder = new TextDecoder()
                 let buffer = ''
                 let finalData = null
+                let heartbeatCount = 0
+                const startTs = Date.now()
 
                 const pendingMsgId = `pending-${Date.now()}`
                 const streamingMsg = { role: 'assistant', content: '', time: now(), _streaming: true, _id: pendingMsgId }
                 if (mountedRef.current) {
                     setMsgs(prev => [...prev, streamingMsg])
+                }
+
+                const parseLine = (line) => {
+                    // SSE heartbeat comment — update status with elapsed time
+                    if (line.startsWith(': ')) {
+                        heartbeatCount++
+                        const elapsed = Math.round((Date.now() - startTs) / 1000)
+                        if (mountedRef.current && isLocal) {
+                           setStatusText(t('chatbot.localProcessing', { elapsed }))
+                       }
+                        return
+                    }
+                    if (!line.startsWith('data: ')) return
+                    try {
+                        const event = JSON.parse(line.slice(6))
+                        if (event.step === 'done' || event.step === 'error') {
+                            finalData = event.data
+                        } else if (event.step === 'token' && event.token && mountedRef.current) {
+                            setMsgs(prev => prev.map(m =>
+                                m._id === pendingMsgId
+                                    ? { ...m, content: m.content + event.token }
+                                    : m
+                            ))
+                        } else if (event.message && mountedRef.current) {
+                            setStatusText(event.message)
+                        }
+                    } catch { }
                 }
 
                 while (true) {
@@ -541,29 +600,16 @@ export default function ChatbotPage() {
                     buffer += decoder.decode(value, { stream: true })
                     const lines = buffer.split('\n')
                     buffer = lines.pop() || ''
-                    for (const line of lines) {
-                        if (!line.startsWith('data: ')) continue
-                        try {
-                            const event = JSON.parse(line.slice(6))
-                            if (event.step === 'done' || event.step === 'error') {
-                                finalData = event.data
-                            } else if (event.step === 'token' && event.token && mountedRef.current) {
-                                setMsgs(prev => prev.map(m =>
-                                    m._id === pendingMsgId
-                                        ? { ...m, content: m.content + event.token }
-                                        : m
-                                ))
-                            } else if (event.message && mountedRef.current) {
-                                setStatusText(event.message)
-                            }
-                        } catch { }
-                    }
+                    for (const line of lines) parseLine(line)
                 }
+
+                // Flush remaining buffer (last chunk may not end with \n)
+                if (buffer.trim()) parseLine(buffer.trim())
 
                 if (finalData) {
                     const botContent = finalData.error
-                        ? (finalData.response || 'Model không khả dụng.')
-                        : (finalData.response || 'Không có phản hồi.')
+                        ? (finalData.response || t('chatbot.modelUnavailable'))
+                        : (finalData.response || t('chatbot.noResponse'))
                     const botMsg = {
                         role: 'assistant',
                         content: botContent,
@@ -586,13 +632,25 @@ export default function ChatbotPage() {
                         lsDel(PENDING_KEY)
                     }
                 } else {
-                    throw new Error('Stream ended without response')
+                    // Stream ended without a done/error event — use any accumulated content
+                    if (mountedRef.current) {
+                        setMsgs(prev => {
+                            const pending = prev.find(m => m._id === pendingMsgId)
+                            const content = pending?.content || t('chatbot.noResponseFromModel')
+                            const botMsg = { role: 'assistant', content, time: now(), model: selectedModel, provider: 'unknown' }
+                            const final = prev.map(m => m._id === pendingMsgId ? botMsg : m)
+                            directSaveSession(id, final)
+                            updateSessions(final, id)
+                            return final
+                        })
+                        lsDel(PENDING_KEY)
+                    }
                 }
             } else {
                 const data = await res.json()
                 const botMsg = {
                     role: 'assistant',
-                    content: data.error ? (data.response || 'Model không khả dụng.') : (data.response || 'Không có phản hồi.'),
+                    content: data.error ? (data.response || t('chatbot.modelUnavailable')) : (data.response || t('chatbot.noResponse')),
                     time: now(),
                     model: data.model,
                     requestedModel: selectedModel,
@@ -609,13 +667,25 @@ export default function ChatbotPage() {
         } catch (err) {
             clearTimeout(timeoutId)
             if (mountedRef.current) {
-                const content = err?.name === 'AbortError'
-                    ? 'Request timeout (5 phút). Model đang quá tải.'
-                    : `Lỗi kết nối: ${err.message}`
-                const final = [...next, { role: 'assistant', content, time: now() }]
-                directSaveSession(id, final)
-                setMsgs(final)
-                updateSessions(final, id)
+                let content
+                if (err?.name === 'AbortError') {
+                    content = t('chatbot.timeoutError')
+                } else if (err?.message?.includes('network') || err?.message?.includes('fetch')) {
+                    content = t('chatbot.networkError')
+                } else {
+                    content = t('chatbot.errorPrefix', { message: err.message || t('common.unknown') })
+                }
+                // Replace any pending streaming message with the error, or append error
+                setMsgs(prev => {
+                    const hasPending = prev.some(m => m._streaming)
+                    const errorMsg = { role: 'assistant', content, time: now() }
+                    const final = hasPending
+                        ? prev.map(m => m._streaming ? errorMsg : m)
+                        : [...next, errorMsg]
+                    directSaveSession(id, final)
+                    updateSessions(final, id)
+                    return final
+                })
                 lsDel(PENDING_KEY)
             }
         } finally {
@@ -667,35 +737,28 @@ export default function ChatbotPage() {
                     onNew={newChat}
                     onClose={() => setSidebar(false)}
                     onClearAll={clearAllSessions}
+                    t={t}
                 />
             </aside>
 
             <div className={styles.main}>
                 <div className={styles.topBar}>
                     <div className={styles.topLeft}>
-                        <button className={styles.menuBtn} onClick={() => setSidebar(true)}>
+                        <button className={styles.menuBtn} onClick={() => setSidebar(true)} title={t('chatbot.chatHistory')}>
                             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M3 12h18M3 6h18M3 18h18" /></svg>
                         </button>
-                        <div>
-                            <h1 className={styles.pageTitle}>CyberAI Assistant</h1>
-                            <p className={styles.pageSub}>ISO 27001 · TCVN 11930 · RAG ChromaDB · Web Search</p>
-                            {aiStatus && (
-                                <div className={styles.aiBadgeRow}>
-                                    <span className={`${styles.aiBadge} ${styles[aiStatus.badgeTone || 'badgeHybrid']}`}>
-                                        {aiStatus.mode}
-                                    </span>
-                                    {aiStatus.missing?.length > 0 && (
-                                        <span className={styles.aiBadgeNote}>LocalAI: missing GGUF model</span>
-                                    )}
-                                </div>
-                            )}
-                        </div>
+                        <h1 className={styles.pageTitle}>{t('chatbot.pageTitle')}</h1>
+                        {aiStatus && (
+                            <span className={`${styles.aiBadge} ${styles[aiStatus.badgeTone || 'badgeHybrid']}`}>
+                                {aiStatus.mode}
+                            </span>
+                        )}
                     </div>
                     <div className={styles.topRight}>
                         <button className={styles.topBtn} onClick={newChat}>
-                            <Plus size={13} style={{ marginRight: 3 }} />New
+                            <Plus size={13} style={{ marginRight: 3 }} />{t('chatbot.newChat')}
                         </button>
-                        <button className={styles.topBtn} onClick={() => setSidebar(true)}>History ({sessions.length})</button>
+                        <button className={styles.topBtn} onClick={() => setSidebar(true)}>{t('chatbot.history')} ({sessions.length})</button>
                     </div>
                 </div>
 
@@ -704,11 +767,11 @@ export default function ChatbotPage() {
                         <div className={styles.welcome}>
                             <div className={styles.welcomeHeading}>
                                 <div className={styles.emptyIcon}><Bot size={32} /></div>
-                                <h2 className={styles.welcomeTitle}>Bắt đầu cuộc trò chuyện</h2>
-                                <p className={styles.welcomeSub}>Hỏi bất kỳ câu hỏi nào về ISO 27001, bảo mật thông tin, hoặc compliance.</p>
+                                <h2 className={styles.welcomeTitle}>{t('chatbot.startConversation')}</h2>
+                                <p className={styles.welcomeSub}>{t('chatbot.startConversationSub')}</p>
                             </div>
                             <div className={styles.chips}>
-                                {SUGGESTED_PROMPTS.map((text, i) => (
+                                {[t('chatbot.suggestedPrompt1'), t('chatbot.suggestedPrompt2'), t('chatbot.suggestedPrompt3')].map((text, i) => (
                                     <button key={i} className={styles.chip} onClick={() => setInput(text)} aria-label={text}>
                                         {text}
                                     </button>
@@ -757,8 +820,9 @@ export default function ChatbotPage() {
                             onKeyDown={handleModelKeyDown}
                             modelBtnRef={modelBtnRef}
                             dropdownRef={dropdownRef}
+                            ollamaAvailable={ollamaAvailable}
                         />
-                        <span className={styles.inputHint}>Enter to send · Shift+Enter for newline</span>
+                        <span className={styles.inputHint}>{t('chatbot.enterToSend')}</span>
                     </div>
                     <form className={styles.inputBar} onSubmit={e => { e.preventDefault(); send(input) }}>
                         <div className={styles.inputWrap}>
@@ -767,7 +831,7 @@ export default function ChatbotPage() {
                                 value={input}
                                 onChange={e => setInput(e.target.value.slice(0, MAX_INPUT))}
                                 onKeyDown={e => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); send(input) } }}
-                                placeholder="Ask about ISO 27001, TCVN, cybersecurity..."
+                                placeholder={t('chatbot.inputPlaceholder')}
                                 disabled={sending}
                                 maxLength={MAX_INPUT}
                                 autoFocus

@@ -8,6 +8,7 @@ import SystemStats from '@/components/SystemStats'
 import Link from 'next/link'
 import styles from './page.module.css'
 import { useToast } from '@/components/Toast'
+import { useTranslation } from '@/components/LanguageProvider'
 import { SkeletonCard, SkeletonTable } from '@/components/Skeleton'
 import { BarChart2, BookOpen, FlaskConical, Trash2, RefreshCw } from 'lucide-react'
 
@@ -114,6 +115,7 @@ function ComplianceHeatmap({ assessments }) {
 }
 
 export default function AnalyticsPage() {
+    const { t, locale } = useTranslation()
     const { showToast } = useToast()
     const [activeMainTab, setActiveMainTab] = useState('dashboard')
     const [benchmarkCases, setBenchmarkCases] = useState(null)
@@ -352,8 +354,8 @@ export default function AnalyticsPage() {
     return (
         <div className="page-container">
             <div className={styles.header}>
-                <h1 className={styles.title}>Analytics</h1>
-                <p className={styles.subtitle}>System monitoring, assessment history and standards management</p>
+                <h1 className={styles.title}>{t('analytics.pageTitle')}</h1>
+                <p className={styles.subtitle}>{t('analytics.pageSubtitle')}</p>
             </div>
 
             <div className={styles.mainTabNav}>
@@ -361,13 +363,13 @@ export default function AnalyticsPage() {
                     className={`${styles.mainTab} ${activeMainTab === 'dashboard' ? styles.mainTabActive : ''}`}
                     onClick={() => setActiveMainTab('dashboard')}
                 >
-                    <BarChart2 size={14} style={{ marginRight: '5px', verticalAlign: 'middle' }} />Dashboard
+                    <BarChart2 size={14} style={{ marginRight: '5px', verticalAlign: 'middle' }} />{t('analytics.tabDashboard')}
                 </button>
                 <button
                     className={`${styles.mainTab} ${activeMainTab === 'standards' ? styles.mainTabActive : ''}`}
                     onClick={() => setActiveMainTab('standards')}
                 >
-                    <BookOpen size={14} style={{ marginRight: '5px', verticalAlign: 'middle' }} />Standards
+                    <BookOpen size={14} style={{ marginRight: '5px', verticalAlign: 'middle' }} />{t('analytics.tabStandards')}
                 </button>
                 <button
                     className={`${styles.mainTab} ${activeMainTab === 'benchmark' ? styles.mainTabActive : ''}`}
@@ -379,10 +381,10 @@ export default function AnalyticsPage() {
                         }
                     }}
                 >
-                    <FlaskConical size={14} style={{ marginRight: '5px', verticalAlign: 'middle' }} />Benchmark AI
+                    <FlaskConical size={14} style={{ marginRight: '5px', verticalAlign: 'middle' }} />{t('analytics.tabBenchmark')}
                 </button>
                 <span className={styles.mainTabSpacer} />
-                <Link href="/form-iso" className={styles.mainTabLink}>← Assessment</Link>
+                <Link href="/form-iso" className={styles.mainTabLink}>{t('analytics.backToAssessment')}</Link>
             </div>
 
             {activeMainTab === 'standards' && (
@@ -584,12 +586,12 @@ export default function AnalyticsPage() {
             {activeMainTab === 'dashboard' && (
                 <div>
                     <section className={styles.section}>
-                        <p className="section-title">⚡ System Resources</p>
+                        <p className="section-title">{t('analytics.systemResources')}</p>
                         <SystemStats />
                     </section>
 
                     <section className={styles.section}>
-                        <p className="section-title">🤖 Service Status</p>
+                        <p className="section-title">{t('analytics.serviceStatus')}</p>
                         {loading ? (
                             <div className="grid-2">
                                 {Array.from({ length: 4 }).map((_, i) => <SkeletonCard key={i} />)}
@@ -614,17 +616,17 @@ export default function AnalyticsPage() {
                     </section>
 
                     <section className={styles.section}>
-                        <p className="section-title">🕒 Assessment History</p>
+                        <p className="section-title">{t('analytics.assessmentHistory')}</p>
                         <div className={styles.tableContainer}>
                             <table className={styles.table}>
                                 <thead>
                                     <tr>
-                                        <th>Time</th>
-                                        <th>Organization</th>
-                                        <th>Compliance</th>
-                                        <th>Status</th>
-                                        <th>ID</th>
-                                        <th style={{ textAlign: 'right' }}>Actions</th>
+                                        <th>{t('analytics.thTime')}</th>
+                                        <th>{t('analytics.thOrganization')}</th>
+                                        <th>{t('analytics.thCompliance')}</th>
+                                        <th>{t('analytics.thStatus')}</th>
+                                        <th>{t('analytics.thId')}</th>
+                                        <th style={{ textAlign: 'right' }}>{t('analytics.thActions')}</th>
                                     </tr>
                                 </thead>
                                 <tbody>
@@ -633,7 +635,7 @@ export default function AnalyticsPage() {
                                         const pctColor = getPctColor(pct)
                                         return (
                                             <tr key={a.id} onClick={() => openDetail(a.id)} className={styles.tableRowRef}>
-                                                <td>{new Date(a.created_at).toLocaleString('vi-VN')}</td>
+                                                <td>{new Date(a.created_at).toLocaleString(locale === 'vi' ? 'vi-VN' : 'en-US')}</td>
                                                 <td><strong>{a.org_name}</strong></td>
                                                 <td>
                                                     {pct != null ? (
@@ -660,8 +662,8 @@ export default function AnalyticsPage() {
                                             <td colSpan="6" className={styles.tableEmpty}>
                                                 <div className={styles.emptyState}>
                                                     <span className={styles.emptyStateIcon}>📋</span>
-                                                    <p className={styles.emptyStateText}>No assessments yet</p>
-                                                    <p className={styles.emptyStateHint}>Run an assessment from the <Link href="/form-iso">Assessment</Link> page to see results here.</p>
+                                                    <p className={styles.emptyStateText}>{t('analytics.noAssessments')}</p>
+                                                    <p className={styles.emptyStateHint}>{t('analytics.noAssessmentsHint')}</p>
                                                 </div>
                                             </td>
                                         </tr>
@@ -672,12 +674,12 @@ export default function AnalyticsPage() {
                     </section>
 
                     <section className={styles.section}>
-                        <p className="section-title">🗺️ Compliance Gap Heatmap</p>
+                        <p className="section-title">{t('analytics.complianceHeatmap')}</p>
                         <ComplianceHeatmap assessments={assessments} />
                     </section>
 
                     <section className={styles.section}>
-                        <p className="section-title">🗄️ ChromaDB — RAG Document Store</p>
+                        <p className="section-title">{t('analytics.chromadbTitle')}</p>
                         <div className={styles.chromaPanel}>
                             <div className={styles.chromaHeader}>
                                 <div className={styles.chromaHeaderLeft}>
@@ -800,7 +802,7 @@ export default function AnalyticsPage() {
                             <div className={styles.modalContent} onClick={e => e.stopPropagation()}>
                                 <div className={styles.modalHeader}>
                                     <div>
-                                        <h3 className={styles.modalTitle}>Assessment Detail</h3>
+                                        <h3 className={styles.modalTitle}>{t('analytics.assessmentDetail')}</h3>
                                         <p className={styles.modalSubtitle}>
                                             ID: <code className={styles.codeId}>{selectedAssessment.id?.split('-')[0]}</code>
                                             {selectedAssessment.created_at && <> · {new Date(selectedAssessment.created_at).toLocaleString('vi-VN')}</>}
@@ -811,8 +813,8 @@ export default function AnalyticsPage() {
                                 <div className={styles.modalBody}>
                                     {modalLoading || selectedAssessment.loading ? (
                                         <div className={styles.loading}>
-                                            <div className={styles.loadingSpinner} />
-                                            <span>Loading report...</span>
+                                        <div className={styles.loadingSpinner} />
+                                        <span>{t('analytics.loadingReport')}</span>
                                         </div>
                                     ) : selectedAssessment.error ? (
                                         <div className={styles.statusError}>{selectedAssessment.error}</div>
@@ -869,7 +871,7 @@ export default function AnalyticsPage() {
                                                 <button className={styles.modalActionBtn} onClick={() => {
                                                     const text = selectedAssessment.result?.report || ''
                                                     navigator.clipboard?.writeText(text).catch(() => { })
-                                                }}>Copy Report</button>
+                                                }}>{t('analytics.copyReportBtn')}</button>
                                                 <button className={styles.modalActionBtn} onClick={() => {
                                                     const pct = selectedAssessment.compliance_percent ?? null
                                                     const orgName = selectedAssessment.system_info?.organization?.name || 'Organization'
@@ -905,8 +907,8 @@ export default function AnalyticsPage() {
 </body></html>`
                                                     const w = window.open('', '_blank')
                                                     if (w) { w.document.write(reportHtml); w.document.close() }
-                                                }}>Export PDF</button>
-                                                <button className={styles.modalActionBtnSecondary} onClick={handleReuse}>Reuse Form</button>
+                                                }}>{t('analytics.exportPdf')}</button>
+                                                <button className={styles.modalActionBtnSecondary} onClick={handleReuse}>{t('analytics.reuseForm')}</button>
                                             </div>
 
                                             {selectedAssessment.status === 'failed' && (
@@ -936,12 +938,12 @@ export default function AnalyticsPage() {
                         <div className={styles.modalOverlay} onClick={() => setDeleteWarning(null)}>
                             <div className={`${styles.modalContent} ${styles.modalSmall}`} onClick={e => e.stopPropagation()}>
                                 <div className={styles.modalHeader}>
-                                    <h3 className={`${styles.modalTitle} ${styles.modalTitleDanger}`}>Confirm Delete</h3>
+                                    <h3 className={`${styles.modalTitle} ${styles.modalTitleDanger}`}>{t('analytics.confirmDelete')}</h3>
                                     <button className={styles.closeBtn} onClick={() => setDeleteWarning(null)}>✕</button>
                                 </div>
                                 <div className={styles.modalBody}>
                                     <p className={styles.deleteWarningText}>
-                                        This action permanently deletes the assessment report and cannot be undone.
+                                        {t('analytics.deleteWarning')}
                                     </p>
                                     <label className={styles.checkboxLabel}>
                                         <input
@@ -949,12 +951,12 @@ export default function AnalyticsPage() {
                                             checked={dontAskAgain}
                                             onChange={(e) => setDontAskAgain(e.target.checked)}
                                         />
-                                        <span>Don&apos;t ask again for 24 hours</span>
+                                        <span>{t('analytics.dontAskAgain')}</span>
                                     </label>
                                 </div>
                                 <div className={styles.modalFooter}>
                                     <button className={styles.btnSecondary} onClick={() => setDeleteWarning(null)}>Cancel</button>
-                                    <button className={styles.btnDanger} onClick={confirmDelete}>Delete permanently</button>
+                                    <button className={styles.btnDanger} onClick={confirmDelete}>{t('analytics.deletePermanently')}</button>
                                 </div>
                             </div>
                         </div>

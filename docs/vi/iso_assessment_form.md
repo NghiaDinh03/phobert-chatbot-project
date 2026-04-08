@@ -1,269 +1,391 @@
-# Form Đánh Giá ISO 27001 — Phân Tích Kỹ Thuật
+# 🛡️ CyberAI Platform — Tính Năng ISO Assessment (Đánh Giá ISO)
 
 <div align="center">
 
-[![🇬🇧 English](https://img.shields.io/badge/English-ISO_Assessment-blue?style=flat-square)](iso_assessment_form.md)
-[![🇻🇳 Tiếng Việt](https://img.shields.io/badge/Tiếng_Việt-Đánh_giá_ISO-red?style=flat-square)](iso_assessment_form_vi.md)
+[![🇬🇧 English](https://img.shields.io/badge/English-ISO_Assessment-blue?style=flat-square)](../en/iso_assessment_form.md)
+[![🇻🇳 Tiếng Việt](https://img.shields.io/badge/Tiếng_Việt-Đánh_giá_ISO-red?style=flat-square)](iso_assessment_form.md)
 
 </div>
 
 ---
 
-## Mục Lục
+## 📑 Mục Lục
 
-1. [Tổng Quan](#1-tổng-quan)
-2. [Sơ Đồ Luồng Đầu Cuối](#2-sơ-đồ-luồng-đầu-cuối)
-3. [Cấu Trúc Form — Wizard 4 Bước](#3-cấu-trúc-form--wizard-4-bước)
-4. [Đánh Giá Async — BackgroundTasks](#4-đánh-giá-async--backgroundtasks)
-5. [Pipeline Phân Tích AI](#5-pipeline-phân-tích-ai)
-6. [Cơ Sở Kiến Thức — Tài Liệu ISO](#6-cơ-sở-kiến-thức--tài-liệu-iso)
-7. [Định Dạng Kết Quả Đánh Giá](#7-định-dạng-kết-quả-đánh-giá)
-8. [Cơ Chế Polling](#8-cơ-chế-polling)
-9. [Hỗ Trợ Đa Tiêu Chuẩn](#9-hỗ-trợ-đa-tiêu-chuẩn)
-10. [Lưu Trữ Dữ Liệu](#10-lưu-trữ-dữ-liệu)
-
----
-
-## 1. Tổng Quan
-
-Module Đánh Giá ISO 27001 đánh giá mức độ tuân thủ bảo mật thông tin của tổ chức theo các controls ISO 27001:2022 (và TCVN 14423). Hệ thống hoạt động **bất đồng bộ** — người dùng gửi form và nhận ngay job ID; phân tích AI chạy trong luồng nền và kết quả được polling.
-
-| Tính năng | Chi tiết |
-|---------|---------|
-| Tiêu chuẩn | ISO 27001:2022 (mặc định), TCVN 14423 (tùy chọn) |
-| Model AI | `gemini-2.5-pro` qua Open Claude (task_type=`iso_analysis`) |
-| Thực thi | FastAPI `BackgroundTasks` (async, không chặn) |
-| Lưu trữ | File JSON: `/data/assessments/{uuid4}.json` |
-| Polling | Frontend poll `GET /api/iso27001/assessments/{id}` mỗi 3s |
-| Kiến thức | ChromaDB `iso_documents` — 7 tài liệu ISO/pháp lý |
+1. [Tổng Quan](#-1-tổng-quan)
+2. [Assessment Workflow — Quy Trình Đánh Giá (4 Bước)](#-2-assessment-workflow--quy-trình-đánh-giá-4-bước)
+3. [2-Phase AI Pipeline (Quy Trình Xử Lý AI 2 Pha)](#-3-2-phase-ai-pipeline-quy-trình-xử-lý-ai-2-pha)
+4. [Compliance Scoring (Chấm Điểm Tuân Thủ)](#-4-compliance-scoring-chấm-điểm-tuân-thủ)
+5. [Structured JSON Output (Đầu Ra JSON Có Cấu Trúc)](#-5-structured-json-output-đầu-ra-json-có-cấu-trúc)
+6. [Supported Standards (Tiêu Chuẩn Hỗ Trợ)](#-6-supported-standards-tiêu-chuẩn-hỗ-trợ)
+7. [Evidence System (Hệ Thống Bằng Chứng)](#-7-evidence-system-hệ-thống-bằng-chứng)
+8. [Export (Xuất Báo Cáo)](#-8-export-xuất-báo-cáo)
+9. [Frontend UI (Giao Diện Người Dùng)](#-9-frontend-ui-giao-diện-người-dùng)
 
 ---
 
-## 2. Sơ Đồ Luồng Đầu Cuối
+## 🔍 1. Tổng Quan
 
-```
-Người dùng điền form 4 bước
-           │
-           ▼
-POST /api/iso27001/assess  { system_info, controls[], standard_id }
-           │
-           ▼
-┌──────────────────────────────────────────────────────────────┐
-│  iso27001.py — assess()                                      │
-│                                                              │
-│  1. assessment_id = str(uuid4())                             │
-│  2. Lưu JSON { id, status:"pending", data:{...} }            │
-│     → /data/assessments/{id}.json                            │
-│  3. background_tasks.add_task(process_assessment_bg, id)     │
-│  4. Trả về HTTP 202 { id, status:"pending" }                 │
-└──────────────────────────┬───────────────────────────────────┘
-                           │ phản hồi ngay lập tức cho frontend
-                           │
-         ┌─────────────────┘
-         │  [Luồng Nền — FastAPI BackgroundTasks]
-         ▼
-┌──────────────────────────────────────────────────────────────┐
-│  process_assessment_bg(assessment_id)                        │
-│                                                              │
-│  1. Load JSON từ /data/assessments/{id}.json                 │
-│  2. ChatService.assess_system(system_data)                   │
-│     a. VectorStore.search(query, top_k=5)                    │
-│        → Truy xuất controls ISO liên quan từ ChromaDB        │
-│     b. Xây dựng system_prompt + user_prompt chi tiết         │
-│     c. CloudLLMService.chat_completion(                      │
-│           task_type="iso_analysis"                           │
-│        )  → gemini-2.5-pro qua Open Claude                   │
-│           → LocalAI dự phòng nếu Open Claude thất bại        │
-│  3. Cập nhật JSON { status:"done", result:{...} }            │
-└──────────────────────────────────────────────────────────────┘
-         │
-         │  [Frontend poll mỗi 3 giây]
-         ▼
-GET /api/iso27001/assessments/{id}
-→ { id, status:"pending" }   (đang xử lý)
-→ { id, status:"done", result:{...} }  (hoàn thành)
+Wizard (Trình hướng dẫn) 4 bước dành cho Assessment (Đánh giá) Compliance (Tuân thủ) an ninh mạng toàn diện. Hỗ trợ **ISO 27001:2022**, **TCVN 11930:2017**, và **tiêu chuẩn tùy chỉnh tải lên**.
+
+Frontend: [`/form-iso`](../../frontend-next/src/app/form-iso/page.js) với điều hướng [`StepProgress`](../../frontend-next/src/components/StepProgress.js).
+
+Backend: [`/api/iso27001/assess`](../../backend/api/routes/iso27001.py) kích hoạt tác vụ nền được xử lý bởi [`assessment_helpers.py`](../../backend/services/assessment_helpers.py).
+
+```mermaid
+flowchart LR
+    A[👤 Người dùng<br>điền form 4 bước] --> B[📡 POST /api/iso27001/assess]
+    B --> C[⚙️ Background Task]
+    C --> D[🤖 AI Pipeline<br>2 Pha]
+    D --> E[📊 Kết quả<br>Assessment]
+    E --> F[📄 Export PDF/HTML]
 ```
 
 ---
 
-## 3. Cấu Trúc Form — Wizard 4 Bước
+## 📝 2. Assessment Workflow — Quy Trình Đánh Giá (4 Bước)
 
-File: [`frontend-next/src/app/form-iso/page.js`](../frontend-next/src/app/form-iso/page.js)
+```mermaid
+flowchart TB
+    S1["🏢 Bước 1<br>Organization & Scope<br>(Tổ chức & Phạm vi)"]
+    S2["🖥️ Bước 2<br>Infrastructure Details<br>(Chi tiết Hạ tầng)"]
+    S3["✅ Bước 3<br>Controls Checklist<br>(Danh sách Kiểm soát)"]
+    S4["📋 Bước 4<br>System Description & AI Mode<br>(Mô tả Hệ thống & Chế độ AI)"]
 
-### Bước 1 — Tiêu Chuẩn & Thông Tin Công Ty
+    S1 --> S2 --> S3 --> S4
+    S4 -->|Submit| AI["🤖 AI Pipeline<br>2-Phase Analysis"]
 
-```
-┌──────────────────────────────────────────────────────┐
-│  Chọn tiêu chuẩn:  [ISO 27001:2022] [TCVN 14423]    │
-│                                                       │
-│  Tên công ty:      [____________________]             │
-│  Lĩnh vực:         [____________________]             │
-│  Mô tả hệ thống:   [____________________]             │
-└──────────────────────────────────────────────────────┘
-```
-
-### Bước 2 — Chọn Controls Bảo Mật
-
-Tổ chức theo danh mục control (miền Annex A):
-
-```
-┌──────────────────────────────────────────────────────────────┐
-│  A.5 Chính sách an toàn thông tin         [Chọn tất cả]      │
-│  ☑ A.5.1 Chính sách an toàn thông tin                        │
-│  ☑ A.5.2 Vai trò và trách nhiệm bảo mật                      │
-│                                                              │
-│  A.9 Kiểm soát truy cập                   [Chọn tất cả]      │
-│  ☑ A.9.1 Yêu cầu nghiệp vụ về kiểm soát truy cập            │
-│  ☐ A.9.2 Quản lý truy cập người dùng                        │
-└──────────────────────────────────────────────────────────────┘
+    style S1 fill:#4CAF50,color:#fff
+    style S2 fill:#2196F3,color:#fff
+    style S3 fill:#FF9800,color:#fff
+    style S4 fill:#9C27B0,color:#fff
+    style AI fill:#f44336,color:#fff
 ```
 
-### Bước 3 — Tình Trạng Bảo Mật Hiện Tại
+### 🏢 Bước 1 — Organization & Scope (Tổ chức & Phạm vi)
 
-Câu hỏi nhị phân/ba giá trị về các controls hiện có:
+| Trường | Mô tả |
+|--------|--------|
+| Organization name (Tên tổ chức) | Tên công ty hoặc tổ chức |
+| Industry (Ngành nghề) | Lĩnh vực hoạt động |
+| Organization size (Quy mô) | Số nhân viên / quy mô tài sản |
+| Standard (Tiêu chuẩn) | ISO 27001 (93 controls, 4 categories) / TCVN 11930 (34 controls, 5 categories) / Custom |
+| Scope (Phạm vi) | `full` / `department` / `system` |
 
-| Trường | Tùy chọn |
-|--------|---------|
-| `firewall` | yes / no |
-| `antivirus` | yes / no |
-| `backup` | yes / partial / no |
-| `patch_management` | yes / no |
-| `incident_response` | yes / no |
-| `access_control` | yes / partial / no |
-| `encryption` | yes / partial / no |
-| `employee_training` | yes / no |
-| `physical_security` | yes / no |
-| `risk_assessment` | yes / partial / no |
+### 🖥️ Bước 2 — Infrastructure Details (Chi Tiết Hạ Tầng)
 
-### Bước 4 — Xem Lại & Gửi
+| Trường | Mô tả |
+|--------|--------|
+| Servers | Danh sách và cấu hình máy chủ |
+| Firewalls | Chi tiết triển khai tường lửa |
+| VPN | Dịch vụ VPN đang sử dụng |
+| Cloud services | Nhà cung cấp và dịch vụ đám mây |
+| Antivirus | Giải pháp bảo vệ endpoint |
+| SIEM | Hệ thống giám sát an ninh |
+| Backup systems | Hạ tầng sao lưu dự phòng |
+| Recent incidents | Các sự cố bảo mật gần đây |
 
-Hiển thị tóm tắt tất cả controls đã chọn và thông tin hệ thống trước khi gửi.
+### ✅ Bước 3 — Controls Checklist (Danh Sách Biện Pháp Kiểm Soát)
+
+- **Chuyển đổi từng Control (Biện pháp kiểm soát)**: đã triển khai / chưa triển khai
+- **Chọn tất cả theo danh mục** để chuyển đổi hàng loạt
+- **Evidence (Bằng chứng) upload** cho từng control (kéo-thả, tối đa 10 MB)
+- Định dạng file được hỗ trợ: `PDF`, `PNG`, `JPG`, `DOC`, `DOCX`, `XLSX`, `CSV`, `TXT`, `LOG`, `CONF`, `XML`, `JSON`
+
+**Trích xuất nội dung Evidence (Bằng chứng) cho AI context:**
+
+| Loại File | Phương Pháp Trích Xuất |
+|-----------|------------------------|
+| TXT, LOG, CONF, CSV, XML, JSON | Đọc trực tiếp dạng text |
+| PDF | `pypdf` |
+| DOCX | `python-docx` |
+| XLSX | `openpyxl` |
+
+### 📋 Bước 4 — System Description & AI Mode (Mô Tả Hệ Thống & Chế Độ AI)
+
+| Trường | Mô tả |
+|--------|--------|
+| Network topology (Kiến trúc mạng) | Mô tả kiến trúc mạng lưới |
+| Additional notes (Ghi chú bổ sung) | Thông tin bổ sung dạng tự do |
+| AI mode (Chế độ AI) | `Local` / `Hybrid` / `Cloud` |
 
 ---
 
-## 4. Đánh Giá Async — BackgroundTasks
+## 🤖 3. 2-Phase AI Pipeline (Quy Trình Xử Lý AI 2 Pha)
 
-File: [`backend/api/routes/iso27001.py`](../backend/api/routes/iso27001.py)
+```mermaid
+flowchart TB
+    subgraph Phase1["⚡ Phase 1 — GAP Analysis (Phân tích khoảng cách)"]
+        direction TB
+        P1A["🔍 RAG Lookup<br>top_k=2, domain-scoped"]
+        P1B["📝 Xây dựng Prompt<br>Missing controls + System info + RAG context"]
+        P1C["🤖 LLM trả về<br>JSON array mỗi category"]
+        P1D["✅ Validate output<br>Retry tối đa 3 lần"]
+        P1A --> P1B --> P1C --> P1D
+    end
 
-### Route Handler
+    subgraph Phase2["📊 Phase 2 — Report Formatting (Định dạng Báo cáo)"]
+        direction TB
+        P2A["📥 Input: Risk Register nén<br>max 2500 ký tự + weight breakdown"]
+        P2B["🤖 LLM tạo báo cáo<br>Markdown 5 phần"]
+        P2A --> P2B
+    end
 
-```python
-@router.post("/iso27001/assess")
-async def assess(data: SystemInfo, background_tasks: BackgroundTasks):
-    assessment_id = str(uuid4())
+    Phase1 --> Phase2
 
-    assessment_data = {
-        "id": assessment_id,
-        "status": "pending",
-        "created_at": datetime.now().isoformat(),
-        "data": data.dict()
-    }
-    save_assessment(assessment_id, assessment_data)
-
-    background_tasks.add_task(process_assessment_bg, assessment_id, data.dict())
-
-    return {"id": assessment_id, "status": "pending"}
+    style Phase1 fill:#e3f2fd,stroke:#1565C0
+    style Phase2 fill:#fce4ec,stroke:#c62828
 ```
 
-### Processor Nền
+### ⚡ Phase 1 — GAP Analysis (Phân Tích Khoảng Cách)
 
-```python
-def process_assessment_bg(assessment_id: str, system_data: dict):
-    data = load_assessment(assessment_id)
-    try:
-        result = ChatService.assess_system(system_data)
-        data["status"] = "done"
-        data["result"] = result
-    except Exception as e:
-        data["status"] = "error"
-        data["error"] = str(e)
-    finally:
-        save_assessment(assessment_id, data)
+**Model:** SecurityLLM 7B (local) hoặc nhà cung cấp cloud.
+
+```
+For each standard category:
+  1. RAG lookup (top_k=2, domain-scoped collection)
+  2. Build compact prompt:
+     ├── Missing (unimplemented) controls for the category
+     ├── System summary from infrastructure details
+     └── RAG context chunks
+  3. LLM returns JSON array per category
+  4. Validate output → retry up to 3 times on failure
 ```
 
-### Lưu File
+**Schema đầu ra cho từng Control (Biện pháp kiểm soát):**
 
-```python
-ASSESSMENTS_DIR = "/data/assessments"
+<details>
+<summary>📄 Xem JSON schema mẫu cho Phase 1 output</summary>
 
-def save_assessment(assessment_id, data):
-    filepath = os.path.join(ASSESSMENTS_DIR, f"{assessment_id}.json")
-    with open(filepath, "w", encoding="utf-8") as f:
-        json.dump(data, f, ensure_ascii=False, indent=2)
+```json
+[
+  {
+    "id": "A.5.1",
+    "severity": "critical|high|medium|low",
+    "likelihood": "high|medium|low",
+    "impact": "high|medium|low",
+    "risk": "Description of risk",
+    "gap": "Description of gap",
+    "recommendation": "Remediation action"
+  }
+]
+```
+
+</details>
+
+**Validation & chống ảo giác (anti-hallucination):**
+
+- Trích xuất JSON từ đầu ra LLM (xử lý markdown fences, JSON không hoàn chỉnh)
+- **Anti-hallucination**: loại bỏ bất kỳ control ID nào không nằm trong tập control hợp lệ của tiêu chuẩn đã chọn
+- Retry tối đa 3 lần khi validation thất bại
+- **Fallback**: [`infer_gap_from_control()`](../../backend/services/assessment_helpers.py) tạo Gap Analysis (Phân tích khoảng cách) từ metadata của control khi LLM thất bại
+- **Chuẩn hóa Severity**: nếu >70% gaps là `critical`, phân bổ lại theo tỷ lệ giữa các mức severity
+
+> **📌 Lưu ý quan trọng:** Cơ chế anti-hallucination đảm bảo chỉ các control ID hợp lệ được đưa vào kết quả. Nếu LLM tạo ra ID không tồn tại trong tiêu chuẩn đã chọn, chúng sẽ bị loại bỏ tự động.
+
+### 📊 Phase 2 — Report Formatting (Định Dạng Báo Cáo)
+
+**Model:** Meta-Llama 8B (local) hoặc nhà cung cấp cloud.
+
+**Input:** Risk Register nén từ Phase 1 (tối đa 2500 ký tự) + weight breakdown.
+
+**Output:** Báo cáo Markdown 5 phần:
+
+| Phần | Nội Dung |
+|------|----------|
+| 1. ĐÁNH GIÁ TỔNG QUAN | Compliance (Tuân thủ) %, phân bổ trọng số theo mức severity |
+| 2. RISK REGISTER | Bảng: Control \| GAP \| Severity \| Likelihood \| Impact \| Risk \| Recommendation \| Timeline |
+| 3. GAP ANALYSIS | Gaps nhóm theo mức severity |
+| 4. ACTION PLAN | 0–30 ngày / 1–3 tháng / 3–12 tháng |
+| 5. EXECUTIVE SUMMARY | Chỉ số chính, top 3 rủi ro, ước tính ngân sách bằng VND |
+
+---
+
+## 📐 4. Compliance Scoring (Chấm Điểm Tuân Thủ)
+
+### Công Thức Weighted Average (Trung Bình Có Trọng Số)
+
+```
+W = Σ(implemented_weight) / Σ(all_weights) × 100%
+```
+
+> **📌 Phương pháp Scoring (Chấm điểm):** Điểm Compliance (Tuân thủ) sử dụng trọng số theo severity — các control Critical có trọng số **gấp 4 lần** control Low. Điều này đảm bảo các biện pháp bảo mật quan trọng nhất có ảnh hưởng lớn hơn đến điểm tổng thể.
+
+**Trọng số theo Severity:**
+
+| Severity (Mức nghiêm trọng) | Weight (Trọng số) |
+|------------------------------|-------------------|
+| Critical (Nghiêm trọng) | 4 |
+| High (Cao) | 3 |
+| Medium (Trung bình) | 2 |
+| Low (Thấp) | 1 |
+
+### Compliance Tiers (Mức Độ Tuân Thủ)
+
+| Score (Điểm) | Tier (Mức độ) |
+|---------------|---------------|
+| ≥ 80% | ✅ High compliance (Tuân thủ cao) |
+| ≥ 50% | ⚠️ Medium compliance (Tuân thủ trung bình) |
+| ≥ 25% | 🟠 Low compliance (Tuân thủ thấp) |
+| < 25% | 🔴 Critical (Nghiêm trọng) |
+
+---
+
+## 📦 5. Structured JSON Output (Đầu Ra JSON Có Cấu Trúc)
+
+[`_build_structured_json`](../../backend/services/assessment_helpers.py) tạo ra bản tóm tắt dạng machine-readable:
+
+<details>
+<summary>📄 Xem ví dụ Structured JSON Output đầy đủ</summary>
+
+```json
+{
+  "compliance_tier": "medium",
+  "compliance_score": 62.5,
+  "weight_breakdown": {
+    "critical": {"implemented": 3, "total": 5, "weight": 4},
+    "high": {"implemented": 10, "total": 15, "weight": 3},
+    "medium": {"implemented": 8, "total": 10, "weight": 2},
+    "low": {"implemented": 4, "total": 5, "weight": 1}
+  },
+  "risk_summary": {
+    "critical": 2,
+    "high": 5,
+    "medium": 2,
+    "low": 1
+  },
+  "top_gaps": [
+    {"id": "A.8.7", "severity": "critical", "gap": "..."},
+    {"id": "A.5.23", "severity": "critical", "gap": "..."}
+  ]
+}
+```
+
+</details>
+
+**Giải thích các trường:**
+
+| Trường | Mô Tả |
+|--------|--------|
+| `compliance_tier` | Mức Compliance (Tuân thủ): `critical` / `low` / `medium` / `high` |
+| `compliance_score` | Điểm Compliance (Tuân thủ) theo Weighted Average (Trung bình có trọng số) (0–100) |
+| `weight_breakdown` | Phân bổ trọng số theo severity: số đã triển khai / tổng / trọng số |
+| `risk_summary` | Số lượng gaps theo severity |
+| `top_gaps` | Danh sách gaps nghiêm trọng nhất cần ưu tiên Remediation (Khắc phục) |
+
+---
+
+## 📚 6. Supported Standards (Tiêu Chuẩn Hỗ Trợ)
+
+### Built-in Standards (Tiêu Chuẩn Có Sẵn)
+
+| Tiêu Chuẩn | ID | Controls (Biện pháp kiểm soát) | Categories (Danh mục) |
+|-------------|-----|------|-----------|
+| ISO 27001:2022 | `iso27001` | 93 | 4 — A.5 Organizational, A.6 People, A.7 Physical, A.8 Technological |
+| TCVN 11930:2017 | `tcvn11930` | 34 | 5 — Network, Server, Application, Data, Management |
+| Custom uploaded (Tải lên tùy chỉnh) | `{custom_id}` | Tối đa 500 | Tùy biến |
+
+Danh mục Control (Biện pháp kiểm soát) được định nghĩa trong [`controls_catalog.py`](../../backend/services/controls_catalog.py).
+
+### Additional Standards cho RAG Domain (Lĩnh vực) Mapping
+
+Các tiêu chuẩn sau được index vào ChromaDB collections và sẵn dùng cho RAG context, nhưng không có control checklist riêng:
+
+| Standard | ID |
+|----------|-----|
+| Nghị định 13/2023 | `nd13` |
+| NIST CSF | `nist_csf` |
+| PCI DSS | `pci_dss` |
+| HIPAA | `hipaa` |
+| GDPR | `gdpr` |
+| SOC 2 | `soc2` |
+
+---
+
+## 📎 7. Evidence System (Hệ Thống Bằng Chứng)
+
+| Tính Năng | Mô Tả |
+|-----------|--------|
+| Upload | Upload file theo từng control qua `/api/iso27001/evidence/{control_id}` (tối đa 10 MB) |
+| Storage (Lưu trữ) | Thư mục `data/evidence/{control_id}/` |
+| Content extraction (Trích xuất) | Nội dung file được trích xuất và đưa vào AI context trong quá trình Assessment (Đánh giá) |
+| Summary (Tóm tắt) | `/api/iso27001/evidence-summary` tổng hợp Evidence (Bằng chứng) trên tất cả controls |
+| Preview (Xem trước) | `/api/iso27001/evidence/{control_id}/{filename}/preview` trả về nội dung text cho các định dạng được hỗ trợ |
+| Management (Quản lý) | Liệt kê, tải xuống, xóa cho từng file của từng control |
+
+```mermaid
+flowchart LR
+    U["📤 Upload File<br>per control"] --> S["💾 Storage<br>data/evidence/{id}/"]
+    S --> E["🔍 Content<br>Extraction"]
+    E --> AI["🤖 AI Context<br>Injection"]
+    S --> P["👁️ Preview<br>& Download"]
 ```
 
 ---
 
-## 5. Pipeline Phân Tích AI
+## 📤 8. Export (Xuất Báo Cáo)
 
-File: [`backend/services/chat_service.py`](../backend/services/chat_service.py)
+| Phương Thức | Công Nghệ | Chi Tiết |
+|-------------|-----------|----------|
+| **PDF** (server) | weasyprint | HTML → PDF với định dạng chuyên nghiệp, qua `/api/iso27001/assessments/{id}/export-pdf` |
+| **HTML fallback** (server) | Jinja2 | Trả về HTML có style nếu weasyprint không khả dụng |
+| **HTML** (client) | Browser | Xuất HTML phía client với tính năng in-sang-PDF của trình duyệt |
 
-### `ChatService.assess_system(system_data)`
+---
 
-```python
-@staticmethod
-def assess_system(system_data: Dict) -> Dict:
-    vs = ChatService.get_vector_store()
+## 🖥️ 9. Frontend UI (Giao Diện Người Dùng)
 
-    # 1. Xây dựng query tìm kiếm từ dữ liệu hệ thống
-    query = (
-        f"{system_data.get('standard_id', 'ISO 27001')} "
-        f"{system_data.get('industry', '')} "
-        f"{' '.join(system_data.get('controls', []))}"
-    )
+Được triển khai tại [`/form-iso`](../../frontend-next/src/app/form-iso/page.js).
 
-    # 2. Truy xuất context ISO liên quan
-    context_docs = vs.search(query, top_k=5)
-    context = "\n\n---\n\n".join([d["document"] for d in context_docs])
+### Navigation (Điều Hướng)
 
-    # 3. Xây dựng AI prompt
-    system_prompt = f"""Bạn là kiểm toán viên ISO 27001 chuyên nghiệp.
-Phân tích thông tin hệ thống được cung cấp theo các controls ISO 27001:2022.
-Tham chiếu context cơ sở kiến thức sau trong phân tích:
+Wizard (Trình hướng dẫn) 4 bước sử dụng component [`StepProgress`](../../frontend-next/src/components/StepProgress.js).
 
-{context}
+### Tabs
 
-Cung cấp:
-1. Điểm tuân thủ tổng thể (0-100)
-2. Mức độ tuân thủ (Không tuân thủ / Một phần / Phần lớn / Hoàn toàn)
-3. Các gap nghiêm trọng tìm thấy
-4. Khuyến nghị cụ thể cho mỗi gap
-5. Phân tích từng control đã chọn"""
+| Tab | Mục Đích |
+|-----|----------|
+| Form | Assessment Wizard (Trình hướng dẫn đánh giá) (Bước 1–4) |
+| Result (Kết quả) | Báo cáo Markdown đã render + compliance gauge + JSON dashboard |
+| History (Lịch sử) | Danh sách phân trang các Assessment (Đánh giá) trước đó |
+| Templates (Mẫu) | Các mẫu Assessment (Đánh giá) đã điền sẵn |
 
-    # 4. Gọi AI
-    result = CloudLLMService.chat_completion(
-        messages=[
-            {"role": "system", "content": system_prompt},
-            {"role": "user",   "content": user_prompt}
-        ],
-        temperature=0.2,
-        task_type="iso_analysis"    # → gemini-2.5-pro
-    )
+### Processing UX (Trải Nghiệm Xử Lý)
 
-    return {"analysis": result["content"], "model": result["model"], "provider": result["provider"]}
+- Submit kích hoạt tác vụ nền (background task)
+- **Polling interval**: mỗi 8 giây cho đến khi hoàn tất
+- Compliance gauge hiển thị trực quan trên trang kết quả
+- Structured JSON dashboard cho đầu ra machine-readable
+
+```mermaid
+sequenceDiagram
+    participant U as 👤 Người dùng
+    participant F as 🖥️ Frontend
+    participant B as ⚙️ Backend
+    participant AI as 🤖 AI Pipeline
+
+    U->>F: Điền form 4 bước
+    F->>B: POST /api/iso27001/assess
+    B-->>F: 202 { id, status: "pending" }
+    F->>U: Hiển thị spinner
+
+    B->>AI: Background Task — Phase 1 + Phase 2
+    
+    loop Polling mỗi 8 giây
+        F->>B: GET /api/iso27001/assessments/{id}
+        B-->>F: { status: "pending" }
+        F->>U: Giữ spinner
+    end
+
+    AI-->>B: Kết quả Assessment
+    F->>B: GET /api/iso27001/assessments/{id}
+    B-->>F: { status: "done", result: {...} }
+    F->>U: Hiển thị báo cáo + gauge + JSON dashboard
 ```
 
 ---
 
-## 6. Cơ Sở Kiến Thức — Tài Liệu ISO
-
-Lưu tại `data/iso_documents/` và được index vào ChromaDB (collection `iso_documents`):
-
-| File | Nội dung | Chunks (xấp xỉ) |
-|------|---------|-----------------|
-| `iso27001_annex_a.md` | Toàn bộ Annex A — 93 controls với mô tả | ~120 |
-| `assessment_criteria.md` | Tiêu chí đánh giá và tuân thủ | ~25 |
-| `checklist_danh_gia_he_thong.md` | Checklist đánh giá hệ thống tiếng Việt | ~30 |
-| `luat_an_ninh_mang_2018.md` | Luật An ninh Mạng Việt Nam 2018 | ~40 |
-| `network_infrastructure.md` | Hướng dẫn và thực hành tốt nhất bảo mật mạng | ~35 |
-| `nghi_dinh_13_2023_bvdlcn.md` | Nghị định 13/2023 bảo vệ dữ liệu cá nhân | ~30 |
-| `tcvn_11930_2017.md` | Tiêu chuẩn CNTT TCVN 11930:2017 | ~35 |
-
-**Tổng cộng: ~315 chunks** được index với cosine similarity, chunk_size=600, overlap=150.
-
----
-
-## 7. Định Dạng Kết Quả Đánh Giá
+<details>
+<summary>📄 Ví dụ Assessment Result (Kết Quả Đánh Giá) JSON đầy đủ</summary>
 
 ```json
 {
@@ -272,138 +394,44 @@ Lưu tại `data/iso_documents/` và được index vào ChromaDB (collection `i
   "created_at": "2025-03-24T09:00:00",
   "data": {
     "company_name": "ACME Corp",
-    "industry": "Tài chính",
-    "controls": ["A.5.1", "A.9.1", "A.9.2"],
-    "firewall": "yes",
-    "patch_management": "no"
+    "industry": "Finance",
+    "standard_id": "iso27001",
+    "scope": "full",
+    "controls": ["A.5.1", "A.6.1", "A.7.1", "A.8.1"],
+    "infrastructure": {
+      "servers": "10 Linux servers, 5 Windows servers",
+      "firewalls": "Palo Alto PA-3200",
+      "vpn": "OpenVPN",
+      "cloud_services": "AWS (EC2, S3, RDS)",
+      "antivirus": "CrowdStrike Falcon",
+      "siem": "Splunk Enterprise",
+      "backup_systems": "Veeam Backup",
+      "recent_incidents": "None in last 12 months"
+    }
   },
   "result": {
-    "analysis": "## Đánh Giá Tuân Thủ ISO 27001:2022\n\n**Điểm tổng thể: 62/100**\n\n**Mức độ tuân thủ: Một phần**\n\n### Các Gap Nghiêm Trọng:\n1. Chưa có quy trình quản lý vá lỗi...\n2. Chưa có kế hoạch ứng phó sự cố...\n\n### Khuyến Nghị:\n1. **Quản lý vá lỗi (A.12.6.1)**: Triển khai quản lý vá lỗi tự động...\n\n### Phân Tích Control:\n- **A.5.1** Chính sách bảo mật: ✅ Tuân thủ\n- **A.9.1** Chính sách kiểm soát truy cập: ⚠️ Một phần\n- **A.9.2** Quản lý truy cập người dùng: ❌ Không tuân thủ",
-    "model": "gemini-2.5-pro",
-    "provider": "open_claude"
-  }
-}
-```
-
----
-
-## 8. Cơ Chế Polling
-
-### Frontend Polling (form-iso/page.js)
-
-```js
-const submit = async () => {
-  const res = await fetch('/api/iso27001/assess', {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify(form)
-  })
-  const { id } = await res.json()
-
-  // Bắt đầu polling
-  setResult({ status: 'pending', id })
-  const interval = setInterval(async () => {
-    const poll = await fetch(`/api/iso27001/assessments/${id}`)
-    const data = await poll.json()
-    if (data.status !== 'pending') {
-      clearInterval(interval)
-      setResult(data)
-    }
-  }, 3000)   // Poll mỗi 3 giây
-}
-```
-
-### Luồng Trạng Thái
-
-```
-submit()    → status: "pending"  → hiện spinner
-poll()×n    → status: "pending"  → giữ spinner
-poll()      → status: "done"     → hiện kết quả
-poll()      → status: "error"    → hiện thông báo lỗi
-```
-
----
-
-## 9. Hỗ Trợ Đa Tiêu Chuẩn
-
-File: [`frontend-next/src/data/standards.js`](../frontend-next/src/data/standards.js)
-
-Form hỗ trợ nhiều tiêu chuẩn. Mỗi tiêu chuẩn định nghĩa bộ controls riêng:
-
-```js
-export const STANDARDS = [
-  {
-    id: "iso27001_2022",
-    name: "ISO 27001:2022",
-    categories: [
-      {
-        name: "A.5 Chính sách an toàn thông tin",
-        controls: [
-          { id: "A.5.1", name: "Chính sách an toàn thông tin" },
-          { id: "A.5.2", name: "Vai trò và trách nhiệm" },
-          ...
-        ]
+    "analysis": "## Đánh Giá Tuân Thủ ISO 27001:2022\n\n**Điểm tổng thể: 62/100**\n...",
+    "structured_json": {
+      "compliance_tier": "medium",
+      "compliance_score": 62.5,
+      "weight_breakdown": {
+        "critical": {"implemented": 3, "total": 5, "weight": 4},
+        "high": {"implemented": 10, "total": 15, "weight": 3}
       },
-      ...  // 4 danh mục, 93 controls tổng
-    ]
-  },
-  {
-    id: "tcvn14423",
-    name: "TCVN 14423",
-    categories: [...]
+      "risk_summary": {"critical": 2, "high": 5, "medium": 2, "low": 1},
+      "top_gaps": [
+        {"id": "A.8.7", "severity": "critical", "gap": "Thiếu quản lý malware protection"},
+        {"id": "A.5.23", "severity": "critical", "gap": "Thiếu quy trình information security for cloud services"}
+      ]
+    },
+    "model": "SecurityLLM-7B",
+    "provider": "local"
   }
-]
-```
-
-### Xử Lý Đổi Tiêu Chuẩn
-
-Khi người dùng đổi tiêu chuẩn giữa chừng, controls đã chọn bị reset:
-
-```js
-const handleStandardChange = (newStandardId) => {
-  setForm(prev => ({
-    ...prev,
-    standard_id: newStandardId,
-    controls: []           // reset lựa chọn controls
-  }))
 }
 ```
+
+</details>
 
 ---
 
-## 10. Lưu Trữ Dữ Liệu
-
-### Lưu Trữ Đánh Giá
-
-```
-/data/assessments/
-├── 7e0b008d-34d9-4c5b-bf9a-f3de2d53658e.json   ← status: done
-├── 71789587-a7cd-4de2-94ed-09a540de90f7.json   ← status: done
-└── {uuid4}.json                                  ← status: pending|done|error
-```
-
-### Load Lịch Sử (trang Analytics)
-
-Trang analytics (`/analytics`) load tóm tắt tất cả đánh giá qua:
-
-```
-GET /api/iso27001/assessments  (list endpoint)
-→ [{ id, status, created_at, company_name }, ...]
-```
-
-Nhấn vào mục để load kết quả đầy đủ:
-
-```
-GET /api/iso27001/assessments/{id}
-→ { id, status, data, result }
-```
-
-### Tái Sử Dụng Đánh Giá
-
-Nút "Tái sử dụng" trên trang analytics điền sẵn form với dữ liệu gửi ban đầu:
-
-```js
-const handleReuse = () => {
-  router.push(`/form-iso?prefill=${encodeURIComponent(JSON.stringify(selectedDetail.data))}`)
-}
-```
+> **📌 Tóm tắt:** Hệ thống Assessment (Đánh giá) ISO cung cấp quy trình đánh giá Compliance (Tuân thủ) đầy đủ từ thu thập dữ liệu qua Wizard (Trình hướng dẫn) 4 bước, phân tích GAP tự động bằng AI Pipeline (Quy trình xử lý) 2 pha, Scoring (Chấm điểm) bằng Weighted Average (Trung bình có trọng số), đến xuất báo cáo PDF/HTML chuyên nghiệp — tất cả chạy bất đồng bộ với polling UX mượt mà.

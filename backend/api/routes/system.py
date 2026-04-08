@@ -120,6 +120,7 @@ def cache_stats():
 
 @router.get("/system/ai-status")
 def ai_status():
+    from services.cloud_llm_service import get_ollama_models
     health = CloudLLMService.health_check()
     models_ready = ModelGuard.is_ready()
     cloud_ready = bool(settings.cloud_api_key_list)
@@ -131,6 +132,8 @@ def ai_status():
     else:
         mode_label = "cloud-first"
 
+    ollama_available_models = get_ollama_models()
+
     return {
         "local_only_mode": settings.LOCAL_ONLY_MODE,
         "prefer_local": settings.PREFER_LOCAL,
@@ -141,6 +144,7 @@ def ai_status():
         "localai": health.get("localai", {}),
         "open_claude": health.get("open_claude", {}),
         "ollama": health.get("ollama", {}),
+        "ollama_models": ollama_available_models,
     }
 
 

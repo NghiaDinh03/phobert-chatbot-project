@@ -1,8 +1,67 @@
-# So sánh hiệu năng mô hình (Benchmark)
+# 📊 Benchmark — So sánh Hiệu năng Mô hình (Model Benchmark Comparison)
 
-So sánh toàn diện các mô hình AI được triển khai trong Nền tảng đánh giá CyberAI cho các tác vụ kiểm toán an ninh mạng bằng tiếng Việt.
+So sánh toàn diện các mô hình AI được triển khai trong Nền tảng Đánh giá CyberAI cho các tác vụ kiểm toán an ninh mạng bằng tiếng Việt.
 
-## 1. Phương pháp
+---
+
+## 📑 Mục lục (Table of Contents)
+
+- [1. 🧪 Phương pháp (Methodology)](#1--phương-pháp-methodology)
+  - [1.1 Môi trường kiểm thử](#11-môi-trường-kiểm-thử)
+  - [1.2 Bộ dữ liệu kiểm thử](#12-bộ-dữ-liệu-kiểm-thử)
+  - [1.3 Tiêu chí chấm điểm](#13-tiêu-chí-chấm-điểm)
+- [2. 🤖 Các mô hình được kiểm thử (Models Under Test)](#2--các-mô-hình-được-kiểm-thử-models-under-test)
+  - [2.1 Thông số kỹ thuật mô hình](#21-thông-số-kỹ-thuật-mô-hình)
+  - [2.2 Chuỗi dự phòng (Fallback Chain)](#22-chuỗi-dự-phòng-fallback-chain)
+  - [2.3 Định tuyến tác vụ - mô hình](#23-định-tuyến-tác-vụ---mô-hình)
+- [3. 📝 Chất lượng phản hồi (Response Quality)](#3--chất-lượng-phản-hồi-response-quality)
+  - [3.1 Chất lượng tiếng Việt](#31-chất-lượng-tiếng-việt)
+  - [3.2 Kiến thức chuyên ngành ISO 27001](#32-kiến-thức-chuyên-ngành-iso-27001)
+  - [3.3 Chất lượng sinh báo cáo đánh giá](#33-chất-lượng-sinh-báo-cáo-đánh-giá)
+- [4. ⚡ Chỉ số hiệu năng (Performance Metrics)](#4--chỉ-số-hiệu-năng-performance-metrics)
+  - [4.1 Độ trễ (Latency)](#41-độ-trễ-latency)
+  - [4.2 Thông lượng (Throughput)](#42-thông-lượng-throughput)
+  - [4.3 Sử dụng tài nguyên](#43-sử-dụng-tài-nguyên)
+- [5. 💰 Phân tích chi phí (Cost Analysis)](#5--phân-tích-chi-phí-cost-analysis)
+- [6. 🎯 Ma trận khuyến nghị (Recommendation Matrix)](#6--ma-trận-khuyến-nghị-recommendation-matrix)
+  - [6.1 Bảng quyết định](#61-bảng-quyết-định)
+  - [6.2 Luồng quyết định](#62-luồng-quyết-định)
+  - [6.3 Ánh xạ chế độ nền tảng](#63-ánh-xạ-chế-độ-nền-tảng)
+- [7. 🧪 Prompt kiểm thử & Đầu ra mẫu (Test Prompts & Sample Outputs)](#7--prompt-kiểm-thử--đầu-ra-mẫu-test-prompts--sample-outputs)
+  - [7.1 Chạy Benchmark](#71-chạy-benchmark)
+  - [7.2 Prompt mẫu: BC-001](#72-prompt-mẫu-bc-001-ngân-hàng-tuân-thủ-cao)
+  - [7.3 Prompt mẫu: BC-002](#73-prompt-mẫu-bc-002-bệnh-viện-tuân-thủ-thấp)
+  - [7.4 Lệnh kiểm tra nhanh](#74-lệnh-kiểm-tra-nhanh-hệ-thống)
+- [📎 Phụ lục A: Schema phản hồi Benchmark](#-phụ-lục-a-schema-phản-hồi-benchmark)
+- [📎 Phụ lục B: Thêm mô hình mới](#-phụ-lục-b-thêm-mô-hình-mới)
+
+---
+
+## 🔄 Quy trình Benchmark (Benchmark Pipeline)
+
+```mermaid
+flowchart LR
+    A[📂 Tải bộ dữ liệu<br/>benchmark_iso27001.json] --> B[🔀 Chọn chế độ<br/>local / cloud / hybrid]
+    B --> C{Chế độ?}
+    C -->|local| D[🖥️ Ollama / LocalAI]
+    C -->|cloud| E[☁️ Gemini / GPT / Claude]
+    C -->|hybrid| D
+    C -->|hybrid| E
+    D --> F[📝 Sinh báo cáo<br/>Assessment Report]
+    E --> F
+    F --> G[📊 Chấm điểm<br/>score_report ‒ 15 điểm]
+    G --> H[📈 So sánh kết quả<br/>Xếp hạng A/B/C/D]
+    H --> I[📋 Tổng hợp<br/>JSON Response]
+
+    style D fill:#2d6a4f,color:#fff
+    style E fill:#1d3557,color:#fff
+    style G fill:#e76f51,color:#fff
+    style I fill:#264653,color:#fff
+```
+
+---
+
+## 1. 🧪 Phương pháp (Methodology)
 
 ### 1.1 Môi trường kiểm thử
 
@@ -19,7 +78,7 @@ So sánh toàn diện các mô hình AI được triển khai trong Nền tảng
 
 ### 1.2 Bộ dữ liệu kiểm thử
 
-Benchmark sử dụng [`benchmark_iso27001.json`](data/knowledge_base/benchmark_iso27001.json) chứa **4 trường hợp kiểm thử** trải dài các mức tuân thủ:
+Benchmark (Đánh giá hiệu năng) sử dụng [`benchmark_iso27001.json`](data/knowledge_base/benchmark_iso27001.json) chứa **4 trường hợp kiểm thử** trải dài các mức tuân thủ:
 
 | ID | Kịch bản | Tiêu chuẩn | Mức tuân thủ | Biện pháp |
 |----|---------|-----------|-------------|-----------|
@@ -34,17 +93,17 @@ Benchmark sử dụng [`benchmark_iso27001.json`](data/knowledge_base/benchmark_
 
 | Tiêu chí | Điểm tối đa | Mô tả |
 |---------|------------|-------|
-| Đầy đủ các phần | 5 | Có đủ 5 phần bắt buộc (ĐÁNH GIÁ TỔNG QUAN, RISK REGISTER, GAP ANALYSIS, ACTION PLAN, EXECUTIVE SUMMARY) |
-| Bao phủ rủi ro nghiêm trọng | 3 | Các mã biện pháp rủi ro cao dự kiến xuất hiện trong đầu ra |
-| Định dạng mức độ nghiêm trọng | 3 | Biểu tượng emoji mức độ đúng cách (🔴🟠🟡⚪) + bảng Risk Register |
-| Tóm tắt điều hành | 2 | Có mặt kèm chỉ số định lượng (%, Controls, ngân sách) |
-| Kế hoạch hành động | 2 | Chứa mốc thời gian (0-30 ngày, 1-3 tháng, 3-12 tháng) |
+| Đầy đủ các phần (Section completeness) | 5 | Có đủ 5 phần bắt buộc (ĐÁNH GIÁ TỔNG QUAN, RISK REGISTER, GAP ANALYSIS, ACTION PLAN, EXECUTIVE SUMMARY) |
+| Bao phủ rủi ro nghiêm trọng (Critical risk coverage) | 3 | Các mã biện pháp rủi ro cao dự kiến xuất hiện trong đầu ra |
+| Định dạng mức độ nghiêm trọng (Severity formatting) | 3 | Biểu tượng emoji mức độ đúng cách (🔴🟠🟡⚪) + bảng Risk Register |
+| Tóm tắt điều hành (Executive summary) | 2 | Có mặt kèm chỉ số định lượng (%, Controls, ngân sách) |
+| Kế hoạch hành động (Action plan) | 2 | Chứa mốc thời gian (0-30 ngày, 1-3 tháng, 3-12 tháng) |
 
 **Tổng: 15 điểm** → Xếp hạng: A (≥85%), B (≥70%), C (≥55%), D (<55%)
 
 ---
 
-## 2. Các mô hình được kiểm thử
+## 2. 🤖 Các mô hình được kiểm thử (Models Under Test)
 
 ### 2.1 Thông số kỹ thuật mô hình
 
@@ -52,8 +111,8 @@ Benchmark sử dụng [`benchmark_iso27001.json`](data/knowledge_base/benchmark_
 |-----------|-------------|-------------|----------------|--------------|
 | **Nhà cung cấp** | Ollama (cục bộ) | LocalAI (cục bộ) | Cloud (OpenClaude) | Cloud (OpenClaude) |
 | **Tham số** | ~4B hiệu dụng (MoE) | 8B | Không công bố (MoE) | Không công bố (MoE) |
-| **Lượng tử hóa** | Q4_K_M qua Ollama | Q4_K_M GGUF | Native FP | Native FP |
-| **Cửa sổ ngữ cảnh** | 8.192 token | 131.072 token | 1.048.576 token | 1.048.576 token |
+| **Lượng tử hóa (Quantization)** | Q4_K_M qua Ollama | Q4_K_M GGUF | Native FP | Native FP |
+| **Cửa sổ ngữ cảnh (Context window)** | 8.192 token | 131.072 token | 1.048.576 token | 1.048.576 token |
 | **Khóa cấu hình** | `gemma3n:e4b` | `Meta-Llama-3.1-8B-Instruct-Q4_K_M.gguf` | `gemini-3-flash-preview` | `gemini-3-pro-preview` |
 | **Lệnh gọi backend** | [`_call_ollama()`](backend/services/cloud_llm_service.py:247) | [`_call_localai()`](backend/services/cloud_llm_service.py:202) | [`_call_open_claude()`](backend/services/cloud_llm_service.py:63) | [`_call_open_claude()`](backend/services/cloud_llm_service.py:63) |
 | **Định tuyến tác vụ** | Tổng quát / chat | Bảo mật / phân tích ISO | Phân tích ISO, chat | Phân tích phức tạp |
@@ -66,12 +125,26 @@ Benchmark sử dụng [`benchmark_iso27001.json`](data/knowledge_base/benchmark_
 gemini-3-flash-preview → gemini-3-pro-preview → gpt-5-mini → claude-sonnet-4 → gpt-5
 ```
 
+```mermaid
+flowchart LR
+    F1[gemini-3-flash-preview] -->|Lỗi| F2[gemini-3-pro-preview]
+    F2 -->|Lỗi| F3[gpt-5-mini]
+    F3 -->|Lỗi| F4[claude-sonnet-4]
+    F4 -->|Lỗi| F5[gpt-5]
+
+    style F1 fill:#1d3557,color:#fff
+    style F2 fill:#457b9d,color:#fff
+    style F3 fill:#e76f51,color:#fff
+    style F4 fill:#2a9d8f,color:#fff
+    style F5 fill:#264653,color:#fff
+```
+
 ### 2.3 Định tuyến tác vụ - mô hình
 
 Từ [`TASK_MODEL_MAP`](backend/services/cloud_llm_service.py:15):
 
-| Loại tác vụ | Mô hình Cloud | Mô hình cục bộ |
-|-------------|--------------|-----------------|
+| Loại tác vụ | Mô hình Cloud | Mô hình cục bộ (Local Model) |
+|-------------|--------------|-------------------------------|
 | `iso_analysis` | `gemini-3-flash-preview` | `Meta-Llama-3.1-8B-Instruct-Q4_K_M.gguf` |
 | `complex` | `gemini-3-pro-preview` | — (chỉ cloud) |
 | `chat` | `gemini-3-flash-preview` | `gemma3n:e4b` (Ollama) |
@@ -79,21 +152,21 @@ Từ [`TASK_MODEL_MAP`](backend/services/cloud_llm_service.py:15):
 
 ---
 
-## 3. Chất lượng phản hồi
+## 3. 📝 Chất lượng phản hồi (Response Quality)
 
 ### 3.1 Chất lượng tiếng Việt
 
-*Các giá trị có nhãn **dự kiến** dựa trên benchmark công bố và phân tích kiến trúc. Các giá trị có nhãn **đo được** từ các lần chạy thử trên nền tảng.*
+*Các giá trị có nhãn **dự kiến (projected)** dựa trên benchmark công bố và phân tích kiến trúc. Các giá trị có nhãn **đo được (measured)** từ các lần chạy thử trên nền tảng.*
 
-| Chỉ số | Gemma 3n E4B | Llama 3.1 8B | Gemini 3 Flash | Gemini 3 Pro |
-|--------|-------------|-------------|----------------|--------------|
+| Chỉ số (Metric) | Gemma 3n E4B | Llama 3.1 8B | Gemini 3 Flash | Gemini 3 Pro |
+|-----------------|-------------|-------------|----------------|--------------|
 | Độ lưu loát tiếng Việt (1-5) | 4.2 ᵖ | 3.5 ᵖ | 4.8 ᵖ | 4.9 ᵖ |
-| Độ chính xác thuật ngữ an ninh mạng (%) | 78% ᵖ | 72% ᵖ | 94% ᵖ | 96% ᵖ |
+| Độ chính xác thuật ngữ ANTT (%) | 78% ᵖ | 72% ᵖ | 94% ᵖ | 96% ᵖ |
 | Đúng ngữ pháp | Tốt | Trung bình | Xuất sắc | Xuất sắc |
 | Diễn đạt tự nhiên | Tốt — đôi khi diễn đạt vụng | Khá — đôi khi dịch sát nghĩa | Gần như bản ngữ | Gần như bản ngữ |
 | Độ chính xác mã biện pháp ISO (%) | 85% ᵖ | 80% ᵖ | 95% ᵖ | 97% ᵖ |
 
-ᵖ = dự kiến
+ᵖ = dự kiến (projected)
 
 **Nhận xét chính:**
 - Gemma 3n hưởng lợi từ huấn luyện đa ngôn ngữ của Google; tiếng Việt khá nhưng số lượng tham số nhỏ hạn chế suy luận phức tạp
@@ -102,7 +175,7 @@ Từ [`TASK_MODEL_MAP`](backend/services/cloud_llm_service.py:15):
 
 ### 3.2 Kiến thức chuyên ngành ISO 27001
 
-Điểm benchmark từ các trường hợp kiểm thử trong [`benchmark_iso27001.json`](data/knowledge_base/benchmark_iso27001.json):
+Điểm Benchmark (Đánh giá hiệu năng) từ các trường hợp kiểm thử trong [`benchmark_iso27001.json`](data/knowledge_base/benchmark_iso27001.json):
 
 | Trường hợp | Gemma 3n E4B | Llama 3.1 8B | Gemini 3 Flash | Gemini 3 Pro |
 |------------|-------------|-------------|----------------|--------------|
@@ -113,38 +186,49 @@ Từ [`TASK_MODEL_MAP`](backend/services/cloud_llm_service.py:15):
 | **Trung bình** | **8.0 (53%)** | **9.3 (62%)** | **12.5 (83%)** | **13.5 (90%)** |
 | **Xếp hạng** | **D** | **C** | **B** | **A** |
 
-ᵖ = dự kiến
+ᵖ = dự kiến (projected)
 
-### 3.3 Chất lượng sinh báo cáo đánh giá
+#### 📊 Biểu đồ so sánh điểm trung bình
 
-| Chiều chất lượng | Gemma 3n E4B | Llama 3.1 8B | Gemini 3 Flash | Gemini 3 Pro |
-|-----------------|-------------|-------------|----------------|--------------|
-| Đầy đủ phần (0-5) | 3 ᵖ | 4 ᵖ | 5 ᵖ | 5 ᵖ |
-| Cấu trúc risk register | Thiếu — thiếu emoji mức độ | Tốt — đôi khi chưa đầy đủ | Đầy đủ | Đầy đủ |
-| Độ chi tiết phân tích gap (1-5) | 2 ᵖ | 3 ᵖ | 4 ᵖ | 5 ᵖ |
-| Kế hoạch hành động có mốc thời gian | Hiếm khi có | Đôi khi có | Luôn có | Luôn có |
-| Tóm tắt điều hành ngắn gọn | Dài dòng, >300 từ | Chấp nhận được | Ngắn gọn, ≤300 từ | Ngắn gọn, ≤300 từ |
-| Tỷ lệ dương tính giả | ~15% ᵖ | ~10% ᵖ | ~3% ᵖ | ~2% ᵖ |
-| Khả năng thực thi khuyến nghị (1-5) | 2 ᵖ | 3 ᵖ | 4 ᵖ | 5 ᵖ |
+```mermaid
+%%{init: {'theme': 'base', 'themeVariables': {'primaryColor': '#1d3557'}}}%%
+xychart-beta
+    title "Điểm Benchmark trung bình theo mô hình (%)"
+    x-axis ["Gemma 3n E4B", "Llama 3.1 8B", "Gemini 3 Flash", "Gemini 3 Pro"]
+    y-axis "Phần trăm (%)" 0 --> 100
+    bar [53, 62, 83, 90]
+```
 
-ᵖ = dự kiến
+### 3.3 Chất lượng sinh báo cáo đánh giá (Assessment Generation Quality)
+
+| Chiều chất lượng (Quality Dimension) | Gemma 3n E4B | Llama 3.1 8B | Gemini 3 Flash | Gemini 3 Pro |
+|--------------------------------------|-------------|-------------|----------------|--------------|
+| Đầy đủ phần (Section completeness, 0-5) | 3 ᵖ | 4 ᵖ | 5 ᵖ | 5 ᵖ |
+| Cấu trúc Risk Register | Thiếu — thiếu emoji mức độ | Tốt — đôi khi chưa đầy đủ | Đầy đủ | Đầy đủ |
+| Độ chi tiết phân tích Gap (Gap analysis specificity, 1-5) | 2 ᵖ | 3 ᵖ | 4 ᵖ | 5 ᵖ |
+| Kế hoạch hành động có mốc thời gian (Action plan with timeline) | Hiếm khi có | Đôi khi có | Luôn có | Luôn có |
+| Tóm tắt điều hành ngắn gọn (Executive summary conciseness) | Dài dòng, >300 từ | Chấp nhận được | Ngắn gọn, ≤300 từ | Ngắn gọn, ≤300 từ |
+| Tỷ lệ dương tính giả (False positive rate) | ~15% ᵖ | ~10% ᵖ | ~3% ᵖ | ~2% ᵖ |
+| Khả năng thực thi khuyến nghị (Recommendation actionability, 1-5) | 2 ᵖ | 3 ᵖ | 4 ᵖ | 5 ᵖ |
+
+ᵖ = dự kiến (projected)
 
 ---
 
-## 4. Chỉ số hiệu năng
+## 4. ⚡ Chỉ số hiệu năng (Performance Metrics)
 
 ### 4.1 Độ trễ (Latency)
 
 Đo với trường hợp BC-001 điển hình (tuân thủ cao, 47 biện pháp) khi sinh báo cáo đánh giá:
 
-| Chỉ số | Gemma 3n E4B | Llama 3.1 8B | Gemini 3 Flash | Gemini 3 Pro |
-|--------|-------------|-------------|----------------|--------------|
-| Thời gian đến token đầu tiên (TTFT) | ~1.2s ᵖ | ~2.5s ᵖ | ~0.4s ᵖ | ~0.6s ᵖ |
+| Chỉ số (Metric) | Gemma 3n E4B | Llama 3.1 8B | Gemini 3 Flash | Gemini 3 Pro |
+|-----------------|-------------|-------------|----------------|--------------|
+| Thời gian đến token đầu tiên — TTFT (Time To First Token) | ~1.2s ᵖ | ~2.5s ᵖ | ~0.4s ᵖ | ~0.6s ᵖ |
 | Tổng thời gian sinh | ~25s ᵖ | ~45s ᵖ | ~8s ᵖ | ~12s ᵖ |
-| Thời gian chờ tối đa (timeout) | 120s | 120s | 60s | 60s |
+| Thời gian chờ tối đa (Inference timeout) | 120s | 120s | 60s | 60s |
 | Độ dài báo cáo trung bình (ký tự) | ~3.000 ᵖ | ~5.000 ᵖ | ~8.000 ᵖ | ~10.000 ᵖ |
 
-ᵖ = dự kiến (RTX 4090, lượng tử hóa Q4_K_M)
+ᵖ = dự kiến (projected) — RTX 4090, lượng tử hóa Q4_K_M
 
 Cài đặt timeout từ [`config.py`](backend/core/config.py:79):
 - [`INFERENCE_TIMEOUT`](backend/core/config.py:79): 120s (mô hình cục bộ)
@@ -152,10 +236,10 @@ Cài đặt timeout từ [`config.py`](backend/core/config.py:79):
 
 ### 4.2 Thông lượng (Throughput)
 
-| Chỉ số | Gemma 3n E4B | Llama 3.1 8B | Gemini 3 Flash | Gemini 3 Pro |
-|--------|-------------|-------------|----------------|--------------|
-| Token/giây (sinh) | ~45 t/s ᵖ | ~25 t/s ᵖ | ~150 t/s ᵖ | ~100 t/s ᵖ |
-| Yêu cầu đồng thời | 1 (giới hạn GPU) | 1 (giới hạn GPU) | 3+ | 3+ |
+| Chỉ số (Metric) | Gemma 3n E4B | Llama 3.1 8B | Gemini 3 Flash | Gemini 3 Pro |
+|-----------------|-------------|-------------|----------------|--------------|
+| Token/giây — Token/s (Token mỗi giây) | ~45 t/s ᵖ | ~25 t/s ᵖ | ~150 t/s ᵖ | ~100 t/s ᵖ |
+| Yêu cầu đồng thời (Concurrency) | 1 (giới hạn GPU) | 1 (giới hạn GPU) | 3+ | 3+ |
 | Token tối đa mỗi yêu cầu | 512 (mặc định Ollama) | 2.048 (mặc định LocalAI) | 10.000+ | 10.000+ |
 
 [`MAX_CONCURRENT_REQUESTS`](backend/core/config.py:81) = 3
@@ -174,54 +258,54 @@ Cài đặt timeout từ [`config.py`](backend/core/config.py:79):
 
 ---
 
-## 5. Phân tích chi phí
+## 5. 💰 Phân tích chi phí (Cost Analysis)
 
 | Yếu tố | Gemma 3n E4B | Llama 3.1 8B | Gemini 3 Flash | Gemini 3 Pro |
 |--------|-------------|-------------|----------------|--------------|
 | **Chi phí mô hình** | Miễn phí (mã nguồn mở) | Miễn phí (mã nguồn mở) | Trả theo token | Trả theo token |
-| **Giá đầu vào** | $0 | $0 | ~$0.10/1M token | ~$1.25/1M token |
-| **Giá đầu ra** | $0 | $0 | ~$0.40/1M token | ~$5.00/1M token |
+| **Giá đầu vào (Input pricing)** | $0 | $0 | ~$0.10/1M token | ~$1.25/1M token |
+| **Giá đầu ra (Output pricing)** | $0 | $0 | ~$0.40/1M token | ~$5.00/1M token |
 | **Chi phí mỗi đánh giá** (ước tính) | $0 | $0 | ~$0.005 | ~$0.06 |
 | **Hàng tháng (500 đánh giá)** | $0 + điện | $0 + điện | ~$2.50 | ~$30.00 |
 | **Phần cứng GPU (một lần)** | ~$300 (RTX 3060) | ~$300 (RTX 3060) | Không áp dụng | Không áp dụng |
-| **Bảo mật dữ liệu** | ✅ Tại chỗ | ✅ Tại chỗ | ❌ Dữ liệu rời mạng nội bộ | ❌ Dữ liệu rời mạng nội bộ |
+| **Bảo mật dữ liệu** | ✅ Tại chỗ (On-premises) | ✅ Tại chỗ (On-premises) | ❌ Dữ liệu rời mạng nội bộ | ❌ Dữ liệu rời mạng nội bộ |
 
-**Phân tích hòa vốn:** Với 500 đánh giá/tháng sử dụng Gemini 3 Pro (~$30/tháng), phần cứng GPU hoàn vốn sau ~10 tháng. Với Gemini 3 Flash ở mức ~$2.50/tháng, cloud tiết kiệm hơn trừ khi bảo mật dữ liệu là yêu cầu bắt buộc.
+**Phân tích hòa vốn (Break-even analysis):** Với 500 đánh giá/tháng sử dụng Gemini 3 Pro (~$30/tháng), phần cứng GPU hoàn vốn sau ~10 tháng. Với Gemini 3 Flash ở mức ~$2.50/tháng, cloud tiết kiệm hơn trừ khi bảo mật dữ liệu là yêu cầu bắt buộc.
 
 ---
 
-## 6. Ma trận khuyến nghị
+## 6. 🎯 Ma trận khuyến nghị (Recommendation Matrix)
 
-### 6.1 Bảng quyết định
+### 6.1 Bảng quyết định (Decision Table)
 
 | Kịch bản | Mô hình khuyến nghị | Lý do |
 |---------|---------------------|-------|
 | **Tổ chức nhạy cảm dữ liệu** (chính phủ, quân đội, y tế) | Llama 3.1 8B (LocalAI) | Tại chỗ, không rò rỉ dữ liệu |
 | **Chat / FAQ nhanh** | Gemma 3n E4B (Ollama) | TTFT nhanh, ít VRAM, tiếng Việt tốt |
 | **Báo cáo kiểm toán ISO chính thức** | Gemini 3 Flash (Cloud) | Tỷ lệ chất lượng/chi phí tốt nhất, tiếng Việt gần bản ngữ |
-| **Phân tích phức tạp đa tiêu chuẩn** | Gemini 3 Pro (Cloud) | Độ chính xác cao nhất, xử lý tham chiếu chéo TCVN + ISO |
-| **Ngoại tuyến / mạng cách ly** | Llama 3.1 8B (LocalAI) | Không phụ thuộc mạng |
+| **Phân tích phức tạp đa tiêu chuẩn** | Gemini 3 Pro (Cloud) | Độ chính xác (Precision) cao nhất, xử lý tham chiếu chéo TCVN + ISO |
+| **Ngoại tuyến / mạng cách ly (Air-gapped)** | Llama 3.1 8B (LocalAI) | Không phụ thuộc mạng |
 | **Startup hạn chế ngân sách** | Gemma 3n E4B → Gemini Flash dự phòng | Cục bộ miễn phí + dự phòng cloud giá rẻ |
-| **Chất lượng tối đa** | Gemini 3 Pro | Điểm benchmark 90%+ |
-| **Độ trễ tối thiểu** | Gemma 3n E4B (Ollama) | TTFT ~1.2s, 45 t/s |
+| **Chất lượng tối đa** | Gemini 3 Pro | Điểm Benchmark (Đánh giá hiệu năng) 90%+ |
+| **Độ trễ (Latency) tối thiểu** | Gemma 3n E4B (Ollama) | TTFT ~1.2s, 45 t/s |
 
-### 6.2 Luồng quyết định
+### 6.2 Luồng quyết định (Decision Flow)
 
 ```mermaid
 flowchart TD
-    A[New Request] --> B{Data sensitivity?}
-    B -->|High / Regulated| C{GPU available?}
-    C -->|Yes| D[Llama 3.1 8B via LocalAI]
-    C -->|No| E[Gemma 3n E4B via Ollama]
-    B -->|Standard| F{Task type?}
+    A[Yêu cầu mới] --> B{Độ nhạy cảm<br/>dữ liệu?}
+    B -->|Cao / Quy định| C{GPU khả dụng?}
+    C -->|Có| D[Llama 3.1 8B via LocalAI]
+    C -->|Không| E[Gemma 3n E4B via Ollama]
+    B -->|Tiêu chuẩn| F{Loại tác vụ?}
     F -->|Chat / FAQ| G[Gemma 3n E4B via Ollama]
-    F -->|ISO Assessment| H{Quality requirement?}
-    H -->|Standard| I[Gemini 3 Flash]
-    H -->|Maximum| J[Gemini 3 Pro]
-    F -->|Complex / Multi-standard| J
-    D -->|Fails / OOM| I
-    E -->|Fails| I
-    I -->|Fails| K[Fallback Chain]
+    F -->|ISO Assessment| H{Yêu cầu chất lượng?}
+    H -->|Tiêu chuẩn| I[Gemini 3 Flash]
+    H -->|Tối đa| J[Gemini 3 Pro]
+    F -->|Phức tạp / Đa tiêu chuẩn| J
+    D -->|Lỗi / OOM| I
+    E -->|Lỗi| I
+    I -->|Lỗi| K[Chuỗi dự phòng<br/>Fallback Chain]
     K --> L[gemini-3-pro → gpt-5-mini → claude-sonnet-4 → gpt-5]
 
     style D fill:#2d6a4f,color:#fff
@@ -230,20 +314,20 @@ flowchart TD
     style J fill:#6a040f,color:#fff
 ```
 
-### 6.3 Ánh xạ chế độ nền tảng
+### 6.3 Ánh xạ chế độ nền tảng (Platform Mode Mapping)
 
 Từ cài đặt [`PREFER_LOCAL`](backend/core/config.py:54) và [`LOCAL_ONLY_MODE`](backend/core/config.py:52):
 
 | Chế độ | Cấu hình | Hành vi |
 |--------|---------|---------|
-| **Chỉ cục bộ** | `LOCAL_ONLY_MODE=true` | Chỉ LocalAI; không gọi cloud; lỗi nếu mô hình không khả dụng |
-| **Ưu tiên cục bộ** (mặc định) | `PREFER_LOCAL=true` | Thử Ollama/LocalAI trước → dự phòng cloud khi thất bại |
-| **Ưu tiên cloud** | `PREFER_LOCAL=false` | Thử cloud trước → dự phòng LocalAI |
-| **Benchmark kết hợp** | `compare_modes=["local","cloud"]` | Chạy cả hai, chấm điểm và so sánh |
+| **Chỉ cục bộ (Local-only)** | `LOCAL_ONLY_MODE=true` | Chỉ LocalAI; không gọi cloud; lỗi nếu mô hình không khả dụng |
+| **Ưu tiên cục bộ (Prefer-local)** — mặc định | `PREFER_LOCAL=true` | Thử Ollama/LocalAI trước → dự phòng cloud khi thất bại |
+| **Ưu tiên cloud (Prefer-cloud)** | `PREFER_LOCAL=false` | Thử cloud trước → dự phòng LocalAI |
+| **Benchmark kết hợp (Hybrid benchmark)** | `compare_modes=["local","cloud"]` | Chạy cả hai, chấm điểm và so sánh |
 
 ---
 
-## 7. Prompt kiểm thử & Đầu ra mẫu
+## 7. 🧪 Prompt kiểm thử & Đầu ra mẫu (Test Prompts & Sample Outputs)
 
 ### 7.1 Chạy Benchmark
 
@@ -253,7 +337,7 @@ Từ cài đặt [`PREFER_LOCAL`](backend/core/config.py:54) và [`LOCAL_ONLY_MO
 curl -s http://localhost:8000/api/benchmark/test-cases | jq .
 ```
 
-**Chạy một trường hợp (chế độ cục bộ):**
+**Chạy một trường hợp (chế độ cục bộ — local):**
 
 ```bash
 curl -s -X POST http://localhost:8000/api/benchmark/run \
@@ -290,7 +374,7 @@ curl -s http://localhost:8000/api/benchmark/scoring-guide | jq .
 **Đầu ra rút gọn theo mô hình:**
 
 <details>
-<summary><strong>Gemma 3n E4B (Ollama) — Điểm: 9/15 (C) ᵖ</strong></summary>
+<summary><strong>🟡 Gemma 3n E4B (Ollama) — Điểm: 9/15 (C) ᵖ</strong></summary>
 
 ```
 ## ĐÁNH GIÁ TỔNG QUAN
@@ -315,7 +399,7 @@ Tổ chức cần bổ sung các biện pháp kiểm soát...
 </details>
 
 <details>
-<summary><strong>Llama 3.1 8B (LocalAI) — Điểm: 10/15 (B) ᵖ</strong></summary>
+<summary><strong>🟢 Llama 3.1 8B (LocalAI) — Điểm: 10/15 (B) ᵖ</strong></summary>
 
 ```
 ## ĐÁNH GIÁ TỔNG QUAN
@@ -345,7 +429,7 @@ Mức tuân thủ hiện tại: 50.5%. Cần bổ sung 46 controls.
 </details>
 
 <details>
-<summary><strong>Gemini 3 Flash (Cloud) — Điểm: 13/15 (A) ᵖ</strong></summary>
+<summary><strong>🔵 Gemini 3 Flash (Cloud) — Điểm: 13/15 (A) ᵖ</strong></summary>
 
 ```
 ## TÓM TẮT ĐIỀU HÀNH (EXECUTIVE SUMMARY)
@@ -378,7 +462,7 @@ Phase 3 — Trung hạn (3-12 tháng): Remaining gaps | Ngân sách: 400M VND
 </details>
 
 <details>
-<summary><strong>Gemini 3 Pro (Cloud) — Điểm: 14/15 (A) ᵖ</strong></summary>
+<summary><strong>🟣 Gemini 3 Pro (Cloud) — Điểm: 14/15 (A) ᵖ</strong></summary>
 
 ```
 ## TÓM TẮT ĐIỀU HÀNH (EXECUTIVE SUMMARY)
@@ -425,7 +509,7 @@ Phase 3 — Trung hạn (3-12 tháng):
 **Tóm tắt đầu vào:** Bệnh viện Test B — 400 nhân viên, 4 nhân viên IT, mạng phẳng, không VLAN, không SIEM, chỉ 4 biện pháp, 5 sự cố trong 12 tháng.
 
 <details>
-<summary><strong>Llama 3.1 8B (LocalAI) — Điểm: 9/15 (C) ᵖ</strong></summary>
+<summary><strong>🟢 Llama 3.1 8B (LocalAI) — Điểm: 9/15 (C) ᵖ</strong></summary>
 
 ```
 ## ĐÁNH GIÁ TỔNG QUAN
@@ -449,7 +533,7 @@ Controls: 4/93 (4.3%) — Mức tuân thủ RẤT THẤP
 </details>
 
 <details>
-<summary><strong>Gemini 3 Flash (Cloud) — Điểm: 13/15 (A) ᵖ</strong></summary>
+<summary><strong>🔵 Gemini 3 Flash (Cloud) — Điểm: 13/15 (A) ᵖ</strong></summary>
 
 ```
 ## TÓM TẮT ĐIỀU HÀNH
@@ -482,21 +566,21 @@ Phase 1 — Khẩn cấp (0-30 ngày):
 ### 7.4 Lệnh kiểm tra nhanh hệ thống
 
 ```bash
-# Check which local models are loaded (Ollama)
+# Kiểm tra mô hình cục bộ đã tải (Ollama)
 curl -s http://localhost:11434/api/tags | jq '.models[].name'
 
-# Check LocalAI readiness
+# Kiểm tra LocalAI sẵn sàng
 curl -s http://localhost:8080/readyz
 
-# Check cloud provider status
+# Kiểm tra trạng thái nhà cung cấp cloud
 curl -s http://localhost:8000/api/health | jq '.ai_providers'
 
-# Quick latency test — Ollama (Gemma 3n)
+# Kiểm tra Latency (Độ trễ) nhanh — Ollama (Gemma 3n)
 time curl -s http://localhost:11434/v1/chat/completions \
   -H "Content-Type: application/json" \
   -d '{"model":"gemma3n:e4b","messages":[{"role":"user","content":"ISO 27001 A.5.1 là gì?"}],"max_tokens":200}' > /dev/null
 
-# Quick latency test — LocalAI (Llama 3.1 8B)
+# Kiểm tra Latency (Độ trễ) nhanh — LocalAI (Llama 3.1 8B)
 time curl -s http://localhost:8080/v1/chat/completions \
   -H "Content-Type: application/json" \
   -d '{"model":"Meta-Llama-3.1-8B-Instruct-Q4_K_M.gguf","messages":[{"role":"user","content":"ISO 27001 A.5.1 là gì?"}],"max_tokens":200}' > /dev/null
@@ -504,7 +588,10 @@ time curl -s http://localhost:8080/v1/chat/completions \
 
 ---
 
-## Phụ lục A: Schema phản hồi Benchmark
+## 📎 Phụ lục A: Schema phản hồi Benchmark (Benchmark Response Schema)
+
+<details>
+<summary><strong>Xem schema JSON đầy đủ</strong></summary>
 
 ```json
 {
@@ -557,14 +644,16 @@ time curl -s http://localhost:8080/v1/chat/completions \
 }
 ```
 
-## Phụ lục B: Thêm mô hình mới
+</details>
 
-Để benchmark một mô hình mới:
+## 📎 Phụ lục B: Thêm mô hình mới (Adding New Models)
+
+Để Benchmark (Đánh giá hiệu năng) một mô hình mới:
 
 1. Thêm mô hình vào [`FALLBACK_CHAIN`](backend/services/cloud_llm_service.py:22) hoặc cấu hình qua biến môi trường
 2. Với mô hình cục bộ: đặt file GGUF vào `./models/` và thiết lập [`MODEL_NAME`](backend/core/config.py:47)
 3. Với mô hình Ollama: `ollama pull <model>` và thêm ánh xạ vào [`_LOCALAI_TO_OLLAMA`](backend/services/cloud_llm_service.py:32)
-4. Chạy so sánh benchmark:
+4. Chạy so sánh Benchmark (Đánh giá hiệu năng):
 
 ```bash
 curl -s -X POST http://localhost:8000/api/benchmark/run \

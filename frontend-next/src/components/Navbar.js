@@ -4,15 +4,16 @@ import { useState, useEffect } from 'react'
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 import { useTheme } from './ThemeProvider'
+import { useTranslation } from './LanguageProvider'
 import styles from './Navbar.module.css'
 import { Home, MessageSquare, Shield, BookOpen, BarChart2, Sun, Moon, Settings } from 'lucide-react'
 
 const NAV_ITEMS = [
-    { href: '/', label: 'Home', icon: Home },
-    { href: '/chatbot', label: 'AI Chat', icon: MessageSquare },
-    { href: '/form-iso', label: 'Assessment', icon: Shield },
-    { href: '/standards', label: 'Standards', icon: BookOpen },
-    { href: '/analytics', label: 'Analytics', icon: BarChart2 },
+    { href: '/', labelKey: 'nav.home', icon: Home },
+    { href: '/chatbot', labelKey: 'nav.aiChat', icon: MessageSquare },
+    { href: '/form-iso', labelKey: 'nav.assessment', icon: Shield },
+    { href: '/standards', labelKey: 'nav.standards', icon: BookOpen },
+    { href: '/analytics', labelKey: 'nav.analytics', icon: BarChart2 },
 ]
 
 const TIMEZONES = [
@@ -24,6 +25,7 @@ const TIMEZONES = [
 export default function Navbar() {
     const pathname = usePathname()
     const { theme, toggle } = useTheme()
+    const { t, locale } = useTranslation()
     const [time, setTime] = useState('')
     const [date, setDate] = useState('')
     const [tzIdx, setTzIdx] = useState(0)
@@ -37,14 +39,15 @@ export default function Navbar() {
     }
 
     const formatTime = (date, timezone) => {
-        const timeStr = date.toLocaleTimeString('vi-VN', {
+        const fmt = locale === 'vi' ? 'vi-VN' : 'en-US'
+        const timeStr = date.toLocaleTimeString(fmt, {
             hour: '2-digit',
             minute: '2-digit',
             second: '2-digit',
             timeZone: timezone,
             hour12: false
         })
-        const dateStr = date.toLocaleDateString('vi-VN', {
+        const dateStr = date.toLocaleDateString(fmt, {
             day: '2-digit',
             month: '2-digit',
             year: 'numeric',
@@ -62,7 +65,7 @@ export default function Navbar() {
         update()
         const id = setInterval(update, 1000)
         return () => clearInterval(id)
-    }, [tzIdx])
+    }, [tzIdx, locale])
 
     useEffect(() => {
         setMobileOpen(false)
@@ -79,13 +82,13 @@ export default function Navbar() {
                         <path d="M16 3L4 8v8c0 6.627 5.153 12.417 12 13.95C22.847 28.417 28 22.627 28 16V8L16 3z" stroke="currentColor" strokeWidth="1.8" strokeLinejoin="round"/>
                         <path d="M11 16l3.5 3.5L21 12" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"/>
                     </svg>
-                    <span className={styles.brandText}>CyberAI</span>
+                    <span className={styles.brandText}>{t('common.appName')}</span>
                 </Link>
 
                 <button
                     className={styles.hamburger}
                     onClick={() => setMobileOpen(!mobileOpen)}
-                    aria-label="Toggle menu"
+                    aria-label={t('nav.toggleMenu')}
                     aria-expanded={mobileOpen}
                 >
                     <span className={`${styles.hamburgerLine} ${mobileOpen ? styles.hamburgerOpen : ''}`} />
@@ -99,20 +102,20 @@ export default function Navbar() {
                             className={`${styles.navLink} ${pathname === item.href ? styles.navLinkActive : ''}`}
                         >
                             <item.icon size={15} style={{ marginRight: '4px', verticalAlign: 'middle' }} />
-                            {item.label}
+                            {t(item.labelKey)}
                         </Link>
                     ))}
                 </div>
 
                 <div className={styles.controls}>
-                    <div className={styles.clock} onClick={handleTzClick} title="Click to switch timezone">
+                    <div className={styles.clock} onClick={handleTzClick} title={t('nav.clickTimezone')}>
                         <span className={styles.clockTime}>{mounted ? time : '--:--:--'}</span>
                         <span className={styles.clockMeta}>
                             {mounted ? date : '--/--/----'} · {TIMEZONES[tzIdx].label}
                         </span>
                     </div>
 
-                    <div className={styles.statusDot} title="Backend Online">
+                    <div className={styles.statusDot} title={t('nav.backendOnline')}>
                         <span className={styles.dot} />
                     </div>
 
@@ -121,16 +124,16 @@ export default function Navbar() {
                         <Link
                             href="/settings"
                             className={styles.settingsBtn}
-                            aria-label="Settings"
-                            title="Settings"
+                            aria-label={t('nav.settings')}
+                            title={t('nav.settings')}
                         >
                             <Settings size={16} strokeWidth={1.8} />
                         </Link>
                         <button
                             className={styles.themeToggle}
                             onClick={toggle}
-                            aria-label={theme === 'dark' ? 'Switch to Light Mode' : 'Switch to Dark Mode'}
-                            title={theme === 'dark' ? 'Switch to Light Mode' : 'Switch to Dark Mode'}
+                            aria-label={theme === 'dark' ? t('nav.switchToLight') : t('nav.switchToDark')}
+                            title={theme === 'dark' ? t('nav.switchToLight') : t('nav.switchToDark')}
                         >
                             {theme === 'dark'
                                 ? <Sun size={16} strokeWidth={1.8} />

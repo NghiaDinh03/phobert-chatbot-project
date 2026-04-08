@@ -1,17 +1,19 @@
 const BACKEND_URL = process.env.API_URL || 'http://backend:8000'
 
-// LocalAI cold start (loading ~5GB GGUF into RAM) can take 3-5 minutes
-const CONNECT_TIMEOUT_MS = 300000   // 5 min — allows LocalAI model warmup
-const INACTIVITY_TIMEOUT_MS = 300000 // 5 min — inactivity watchdog
+// LocalAI/Ollama on CPU: cold start 1-2 min + inference 3-10 min = up to 30 min worst case
+const CONNECT_TIMEOUT_MS = 1800000   // 30 min
+const INACTIVITY_TIMEOUT_MS = 1800000 // 30 min inactivity watchdog
 
-export const maxDuration = 300
+export const maxDuration = 1800
 
 export async function POST(request) {
+    let controller
+    let connectTimer
     try {
         const body = await request.json()
 
-        const controller = new AbortController()
-        const timeout = setTimeout(() => controller.abort(), CONNECT_TIMEOUT_MS)
+        controller = new AbortController()
+        connectTimer = setTimeout(() => controller.abort(), CONNECT_TIMEOUT_MS)
 
         let res
         try {
@@ -22,9 +24,9 @@ export async function POST(request) {
                 signal: controller.signal
             })
         } catch (fetchErr) {
-            clearTimeout(timeout)
+            clearTimeout(connectTimer)
             if (fetchErr.name === 'AbortError') {
-                const errorPayload = `data: ${JSON.stringify({ step: 'error', data: { error: true, response: 'Request timed out after 5 minutes. If using LocalAI, the model may still be warming up — please try again in a moment.' } })}\n\n`
+                const errorPayload = `data: ${JSON.stringify({ step: 'error', data: { error: true, response: 'Request timed out after 10 minutes. If using LocalAI/Ollama, the model may still be warming up — please try again in a moment.' } })}\n\n`
                 return new Response(errorPayload, {
                     headers: { 'Content-Type': 'text/event-stream', 'Cache-Control': 'no-cache', 'Connection': 'keep-alive' }
                 })
@@ -35,59 +37,82 @@ export async function POST(request) {
             )
         }
 
-        clearTimeout(timeout)
+        clearTimeout(connectTimer)
 
         if (!res.ok) {
-            await res.text().catch(() => '')
-            return Response.json(
-                { response: `Backend error: ${res.status}`, error: true },
-                { status: res.status }
-            )
+            const errBody = await res.text().catch(() => '')
+            let detail = `Backend error: ${res.status}`
+            try {
+                const parsed = JSON.parse(errBody)
+                if (parsed.detail) detail = parsed.detail
+            } catch { }
+            // Return as SSE error so frontend can handle it gracefully
+            const errorPayload = `data: ${JSON.stringify({ step: 'error', data: { error: true, response: detail } })}\n\n`
+            return new Response(errorPayload, {
+                headers: { 'Content-Type': 'text/event-stream', 'Cache-Control': 'no-cache', 'Connection': 'keep-alive' }
+            })
         }
 
         const { readable, writable } = new TransformStream()
         const writer = writable.getWriter()
-        const encoder = new TextEncoder()
 
-        let streamTimeout = setTimeout(async () => {
-            try {
-                const msg = `data: ${JSON.stringify({ step: 'error', data: { error: true, response: 'Stream inactive for 5 minutes. Please try again.' } })}\n\n`
-                await writer.write(encoder.encode(msg))
-                await writer.close()
-            } catch { }
+        let inactivityTimer = setTimeout(() => {
+            const msg = `data: ${JSON.stringify({ step: 'error', data: { error: true, response: 'Stream inactive for 30 minutes. Please try again.' } })}\n\n`
+            writer.write(new TextEncoder().encode(msg)).then(() => writer.close()).catch(() => {})
         }, INACTIVITY_TIMEOUT_MS)
 
-        ;(async () => {
+        // Pipe backend SSE → client in background
+        const pipePromise = (async () => {
             try {
                 const reader = res.body.getReader()
                 while (true) {
                     const { done, value } = await reader.read()
                     if (done) break
-                    clearTimeout(streamTimeout)
-                    streamTimeout = setTimeout(async () => {
-                        try {
-                            const msg = `data: ${JSON.stringify({ step: 'error', data: { error: true, response: 'Stream inactive for 5 minutes. Please try again.' } })}\n\n`
-                            await writer.write(encoder.encode(msg))
-                            await writer.close()
-                        } catch { }
+
+                    // Reset inactivity timer on each chunk
+                    clearTimeout(inactivityTimer)
+                    inactivityTimer = setTimeout(() => {
+                        const msg = `data: ${JSON.stringify({ step: 'error', data: { error: true, response: 'Stream inactive for 30 minutes. Please try again.' } })}\n\n`
+                        writer.write(new TextEncoder().encode(msg)).then(() => writer.close()).catch(() => {})
                     }, INACTIVITY_TIMEOUT_MS)
-                    await writer.write(value)
+
+                    try {
+                        await writer.write(value)
+                    } catch {
+                        // Client disconnected — stop reading
+                        reader.cancel().catch(() => {})
+                        break
+                    }
                 }
-                clearTimeout(streamTimeout)
-                await writer.close()
+                clearTimeout(inactivityTimer)
+                try { await writer.close() } catch { }
             } catch {
-                clearTimeout(streamTimeout)
-                try { await writer.abort() } catch { }
+                clearTimeout(inactivityTimer)
+                try { await writer.close() } catch { }
             }
         })()
 
+        // Ensure cleanup when client aborts the request
+        request.signal?.addEventListener?.('abort', () => {
+            clearTimeout(inactivityTimer)
+            pipePromise.then(() => {}).catch(() => {})
+            try { writer.close() } catch { }
+        })
+
         return new Response(readable, {
-            headers: { 'Content-Type': 'text/event-stream', 'Cache-Control': 'no-cache', 'Connection': 'keep-alive' }
+            headers: {
+                'Content-Type': 'text/event-stream',
+                'Cache-Control': 'no-cache',
+                'Connection': 'keep-alive',
+                'X-Accel-Buffering': 'no',
+            }
         })
     } catch (err) {
-        return Response.json(
-            { response: `Lỗi kết nối Backend: ${err.message}`, error: true },
-            { status: 502 }
-        )
+        if (connectTimer) clearTimeout(connectTimer)
+        // Return as SSE error format so frontend always gets a parseable response
+        const errorPayload = `data: ${JSON.stringify({ step: 'error', data: { error: true, response: `Lỗi kết nối Backend: ${err.message}` } })}\n\n`
+        return new Response(errorPayload, {
+            headers: { 'Content-Type': 'text/event-stream', 'Cache-Control': 'no-cache', 'Connection': 'keep-alive' }
+        })
     }
 }

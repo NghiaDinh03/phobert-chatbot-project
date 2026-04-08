@@ -26,12 +26,14 @@ services:
       - RATE_LIMIT_CHAT=${RATE_LIMIT_CHAT:-10/minute}
       - RATE_LIMIT_ASSESS=${RATE_LIMIT_ASSESS:-3/minute}
       - RATE_LIMIT_BENCHMARK=${RATE_LIMIT_BENCHMARK:-5/minute}
-      - INFERENCE_TIMEOUT=${INFERENCE_TIMEOUT:-600}
+      - INFERENCE_TIMEOUT=${INFERENCE_TIMEOUT:-1800}
       - CLOUD_TIMEOUT=${CLOUD_TIMEOUT:-60}
+      - MODELS_PATH=/app/models
     networks:
       - phobert-network
     volumes:
       - ./backend:/app
+      - ./models/llm:/app/models
       - ./data/iso_documents:/data/iso_documents
       - ./data/vector_store:/data/vector_store
       - ./data/assessments:/data/assessments
@@ -78,6 +80,7 @@ services:
       - ./frontend-next/jsconfig.json:/app/jsconfig.json
       - ./frontend-next/package.json:/app/package.json
       - ./frontend-next/package-lock.json:/app/package-lock.json
+      - ./docs:/app/docs:ro
     networks:
       - phobert-network
     depends_on:
@@ -124,13 +127,15 @@ services:
   ollama:
     image: ollama/ollama:latest
     container_name: phobert-ollama
-    entrypoint: ["/bin/sh", "-c", "ollama serve & sleep 5 && ollama pull gemma3n:e4b; wait"]
+    entrypoint: ["/bin/sh", "-c", "ollama serve & sleep 5 && ollama pull gemma4:latest && ollama pull gemma3n:e4b && ollama pull gemma3n:e2b && echo 'Pre-warming gemma4...' && curl -sf http://localhost:11434/v1/chat/completions -d '{\"model\":\"gemma4:latest\",\"messages\":[{\"role\":\"user\",\"content\":\"hi\"}],\"max_tokens\":1}' > /dev/null 2>&1; wait"]
     ports:
       - "11434:11434"
     environment:
       - OLLAMA_HOST=0.0.0.0:11434
       - OLLAMA_NUM_PARALLEL=1
-      - OLLAMA_MAX_LOADED_MODELS=1
+      - OLLAMA_MAX_LOADED_MODELS=2
+      - OLLAMA_KEEP_ALIVE=24h
+      - OLLAMA_LOAD_TIMEOUT=30m
     volumes:
       - ollama_data:/root/.ollama
     networks:

@@ -1,12 +1,16 @@
 ﻿"""Chat API Routes — Streaming, history, and session management."""
 
+import json
+import threading
+import time
+from typing import Optional
+
 from fastapi import APIRouter, BackgroundTasks, HTTPException, Request
 from fastapi.responses import StreamingResponse
 from pydantic import BaseModel, Field
+
 from core.config import settings
 from services.chat_service import ChatService
-from typing import Optional
-import json
 
 router = APIRouter()
 
@@ -62,17 +66,63 @@ async def chat_stream(request: ChatRequest):
         raise HTTPException(status_code=400, detail="Message cannot be empty")
 
     def event_generator():
-        for event in ChatService.generate_response_stream(
-            message=request.message.strip(),
-            session_id=request.session_id,
-            model_override=request.model,
-            prefer_cloud=request.prefer_cloud,
-        ):
-            yield f"data: {json.dumps(event, ensure_ascii=False)}\n\n"
+        """Generator that streams SSE events with heartbeat to keep connection alive.
+
+        The LLM inference (especially local models on CPU) can take 2-5 minutes.
+        Without heartbeats, browser/proxy will close the idle connection.
+        """
+        import queue as q_module
+
+        event_queue: q_module.Queue = q_module.Queue()
+        done_event = threading.Event()
+
+        def producer():
+            try:
+                for event in ChatService.generate_response_stream(
+                    message=request.message.strip(),
+                    session_id=request.session_id,
+                    model_override=request.model,
+                    prefer_cloud=request.prefer_cloud,
+                ):
+                    event_queue.put(event)
+            except Exception as exc:
+                event_queue.put({
+                    "step": "error",
+                    "data": {
+                        "error": True,
+                        "response": f"Lỗi: {str(exc)}",
+                        "model": settings.MODEL_NAME,
+                        "session_id": request.session_id,
+                    },
+                })
+            finally:
+                done_event.set()
+
+        thread = threading.Thread(target=producer, daemon=True)
+        thread.start()
+
+        # Drain the queue, yielding heartbeats when no data arrives within 15s
+        while not (done_event.is_set() and event_queue.empty()):
+            try:
+                event = event_queue.get(timeout=15)
+                yield f"data: {json.dumps(event, ensure_ascii=False)}\n\n"
+                # Stop iterating after terminal events
+                if event.get("step") in ("done", "error"):
+                    break
+            except q_module.Empty:
+                # Send SSE comment heartbeat — keeps connection alive through nginx/proxies
+                yield ": heartbeat\n\n"
+
+        thread.join(timeout=5)
 
     return StreamingResponse(
         event_generator(), media_type="text/event-stream",
-        headers={"Cache-Control": "no-cache", "Connection": "keep-alive", "X-Accel-Buffering": "no"})
+        headers={
+            "Cache-Control": "no-cache",
+            "Connection": "keep-alive",
+            "X-Accel-Buffering": "no",
+        },
+    )
 
 
 @router.delete("/chat/history/{session_id}")

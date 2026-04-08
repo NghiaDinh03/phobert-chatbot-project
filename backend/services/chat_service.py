@@ -10,7 +10,7 @@ from typing import Dict, Any, Generator, List
 from fastapi import HTTPException
 
 from core.config import settings
-from services.cloud_llm_service import CloudLLMService
+from services.cloud_llm_service import CloudLLMService, MIN_MAX_TOKENS
 from services.model_guard import ModelGuard
 from services.model_router import route_model
 from services.web_search import WebSearch
@@ -84,9 +84,20 @@ class ChatService:
 
     @staticmethod
     def _build_messages(message: str, routing: dict, context: str = "",
-                        search_context: str = "", history: List[Dict[str, str]] = None) -> list:
+                        search_context: str = "", history: List[Dict[str, str]] = None,
+                        is_local: bool = False) -> list:
         use_rag = routing["use_rag"]
         use_search = routing.get("use_search", False)
+
+        # Short system prompt for local CPU models to minimize token count
+        if is_local:
+            system_prompt = "Bạn là trợ lý AI về an ninh mạng. Trả lời ngắn gọn bằng tiếng Việt."
+            user_content = message
+            messages = [{"role": "system", "content": system_prompt}]
+            if history:
+                messages.extend(history[-2:])
+            messages.append({"role": "user", "content": user_content})
+            return messages
 
         if use_rag and context:
             system_prompt = (
@@ -248,13 +259,23 @@ class ChatService:
             use_rag = routing["use_rag"]
             use_search = routing.get("use_search", False)
 
+            # For local Ollama models: disable RAG and web search to keep context small.
+            # CPU inference is ~1 tok/s — large contexts cause timeouts.
+            OLLAMA_PREFIXES = ("gemma3:", "gemma3n:", "gemma4:", "phi4:", "llama3:", "mistral:", "qwen3:")
+            is_ollama = any(model_name.startswith(p) for p in OLLAMA_PREFIXES) if model_name else False
+            if is_ollama:
+                use_rag = False
+                use_search = False
+
             context, search_context = "", ""
             sources, web_sources = [], []
 
             if use_rag:
                 yield {"step": "rag", "message": "📚 Đang tra cứu tài liệu nội bộ..."}
                 vs = ChatService.get_vector_store()
-                results = vs.search(message, top_k=5)
+                # Limit to 2 RAG results to keep context small
+                rag_top_k = 2 if not is_ollama else 0
+                results = vs.search(message, top_k=rag_top_k)
                 if results:
                     context = "\n\n---\n\n".join([r["text"] for r in results])
                     sources = [r.get("source", "") for r in results]
@@ -271,8 +292,10 @@ class ChatService:
             yield {"step": "thinking", "message": f"🤖 Đang tạo câu trả lời ({display_model})..."}
 
             ss = ChatService.get_session_store()
-            history = ss.get_context_messages(session_id, max_messages=10)
-            messages = ChatService._build_messages(message, routing, context, search_context, history)
+            # Limit history: local Ollama uses 2 messages, cloud uses 10
+            max_hist = 2 if is_ollama else 10
+            history = ss.get_context_messages(session_id, max_messages=max_hist)
+            messages = ChatService._build_messages(message, routing, context, search_context, history, is_local=is_ollama)
 
             # Pass cloud_model ONLY when prefer_cloud=True (cloud model selected).
             # When prefer_cloud=False the model_override is a LocalAI model ID — do NOT

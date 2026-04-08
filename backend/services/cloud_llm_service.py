@@ -4,7 +4,8 @@ import time
 import logging
 import requests
 import httpx
-from typing import Dict, Any, List
+import threading
+from typing import Dict, Any, List, Optional
 from core.config import settings
 from services.model_guard import ModelGuard
 
@@ -33,7 +34,72 @@ _LOCALAI_TO_OLLAMA: Dict[str, str] = {
     "gemma-3-4b-it":  "gemma3:4b",
     "gemma-3-12b-it": "gemma3:12b",
     "gemma-4-31b-it": "gemma4:31b",
+    "gemma4:latest":  "gemma4:latest",
+    "gemma3n:e4b":    "gemma3n:e4b",
+    "gemma3n:e2b":    "gemma3n:e2b",
 }
+
+# Cached list of Ollama models with TTL
+_ollama_models_cache: List[str] = []
+_ollama_cache_lock = threading.Lock()
+_ollama_cache_ts: float = 0
+_OLLAMA_CACHE_TTL = 30  # seconds
+
+
+def get_ollama_models(timeout: int = 5) -> List[str]:
+    """Fetch available model names from Ollama /api/tags with caching."""
+    global _ollama_models_cache, _ollama_cache_ts
+    now = time.time()
+    if _ollama_models_cache and (now - _ollama_cache_ts) < _OLLAMA_CACHE_TTL:
+        return _ollama_models_cache
+
+    with _ollama_cache_lock:
+        # Double-check after acquiring lock
+        if _ollama_models_cache and (time.time() - _ollama_cache_ts) < _OLLAMA_CACHE_TTL:
+            return _ollama_models_cache
+        try:
+            resp = requests.get(f"{settings.OLLAMA_URL}/api/tags", timeout=timeout)
+            if resp.status_code == 200:
+                data = resp.json()
+                models = [m.get("name", "") for m in data.get("models", []) if m.get("name")]
+                _ollama_models_cache = models
+                _ollama_cache_ts = time.time()
+                logger.debug(f"[Ollama] Refreshed model cache: {models}")
+                return models
+        except Exception as e:
+            logger.debug(f"[Ollama] Failed to fetch models: {e}")
+    return _ollama_models_cache
+
+
+def resolve_ollama_model(requested: str) -> Optional[str]:
+    """Resolve an Ollama model name, falling back to any available model if
+    the requested one is not installed."""
+    available = get_ollama_models()
+    if not available:
+        return requested  # Can't check — pass through and let Ollama return the error
+
+    # Direct match (e.g. "gemma3n:e4b")
+    if requested in available:
+        return requested
+
+    # Check via _LOCALAI_TO_OLLAMA mapping (e.g. "gemma-3-4b-it" → "gemma3:4b")
+    mapped = _LOCALAI_TO_OLLAMA.get(requested, requested)
+    if mapped in available:
+        return mapped
+
+    # Partial match: "gemma3:4b" matches "gemma3:4b-instruct" etc.
+    for avail in available:
+        if avail.startswith(mapped.split(":")[0] + ":"):
+            logger.info(f"[Ollama] Partial match: '{requested}' → '{avail}'")
+            return avail
+
+    # Fallback: use first available model
+    fallback = available[0]
+    logger.warning(
+        f"[Ollama] Model '{requested}' (mapped: '{mapped}') not found. "
+        f"Available: {available}. Falling back to '{fallback}'"
+    )
+    return fallback
 
 
 class CloudLLMService:
@@ -203,7 +269,8 @@ class CloudLLMService:
                       priority: bool = False) -> Dict[str, Any]:
         logger.info(f"[LocalAI] Requesting model={model}, messages={len(messages)}, priority={priority}")
 
-        effective_max_tokens = settings.MAX_TOKENS if settings.MAX_TOKENS > 0 else 2048
+        # CPU-only inference: cap at 512 tokens to keep response time under ~3 min
+        effective_max_tokens = settings.MAX_TOKENS if settings.MAX_TOKENS > 0 else 512
 
         payload = {
             "model": model,
@@ -244,16 +311,29 @@ class CloudLLMService:
         }
 
     @classmethod
-    def _call_ollama(cls, model: str, messages: List[Dict], temperature: float = 0.7) -> Dict[str, Any]:
+    def _call_ollama(cls, model: str, messages: List[Dict], temperature: float = 0.7,
+                     max_tokens: int = 512) -> Dict[str, Any]:
         ollama_url = settings.OLLAMA_URL
-        logger.info(f"[Ollama] Requesting model={model}, messages={len(messages)}")
-        effective_max_tokens = settings.MAX_TOKENS if settings.MAX_TOKENS > 0 else 512
+        resolved = resolve_ollama_model(model)
+        if resolved != model:
+            logger.info(f"[Ollama] Model resolved: '{model}' → '{resolved}'")
+
+        # Trim history to last 3 messages to keep context small for CPU inference.
+        # Ollama/Gemma3n on CPU: ~1 tok/s → large contexts take too long.
+        trimmed = messages[:1] + messages[-3:] if len(messages) > 4 else messages
+        if len(trimmed) < len(messages):
+            logger.info(f"[Ollama] Trimmed messages {len(messages)} → {len(trimmed)} to reduce context")
+
+        # Always cap at 512 tokens — CPU inference can't handle large outputs
+        effective_max_tokens = max(64, min(512, max_tokens))
+        logger.info(f"[Ollama] Requesting model={resolved}, messages={len(trimmed)}, max_tokens={effective_max_tokens}")
+        model = resolved
         try:
             response = requests.post(
                 f"{ollama_url}/v1/chat/completions",
                 json={
                     "model": model,
-                    "messages": messages,
+                    "messages": trimmed,
                     "temperature": temperature,
                     "max_tokens": effective_max_tokens,
                     "stream": False,
@@ -267,6 +347,11 @@ class CloudLLMService:
 
         if response.status_code != 200:
             err_text = response.text[:300]
+            if response.status_code == 499:
+                raise Exception(
+                    f"[Ollama] Model '{resolved}' đang được tải vào RAM (có thể mất 5-10 phút cho model lớn trên CPU). "
+                    "Vui lòng thử lại sau vài phút."
+                )
             raise Exception(f"[Ollama] HTTP {response.status_code}: {err_text}")
 
         data = response.json()
@@ -274,11 +359,11 @@ class CloudLLMService:
         if not content:
             logger.warning(f"[Ollama] Empty content: {str(data)[:200]}")
 
-        logger.info(f"[Ollama] OK — model={model}, output_len={len(content)}")
+        logger.info(f"[Ollama] OK — model={resolved}, output_len={len(content)}")
         return {
             "content": content.strip() if content else "",
             "usage": data.get("usage", {}),
-            "model": model,
+            "model": resolved,
             "provider": "ollama",
         }
 
@@ -368,6 +453,9 @@ class CloudLLMService:
         if settings.PREFER_LOCAL or force_local:
             if is_ollama_model:
                 try:
+                    # resolve_ollama_model (inside _call_ollama) auto-detects available
+                    # models and falls back to an installed one when the requested model
+                    # is not present in Ollama.
                     ollama_model = local_model if ":" in local_model else _LOCALAI_TO_OLLAMA.get(local_model, local_model)
                     result = cls._call_ollama(ollama_model, messages, temperature)
                     if result.get("content"):
@@ -389,9 +477,13 @@ class CloudLLMService:
 
             if force_local:
                 err_msg = " | ".join(errors)
+                available_ollama = get_ollama_models()
+                if available_ollama:
+                    hint = f" Ollama có sẵn model: {', '.join(available_ollama)}. Hãy chọn model đó từ dropdown."
+                else:
+                    hint = " Không có model nào trong Ollama. Chạy 'ollama pull <model>' hoặc chọn model Cloud ở dropdown."
                 raise Exception(
-                    f"⚠️ LocalAI không khả dụng: {err_msg}. "
-                    "Vui lòng tải model GGUF vào thư mục ./models hoặc chọn model Cloud ở dropdown."
+                    f"⚠️ LocalAI không khả dụng: {err_msg}.{hint}"
                 )
 
             if settings.cloud_api_key_list:

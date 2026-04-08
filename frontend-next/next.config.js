@@ -4,6 +4,10 @@ const nextConfig = {
     async rewrites() {
         return [
             {
+                source: '/api/docs/:path*',
+                destination: '/api/docs/:path*'
+            },
+            {
                 source: '/api/:path*',
                 destination: `${process.env.API_URL || 'http://backend:8000'}/api/:path*`
             }

@@ -10,6 +10,7 @@ import { ASSESSMENT_STANDARDS, calcWeightedScore, calcCategoryBreakdown, WEIGHT_
 import { CONTROL_DESCRIPTIONS } from '../../data/controlDescriptions'
 import { ASSESSMENT_TEMPLATES } from '../../data/templates'
 import StepProgress from '@/components/StepProgress'
+import { useTranslation } from '@/components/LanguageProvider'
 import { Shield, ChevronRight, ChevronLeft } from 'lucide-react'
 
 const POLL_INTERVAL = 8000
@@ -27,7 +28,7 @@ const STANDARD_LABEL_MAP = {
 }
 const getStdLabel = (stdId) => STANDARD_LABEL_MAP[stdId] || stdId || 'ISO 27001:2022'
 
-const WEIGHT_LABEL = { critical: 'Tối quan trọng', high: 'Quan trọng', medium: 'Trung bình', low: 'Thấp' }
+// WEIGHT_LABEL is resolved dynamically via t() in render
 const WEIGHT_COLOR = { critical: 'var(--accent-red)', high: 'var(--accent-amber,#f59e0b)', medium: 'var(--accent-blue)', low: 'var(--text-dim)' }
 
 function escHtml(s) {
@@ -70,6 +71,7 @@ const EMPTY_FORM = {
 
 export default function FormISOPage() {
     const router = useRouter()
+    const { t, locale } = useTranslation()
     const [step, setStep] = useState(1)
     const [form, setForm] = useState(EMPTY_FORM)
     // result: { id, status, report, model_used, json_data, progress, compliance_percent, standard, org_name, error }
@@ -227,6 +229,14 @@ export default function FormISOPage() {
         return calcCategoryBreakdown(form.implemented_controls, currentStandard.controls)
     }, [form.implemented_controls, currentStandard.controls])
 
+    // Result-aware breakdown: uses server-stored controls when viewing history
+    const resultCategoryBreakdown = useMemo(() => {
+        if (!result?.implemented_controls || result.implemented_controls.length === 0) return null
+        const stdId = result.standard || form.assessment_standard
+        const std = availableStandards.find(s => s.id === stdId) || currentStandard
+        return calcCategoryBreakdown(result.implemented_controls, std.controls)
+    }, [result?.implemented_controls, result?.standard, form.assessment_standard, availableStandards, currentStandard])
+
     const compliancePercent = weightedScore.percent
 
     const applyTemplateData = (parsed, keepModelMode = false, currentModelMode = 'hybrid') => {
@@ -350,6 +360,8 @@ export default function FormISOPage() {
                         compliance_percent: data.compliance_percent ?? null,
                         standard: data.standard || data.system_info?.assessment_standard,
                         org_name: data.system_info?.organization?.name || '',
+                        // Persist implemented_controls from server for category breakdown
+                        implemented_controls: data.system_info?.compliance?.implemented_controls || [],
                         progress: null,
                     })
                     setActiveTab('result')
@@ -534,6 +546,8 @@ export default function FormISOPage() {
                     compliance_percent: data.compliance_percent ?? null,
                     standard: data.standard || data.system_info?.assessment_standard,
                     org_name: data.system_info?.organization?.name || '',
+                    // Persist implemented_controls from server for category breakdown
+                    implemented_controls: data.system_info?.compliance?.implemented_controls || [],
                     progress: null,
                 })
                 setActiveTab('result')
@@ -1154,54 +1168,86 @@ export default function FormISOPage() {
         return { implemented, total }
     }
 
+    const STEP_TITLES = [
+        t('assessment.step1Title'),
+        t('assessment.step2Title'),
+        t('assessment.step3Title'),
+        t('assessment.step4Title'),
+    ]
+
+    const WEIGHT_LABEL = {
+        critical: t('assessment.weightCritical'),
+        high: t('assessment.weightHigh'),
+        medium: t('assessment.weightMedium'),
+        low: t('assessment.weightLow'),
+    }
+
     return (
         <div className="page-container">
-            <div className={styles.header}>
-                <h1 className={styles.title}>Đánh giá An toàn Thông tin</h1>
-                <p className={styles.subtitle}>
-                    AI Auditor · ISO 27001 · TCVN 11930 · Phân tích GAP & Risk Register tự động
-                </p>
-            </div>
+            <div className={styles.compactHeader}>
+                <div className={styles.headerRow}>
+                    <h1 className={styles.title}>{t('assessment.pageTitle')}</h1>
+                    <p className={styles.subtitle}>{t('assessment.pageSubtitle')}</p>
+                </div>
 
-            <div className={styles.tabs}>
-                <button className={`${styles.tab} ${activeTab === 'form' ? styles.tabActive : ''}`} onClick={() => setActiveTab('form')}>
-                    Nhập liệu
-                </button>
-                <button className={`${styles.tab} ${activeTab === 'result' ? styles.tabActive : ''}`} onClick={() => setActiveTab('result')} disabled={!result}>
-                    Kết quả {result && !result.error ? '✓' : ''}
-                </button>
-                <button className={`${styles.tab} ${activeTab === 'history' ? styles.tabActive : ''}`} onClick={() => setActiveTab('history')}>
-                    Lịch sử
-                </button>
-                <button className={`${styles.tab} ${activeTab === 'templates' ? styles.tabActive : ''}`} onClick={() => setActiveTab('templates')}>
-                    Mẫu
-                </button>
+                <div className={styles.tabs}>
+                    <button className={`${styles.tab} ${activeTab === 'form' ? styles.tabActive : ''}`} onClick={() => setActiveTab('form')}>
+                        {t('assessment.tabForm')}
+                    </button>
+                    <button className={`${styles.tab} ${activeTab === 'result' ? styles.tabActive : ''}`} onClick={() => setActiveTab('result')} disabled={!result}>
+                        {t('assessment.tabResult')} {result && !result.error ? '✓' : ''}
+                    </button>
+                    <button className={`${styles.tab} ${activeTab === 'history' ? styles.tabActive : ''}`} onClick={() => setActiveTab('history')}>
+                        {t('assessment.tabHistory')}
+                    </button>
+                    <button className={`${styles.tab} ${activeTab === 'templates' ? styles.tabActive : ''}`} onClick={() => setActiveTab('templates')}>
+                        {t('assessment.tabTemplates')}
+                    </button>
+                </div>
+
+                {activeTab === 'form' && (
+                    <div className={styles.inlineSteps}>
+                        {STEP_TITLES.map((label, i) => {
+                            const idx = i + 1
+                            const done = idx < step
+                            const active = idx === step
+                            return (
+                                <button
+                                    key={i}
+                                    type="button"
+                                    className={`${styles.inlineStep} ${done ? styles.inlineStepDone : ''} ${active ? styles.inlineStepActive : ''}`}
+                                    onClick={() => { if (done || active) setStep(idx) }}
+                                    disabled={!done && !active}
+                                >
+                                    <span className={styles.inlineStepNum}>{done ? '✓' : idx}</span>
+                                    <span className={styles.inlineStepLabel}>{label}</span>
+                                </button>
+                            )
+                        })}
+                    </div>
+                )}
             </div>
 
             {activeTab === 'form' && (
                 <div className={styles.formWrap}>
-                    <StepProgress currentStep={step} />
                     {form.org_name && (
                         <div className={styles.draftBanner}>
                             <span className={styles.draftBannerDot} />
-                            <span>Draft tự động lưu</span>
+                            <span>{t('assessment.draftSaved')}</span>
                             <button
                                 type="button"
                                 className={styles.draftClearBtn}
                                 onClick={() => { clearDraft(); setForm(EMPTY_FORM); setStep(1) }}
-                                title="Xóa draft và bắt đầu lại"
-                            >✕ Xóa</button>
+                                title={t('assessment.draftClearTitle')}
+                            >{t('assessment.draftClear')}</button>
                         </div>
                     )}
 
                     <div className={styles.stepBanner}>
-                        <span className={styles.stepBannerCount}>Bước {step} / 4</span>
+                        <span className={styles.stepBannerCount}>{t('assessment.stepOf', { current: step, total: 4 })}</span>
                         <span className={styles.stepBannerSep}>—</span>
                         <span className={styles.stepBannerTitle}>
-                            {step === 1 ? 'Thông tin Tổ chức & Tiêu chuẩn' :
-                             step === 2 ? 'Hạ tầng & Kỹ thuật mạng' :
-                             step === 3 ? 'Biện pháp kiểm soát (Controls)' :
-                             'Mô tả hệ thống & Tổng kết'}
+                            {STEP_TITLES[step - 1]}
                         </span>
                     </div>
 
@@ -1211,19 +1257,19 @@ export default function FormISOPage() {
 
                     <div className={styles.stepActions}>
                         <button className={styles.btnSecondary} onClick={prevStep} disabled={step === 1 || loading}>
-                            <ChevronLeft size={15} style={{ verticalAlign: 'middle' }} /> Quay lại
+                            <ChevronLeft size={15} style={{ verticalAlign: 'middle' }} /> {t('assessment.backBtn')}
                         </button>
 
                         {step < 4 ? (
                             <button className={styles.btnPrimary} onClick={nextStep} disabled={step === 1 && !form.org_name}>
-                                Tiếp theo <ChevronRight size={15} style={{ verticalAlign: 'middle' }} />
+                                {t('assessment.nextBtn')} <ChevronRight size={15} style={{ verticalAlign: 'middle' }} />
                             </button>
                         ) : (
                             <button className={styles.btnSubmit} onClick={submit} disabled={loading || !form.org_name}>
                                 {loading ? (
-                                    <><span className={styles.spinner} /> Đang xử lý ...</>
+                                    <><span className={styles.spinner} /> {t('assessment.submitting')}</>
                                 ) : (
-                                    <><Shield size={16} style={{ marginRight: '6px', verticalAlign: 'middle' }} />Bắt đầu Đánh giá</>
+                                    <><Shield size={16} style={{ marginRight: '6px', verticalAlign: 'middle' }} />{t('assessment.submitBtn')}</>
                                 )}
                             </button>
                         )}
@@ -1235,7 +1281,7 @@ export default function FormISOPage() {
                 <div className={styles.resultWrap}>
                     {result.status === 'failed' || result.error ? (
                         <div className={styles.errorBox}>
-                            <h3>Đã có lỗi xảy ra</h3>
+                            <h3>{t('assessment.errorTitle')}</h3>
                             <p className={styles.errorDetail}>{result.report || 'Timeout hoặc lỗi phân tích.'}</p>
                             {(result.report || '').includes('could not load model') || (result.report || '').includes('rpc error') ? (
                                 <div className={styles.errorGuidance}>
@@ -1249,16 +1295,16 @@ export default function FormISOPage() {
                                 </div>
                             ) : null}
                             <div style={{ display: 'flex', gap: '0.75rem', marginTop: '1rem', flexWrap: 'wrap' }}>
-                                <button className={styles.btnSecondary} onClick={() => setActiveTab('form')}>
-                                    ← Quay lại chỉnh sửa
-                                </button>
-                                <button className={styles.btnPrimary} onClick={() => {
-                                    set('model_mode', 'hybrid')
-                                    setActiveTab('form')
-                                    setStep(4)
-                                }}>
-                                    ⚡ Chuyển sang Hybrid & thử lại
-                                </button>
+                               <button className={styles.btnSecondary} onClick={() => setActiveTab('form')}>
+                                   {t('assessment.backToEdit')}
+                               </button>
+                               <button className={styles.btnPrimary} onClick={() => {
+                                   set('model_mode', 'hybrid')
+                                   setActiveTab('form')
+                                   setStep(4)
+                               }}>
+                                   {t('assessment.switchHybrid')}
+                               </button>
                             </div>
                         </div>
                     ) : (result.status === 'processing' || result.status === 'pending') ? (
@@ -1267,7 +1313,7 @@ export default function FormISOPage() {
                                 <div className={styles.spinnerRing} />
                                 <span className={styles.spinnerIcon}>🤖</span>
                             </div>
-                            <h3 className={styles.processingTitle}>AI đang phân tích hệ thống...</h3>
+                            <h3 className={styles.processingTitle}>{t('assessment.processingTitle')}</h3>
                             <div className={styles.processingTabAway}>
                                 <span>💡</span>
                                 <span>
@@ -1322,14 +1368,18 @@ export default function FormISOPage() {
                                                 {p1Done ? '✓' : '2'}
                                             </span>
                                             <div className={styles.procStepText}>
-                                                <span className={styles.procStepLabel}>Phase 1 — SecurityLM</span>
+                                                <span className={styles.procStepLabel}>
+                                                    Phase 1 — {form.model_mode === 'cloud' ? 'OpenClaude' : 'SecurityLM'}
+                                                </span>
                                                 <span className={styles.procStepDesc}>Phân tích GAP theo từng category controls</span>
                                             </div>
                                         </div>
                                         <div className={styles.procStep} style={!p1Done ? { opacity: 0.4 } : {}}>
                                             <span className={`${styles.procStepNum} ${p2Active ? styles.procStepNumAnim : ''}`}>3</span>
                                             <div className={styles.procStepText}>
-                                                <span className={styles.procStepLabel}>Phase 2 — {form.model_mode === 'local' ? 'Meta-Llama 8B' : 'OpenClaude'}</span>
+                                                <span className={styles.procStepLabel}>
+                                                    Phase 2 — {form.model_mode === 'local' ? 'Meta-Llama 8B' : 'OpenClaude'}
+                                                </span>
                                                 <span className={styles.procStepDesc}>Định dạng báo cáo Markdown + Risk Register</span>
                                             </div>
                                         </div>
@@ -1424,7 +1474,7 @@ export default function FormISOPage() {
                             <div className={styles.breakdownPanel}>
                                 <h4 className={styles.breakdownTitle}>Phân tích theo Category (Weighted)</h4>
                                 <div className={styles.breakdownGrid}>
-                                    {categoryBreakdown.map((cat, idx) => (
+                                    {(resultCategoryBreakdown || categoryBreakdown).map((cat, idx) => (
                                         <div key={idx} className={styles.breakdownItem}>
                                             <div className={styles.breakdownItemHeader}>
                                                 <span className={styles.breakdownCatName}>{cat.category}</span>
@@ -1625,8 +1675,29 @@ ${escHtml(result.report || '')}
                                     🖨️ In báo cáo
                                 </button>
                                 <button className={styles.reportActionBtnSecondary} onClick={() => setActiveTab('form')}>
-                                    ← Đánh giá mới
+                                    {t('assessment.newAssessment')}
                                 </button>
+                                <div className={styles.reEvalGroup}>
+                                    <span className={styles.reEvalLabel}>{t('assessment.reAssess')}</span>
+                                    {[
+                                        { id: 'local', icon: '🔒', label: 'Local' },
+                                        { id: 'hybrid', icon: '⚡', label: 'Hybrid' },
+                                        { id: 'cloud', icon: '☁️', label: 'Cloud' },
+                                    ].map(opt => (
+                                        <button
+                                            key={opt.id}
+                                            className={styles.reEvalBtn}
+                                            disabled={loading}
+                                            onClick={() => {
+                                                set('model_mode', opt.id)
+                                                setTimeout(() => submit(), 100)
+                                            }}
+                                            title={`Đánh giá lại với ${opt.label} AI`}
+                                        >
+                                            {opt.icon} {opt.label}
+                                        </button>
+                                    ))}
+                                </div>
                             </div>
 
                             <div className={styles.reportSection}>
@@ -1644,8 +1715,8 @@ ${escHtml(result.report || '')}
             {activeTab === 'history' && (
                 <div className={styles.historyWrap}>
                     <div className={styles.historyHeader}>
-                        <h2 className={styles.sectionTitle}>Lịch sử Báo cáo</h2>
-                        <button className={styles.refreshBtn} onClick={fetchHistory}>🔄 Làm mới</button>
+                        <h2 className={styles.sectionTitle}>{t('assessment.historyTitle')}</h2>
+                        <button className={styles.refreshBtn} onClick={fetchHistory}>{t('assessment.historyRefresh')}</button>
                     </div>
                     <p className={styles.helperText}>
                         Hệ thống RAG xử lý ngầm. Báo cáo được lưu trên máy chủ · Tổng: <strong>{assessmentHistory.length}</strong> đánh giá
@@ -1653,8 +1724,8 @@ ${escHtml(result.report || '')}
 
                     {assessmentHistory.length === 0 ? (
                         <div className={styles.emptyHistory}>
-                            Chưa có lịch sử đánh giá nào.<br />
-                            <small style={{ opacity: 0.5 }}>Hãy hoàn thành đánh giá đầu tiên từ tab Nhập liệu.</small>
+                            {t('assessment.historyEmpty')}<br />
+                            <small style={{ opacity: 0.5 }}>{t('assessment.historyEmptyHint')}</small>
                         </div>
                     ) : (
                         <div className={styles.historyList}>
@@ -1692,28 +1763,28 @@ ${escHtml(result.report || '')}
                                     </div>
                                     <div className={styles.histAction}>
                                         <span className={`${styles.statusBadge} ${styles[`status_${hist.status}`]}`}>
-                                            {hist.status === 'completed' ? '✅ Hoàn thành' :
-                                             hist.status === 'failed'    ? '❌ Thất bại' :
-                                             hist.status === 'processing'? '⏳ Xử lý...' : '🔄 Chờ'}
+                                            {hist.status === 'completed' ? t('assessment.historyCompleted') :
+                                             hist.status === 'failed'    ? t('assessment.historyFailed') :
+                                             hist.status === 'processing'? t('assessment.historyProcessing') : t('assessment.historyPending')}
                                         </span>
                                         {/* BUG 4 FIX: use loadAssessmentById — fully independent of stale result state */}
                                         {hist.status === 'completed' && hist.id && (
                                             <button className={styles.btnSmall}
                                                 onClick={() => loadAssessmentById(hist.id)}>
-                                                Xem →
+                                                {t('assessment.historyView')}
                                             </button>
                                         )}
                                         {(hist.status === 'processing' || hist.status === 'pending') && hist.id && (
                                             <button className={styles.btnSmall}
                                                 onClick={() => loadAssessmentById(hist.id)}>
-                                                Theo dõi →
+                                                {t('assessment.historyTrack')}
                                             </button>
                                         )}
                                         {hist.status === 'failed' && (
                                             <button className={styles.btnSmall}
                                                 style={{ color: 'var(--accent-amber,#f59e0b)' }}
                                                 onClick={() => { setActiveTab('form'); setStep(4) }}>
-                                                Thử lại
+                                                {t('assessment.historyRetry')}
                                             </button>
                                         )}
                                         {/* Enhancement 9: delete with inline confirm */}
@@ -1845,8 +1916,8 @@ ${escHtml(result.report || '')}
                     </div>
 
                     <div className={styles.tplNavRow}>
-                        <button className={styles.btnSecondary} onClick={() => setActiveTab('form')}>← Nhập liệu</button>
-                        <Link href="/analytics" className={styles.btnPrimary}>Analytics & Standards →</Link>
+                        <button className={styles.btnSecondary} onClick={() => setActiveTab('form')}>{t('assessment.formInput')}</button>
+                        <Link href="/analytics" className={styles.btnPrimary}>{t('assessment.analyticsStandards')}</Link>
                     </div>
                 </div>
             )}

@@ -1,20 +1,22 @@
-# Tham chiếu thuật toán
+# 🧠 Tham Chiếu Thuật Toán
 
-Tài liệu kỹ thuật về tất cả các thuật toán quan trọng trong Nền tảng đánh giá CyberAI, được trích xuất từ mã nguồn.
-
-## Mục lục
-
-- [1. Truy xuất RAG](#1-truy-xuất-rag)
-- [2. Định tuyến mô hình](#2-định-tuyến-mô-hình)
-- [3. Chấm điểm tuân thủ có trọng số](#3-chấm-điểm-tuân-thủ-có-trọng-số)
-- [4. Chấm điểm sổ đăng ký rủi ro](#4-chấm-điểm-sổ-đăng-ký-rủi-ro)
-- [5. Chuẩn hóa mức độ nghiêm trọng](#5-chuẩn-hóa-mức-độ-nghiêm-trọng)
-- [6. Bảo vệ đầu vào an toàn](#6-bảo-vệ-đầu-vào-an-toàn)
-- [7. Chuỗi dự phòng Cloud LLM](#7-chuỗi-dự-phòng-cloud-llm)
+Tài liệu kỹ thuật về tất cả các thuật toán quan trọng trong Nền tảng Đánh giá CyberAI, được trích xuất từ mã nguồn.
 
 ---
 
-## 1. Truy xuất RAG
+## 📑 Mục Lục
+
+- [1. 🔍 Truy xuất RAG (Retrieval Augmented Generation)](#1--truy-xuất-rag-retrieval-augmented-generation)
+- [2. 🧭 Định tuyến mô hình (Model Routing)](#2--định-tuyến-mô-hình-model-routing)
+- [3. ⚖️ Chấm điểm tuân thủ có trọng số (Weighted Compliance Scoring)](#3-️-chấm-điểm-tuân-thủ-có-trọng-số-weighted-compliance-scoring)
+- [4. 📊 Chấm điểm sổ đăng ký rủi ro (Risk Register Scoring)](#4--chấm-điểm-sổ-đăng-ký-rủi-ro-risk-register-scoring)
+- [5. 🔄 Chuẩn hóa mức độ nghiêm trọng (Severity Normalization)](#5--chuẩn-hóa-mức-độ-nghiêm-trọng-severity-normalization)
+- [6. 🛡️ Bảo vệ đầu vào an toàn (Input Safety Guard)](#6-️-bảo-vệ-đầu-vào-an-toàn-input-safety-guard)
+- [7. ☁️ Chuỗi dự phòng Cloud LLM (Cloud LLM Fallback Chain)](#7-️-chuỗi-dự-phòng-cloud-llm-cloud-llm-fallback-chain)
+
+---
+
+## 1. 🔍 Truy xuất RAG (Retrieval Augmented Generation)
 
 Nguồn: [`rag_service.py`](backend/services/rag_service.py), [`vector_store.py`](backend/repositories/vector_store.py)
 
@@ -22,9 +24,9 @@ Nguồn: [`rag_service.py`](backend/services/rag_service.py), [`vector_store.py`
 
 Pipeline RAG (Truy xuất tăng cường sinh - Retrieval Augmented Generation) hoạt động qua ba giai đoạn:
 
-1. **Chia đoạn (Chunking)** — Tài liệu Markdown được chia thành các đoạn chồng lấp, kèm theo ngữ cảnh phân cấp tiêu đề.
-2. **Truy xuất (Retrieval)** — Tìm kiếm bằng độ tương đồng cosine trên ChromaDB với chỉ mục HNSW, hỗ trợ mở rộng đa truy vấn (multi-query expansion).
-3. **Lọc theo độ tin cậy (Confidence Filtering)** — Các đoạn có độ tương đồng thấp bị loại bỏ trước khi ghép ngữ cảnh.
+1. **Chunking (Chia đoạn)** — Tài liệu Markdown được chia thành các đoạn chồng lấp, kèm theo ngữ cảnh phân cấp tiêu đề (header hierarchy context injection).
+2. **Retrieval (Truy xuất)** — Tìm kiếm bằng Cosine Similarity (Độ tương đồng cosine) trên ChromaDB với chỉ mục HNSW, hỗ trợ Multi-Query Expansion (mở rộng đa truy vấn).
+3. **Confidence Filtering (Lọc theo độ tin cậy)** — Các đoạn có độ tương đồng thấp bị loại bỏ trước khi ghép ngữ cảnh.
 
 ```mermaid
 flowchart LR
@@ -38,7 +40,7 @@ flowchart LR
     CTX --> LLM[LLM Generation]
 ```
 
-### 1.2 Chiến lược chia đoạn
+### 1.2 Chiến lược chia đoạn (Chunking Strategy)
 
 Được định nghĩa trong [`VectorStore._chunk_text()`](backend/repositories/vector_store.py:30):
 
@@ -48,7 +50,10 @@ flowchart LR
 | `overlap` | **150** ký tự | Cửa sổ chồng lấp từ cuối đoạn trước |
 | Điều kiện tách | Điểm ngắt tự nhiên | Chỉ tách khi không nằm trong dòng bảng (`\|`), mục danh sách (`- `), hoặc khối thụt lề |
 
-**Chèn phân cấp tiêu đề**: mỗi đoạn không bắt đầu bằng tiêu đề sẽ được thêm tiền tố `[Context: # H1 > ## H2 > ### H3]` để bảo toàn cấu trúc tài liệu.
+**Header hierarchy injection (Chèn phân cấp tiêu đề)**: mỗi đoạn không bắt đầu bằng tiêu đề sẽ được thêm tiền tố `[Context: # H1 > ## H2 > ### H3]` để bảo toàn cấu trúc tài liệu.
+
+<details>
+<summary>📝 Pseudocode: <code>_chunk_text()</code></summary>
 
 ```python
 # Pseudocode: _chunk_text()
@@ -65,7 +70,9 @@ for line in lines:
         current_chunk = tail_lines(current_chunk, 150)
 ```
 
-### 1.3 Mở rộng đa truy vấn (Multi-Query Expansion)
+</details>
+
+### 1.3 Multi-Query Expansion (Mở rộng đa truy vấn)
 
 Được định nghĩa trong [`VectorStore.multi_query_search()`](backend/repositories/vector_store.py:158):
 
@@ -78,7 +85,7 @@ Quy tắc mở rộng truy vấn:
 
 Kết quả được loại trùng theo khóa tổ hợp `{source}_{chunk_index}`, sắp xếp theo điểm giảm dần, và giới hạn tối đa `top_k` (mặc định: **5**).
 
-### 1.4 Lọc theo ngưỡng độ tin cậy
+### 1.4 Confidence Threshold Filtering (Lọc theo Ngưỡng Độ tin cậy)
 
 Được định nghĩa trong [`_filter_by_confidence()`](backend/services/rag_service.py:18):
 
@@ -86,7 +93,7 @@ Kết quả được loại trùng theo khóa tổ hợp `{source}_{chunk_index}
 RAG_CONFIDENCE_THRESHOLD = 0.35
 ```
 
-ChromaDB trả về **khoảng cách** cosine. Chuyển đổi sang độ tương đồng:
+ChromaDB trả về **khoảng cách** cosine. Chuyển đổi sang Cosine Similarity (Độ tương đồng cosine):
 
 ```
 similarity_score = 1 - cosine_distance
@@ -110,7 +117,7 @@ Chỉ các đoạn có `score >= 0.35` (tức `distance <= 0.65`) mới vượt 
 
 | Phương pháp | Ưu điểm | Nhược điểm | Trạng thái |
 |-------------|---------|------------|------------|
-| **Cosine similarity (hiện tại)** | Nhanh, hoạt động tốt với embedding đã chuẩn hóa | Nhạy cảm với chất lượng embedding | ✅ Đã triển khai |
+| **Cosine Similarity (Độ tương đồng cosine) — hiện tại** | Nhanh, hoạt động tốt với Embedding (Nhúng vector) đã chuẩn hóa | Nhạy cảm với chất lượng embedding | ✅ Đã triển khai |
 | Tìm kiếm từ khóa BM25 | Không cần mô hình embedding | Bỏ sót từ đồng nghĩa ngữ nghĩa | Chưa triển khai |
 | Kết hợp BM25 + vector | Tận dụng ưu điểm cả hai | Độ phức tạp cao, chỉ mục kép | Chưa triển khai |
 | Xếp hạng lại (cross-encoder) | Độ chính xác cao hơn trên top-k | Chậm hơn, cần mô hình riêng | Chưa triển khai |
@@ -133,13 +140,13 @@ Context = ChunkA + "\n\n---\n\n" + ChunkB + "\n\n---\n\n" + ChunkC
 
 ---
 
-## 2. Định tuyến mô hình
+## 2. 🧭 Định tuyến mô hình (Model Routing)
 
 Nguồn: [`model_router.py`](backend/services/model_router.py)
 
 ### 2.1 Cơ chế hoạt động
 
-Phân loại ý định kết hợp hai giai đoạn: **ngữ nghĩa trước**, sau đó **dự phòng từ khóa** nếu độ tin cậy quá thấp.
+Intent Classification (Phân loại ý định) kết hợp hai giai đoạn: **Semantic Search (Tìm kiếm ngữ nghĩa) trước**, sau đó **Keyword Fallback (dự phòng từ khóa)** nếu Confidence Score (Điểm tin cậy) quá thấp.
 
 ```mermaid
 flowchart TD
@@ -160,19 +167,20 @@ flowchart TD
     SRCH2 -->|no| GEN2[general]
 ```
 
-### 2.2 Phân loại ngữ nghĩa (Semantic Classification)
+### 2.2 Semantic Classification (Phân loại ngữ nghĩa)
 
 Được định nghĩa trong [`_semantic_classify()`](backend/services/model_router.py:146):
 
 Sử dụng bộ sưu tập ChromaDB trong bộ nhớ (`intent_classifier`, không gian cosine) được khởi tạo với các mẫu ý định từ [`INTENT_TEMPLATES`](backend/services/model_router.py:14).
 
-| Ý định | Số lượng mẫu | Ví dụ |
-|--------|-------------|-------|
+| Ý định (Intent) | Số lượng mẫu | Ví dụ |
+|-----------------|-------------|-------|
 | `security` | ~34 | `"đánh giá rủi ro bảo mật"`, `"iso 27001"`, `"risk assessment"` |
 | `search` | ~19 | `"tin tức mới nhất"`, `"latest news"`, `"stock price today"` |
 | `general` | ~15 | `"xin chào"`, `"hello"`, `"what can you do"` |
 
-**Thuật toán bỏ phiếu**:
+<details>
+<summary>📝 Thuật toán bỏ phiếu (Voting Algorithm)</summary>
 
 ```python
 # Query top-3 nearest templates
@@ -189,19 +197,21 @@ best_intent = max(votes, key=votes.get)
 confidence = votes[best_intent] / len(metadatas)  # normalized by 3
 ```
 
-### 2.3 Dự phòng từ khóa (Keyword Fallback)
+</details>
+
+### 2.3 Keyword Fallback (Dự phòng từ khóa)
 
 Ba mẫu regex được biên dịch sẵn:
 
-| Mẫu | Từ khóa | Ngưỡng khớp |
-|-----|---------|-------------|
+| Mẫu | Từ khóa | Threshold (Ngưỡng) khớp |
+|-----|---------|--------------------------|
 | [`_iso_pattern`](backend/services/model_router.py:112) | 34 thuật ngữ ISO/tuân thủ | `≥ 1` lần khớp |
 | [`_iso_strict_pattern`](backend/services/model_router.py:113) | 30 thuật ngữ bảo mật nghiêm ngặt (ranh giới từ) | `≥ 2` lần khớp |
 | [`_search_pattern`](backend/services/model_router.py:114) | 31 thuật ngữ ý định tìm kiếm | `≥ 1` lần khớp |
 
 **Ma trận quyết định** (khi `confidence ≤ 0.6`):
 
-| `has_search` | `has_iso` | `has_iso_strict` | Tuyến |
+| `has_search` | `has_iso` | `has_iso_strict` | Tuyến (Route) |
 |:---:|:---:|:---:|---|
 | ✅ | ✅ | ❌ | `search` |
 | any | any | ✅ | `security` |
@@ -209,7 +219,7 @@ Ba mẫu regex được biên dịch sẵn:
 | ✅ | ❌ | ❌ | `search` |
 | ❌ | ❌ | ❌ | `general` |
 
-### 2.4 Kết quả định tuyến
+### 2.4 Kết quả định tuyến (Route Output)
 
 [`route_model()`](backend/services/model_router.py:173) trả về:
 
@@ -249,20 +259,20 @@ Result: route="security", use_rag=True, model=SECURITY_MODEL, method="semantic"
 
 ---
 
-## 3. Chấm điểm tuân thủ có trọng số
+## 3. ⚖️ Chấm điểm tuân thủ có trọng số (Weighted Compliance Scoring)
 
 Nguồn: [`controls_catalog.py`](backend/services/controls_catalog.py), [`assessment_helpers.py`](backend/services/assessment_helpers.py)
 
 ### 3.1 Cơ chế hoạt động
 
-Các biện pháp kiểm soát được gán trọng số theo mức độ nghiêm trọng. Tỷ lệ tuân thủ được tính bằng tỷ số giữa **điểm trọng số đạt được** và **điểm trọng số tối đa**, không phải đơn thuần đếm số lượng.
+Các biện pháp kiểm soát được gán trọng số theo mức độ nghiêm trọng. Tỷ lệ tuân thủ được tính bằng tỷ số giữa **Weighted Scoring (điểm trọng số) đạt được** và **điểm trọng số tối đa**, không phải đơn thuần đếm số lượng.
 
-### 3.2 Bảng ánh xạ trọng số
+### 3.2 Bảng ánh xạ trọng số (Weight Score Mapping)
 
 Được định nghĩa trong [`WEIGHT_SCORE`](backend/services/controls_catalog.py:159):
 
-| Mức độ nghiêm trọng | Trọng số | Mô tả |
-|---------------------|---------|-------|
+| Mức độ nghiêm trọng (Severity) | Trọng số (Weight) | Mô tả |
+|---------------------------------|-------------------|-------|
 | `critical` | **4** | Biện pháp bắt buộc (ví dụ: kiểm soát truy cập, mã hóa, ứng phó sự cố) |
 | `high` | **3** | Biện pháp quan trọng (ví dụ: kiểm tra lý lịch, SDLC) |
 | `medium` | **2** | Biện pháp tiêu chuẩn (ví dụ: liên hệ cơ quan chức năng, lọc web) |
@@ -281,6 +291,9 @@ achieved_weighted = Σ weight_map[implemented_controls]
 percentage = (achieved_weighted / max_weighted) × 100
 ```
 
+<details>
+<summary>📝 Pseudocode: <code>calc_compliance()</code></summary>
+
 ```python
 # Pseudocode
 flat = get_flat_controls(standard)
@@ -290,18 +303,20 @@ achieved_w = sum(weight_map[cid] for cid in implemented if cid in weight_map)
 percentage = round(achieved_w / max_w * 100, 1)
 ```
 
-### 3.4 Phân loại mức tuân thủ
+</details>
+
+### 3.4 Phân loại mức tuân thủ (Compliance Tier Classification)
 
 Được định nghĩa trong [`_build_structured_json()`](backend/services/chat_service.py:731):
 
-| Tỷ lệ phần trăm | Mức | Nhãn |
-|-----------------|-----|------|
+| Tỷ lệ phần trăm | Mức (Tier) | Nhãn (Label) |
+|-----------------|------------|--------------|
 | `≥ 80%` | `high` | Tuân thủ cao |
 | `≥ 50%` | `medium` | Tuân thủ một phần |
 | `≥ 25%` | `low` | Tuân thủ thấp |
 | `< 25%` | `critical` | Không tuân thủ |
 
-### 3.5 Phân tích chi tiết trọng số
+### 3.5 Phân tích chi tiết trọng số (Weight Breakdown)
 
 Được định nghĩa trong [`build_weight_breakdown()`](backend/services/controls_catalog.py:192):
 
@@ -348,15 +363,15 @@ tier = "critical" (< 25%)
 
 ---
 
-## 4. Chấm điểm sổ đăng ký rủi ro
+## 4. 📊 Chấm điểm sổ đăng ký rủi ro (Risk Register Scoring)
 
 Nguồn: [`assessment_helpers.py`](backend/services/assessment_helpers.py), [`chat_service.py`](backend/services/chat_service.py)
 
 ### 4.1 Cơ chế hoạt động
 
-Mỗi biện pháp kiểm soát chưa được triển khai được gán điểm rủi ro **Khả năng xảy ra × Mức độ ảnh hưởng** bởi mô hình SecurityLM trong Giai đoạn 1 đánh giá. Khi LLM (Mô hình ngôn ngữ lớn) thất bại, hệ thống sẽ suy luận rủi ro theo phương pháp tất định từ metadata trọng số của biện pháp.
+Mỗi biện pháp kiểm soát chưa được triển khai được gán điểm rủi ro **Likelihood (Khả năng xảy ra) × Impact (Mức độ ảnh hưởng)** bởi mô hình SecurityLM trong Giai đoạn 1 đánh giá. Khi LLM (Mô hình ngôn ngữ lớn) thất bại, hệ thống sẽ suy luận rủi ro theo phương pháp tất định từ metadata trọng số của biện pháp.
 
-### 4.2 Công thức điểm rủi ro
+### 4.2 Công thức điểm rủi ro (Risk Score Formula)
 
 ```
 Risk = Likelihood × Impact
@@ -368,7 +383,7 @@ Risk = Likelihood × Impact
 | Impact (Mức độ ảnh hưởng - I) | 1–5 | Tác động kinh doanh nếu bị khai thác |
 | Risk (Rủi ro) | 1–25 | Điểm rủi ro tổng hợp |
 
-### 4.3 Sổ đăng ký rủi ro do LLM tạo
+### 4.3 Sổ đăng ký rủi ro do LLM tạo (LLM-Generated Risk Register)
 
 Mô hình SecurityLM xuất JSON cho mỗi danh mục biện pháp:
 
@@ -392,16 +407,16 @@ Kiểm tra hợp lệ trong [`validate_chunk_output()`](backend/services/assessm
 - Risk được giới hạn trong `[1, 25]`
 - Văn bản Gap bị cắt ngắn tối đa **200** ký tự
 - Recommendation bị cắt ngắn tối đa **200** ký tự
-- **Chống ảo giác**: các mã biện pháp không thuộc tập hợp lệ sẽ bị từ chối
+- **Chống ảo giác (Anti-hallucination)**: các mã biện pháp không thuộc tập hợp lệ sẽ bị từ chối
 
-### 4.4 Dự phòng tất định (khi LLM thất bại)
+### 4.4 Dự phòng tất định (Deterministic Fallback) — khi LLM thất bại
 
 Được định nghĩa trong [`infer_gap_from_control()`](backend/services/assessment_helpers.py:46):
 
 Khi cả 3 lần thử gọi LLM đều thất bại cho một danh mục, hệ thống suy luận gap (lỗ hổng) từ metadata biện pháp:
 
-| Trọng số biện pháp | Likelihood | Impact | Risk |
-|--------------------|------------|--------|------|
+| Trọng số biện pháp (Control Weight) | Likelihood | Impact | Risk |
+|--------------------------------------|------------|--------|------|
 | `critical` | 4 | 4 | 16 |
 | `high` | 3 | 3 | 9 |
 | `medium` | 2 | 2 | 4 |
@@ -409,7 +424,7 @@ Khi cả 3 lần thử gọi LLM đều thất bại cho một danh mục, hệ 
 
 Tối đa **10** biện pháp được suy luận cho mỗi danh mục thất bại.
 
-### 4.5 Sắp xếp sổ đăng ký rủi ro
+### 4.5 Sắp xếp sổ đăng ký rủi ro (Risk Register Sorting)
 
 Được định nghĩa trong [`gap_items_to_markdown()`](backend/services/assessment_helpers.py:113):
 
@@ -449,7 +464,7 @@ Fallback (if LLM fails):
 
 ---
 
-## 5. Chuẩn hóa mức độ nghiêm trọng
+## 5. 🔄 Chuẩn hóa mức độ nghiêm trọng (Severity Normalization)
 
 Nguồn: [`assessment_helpers.py`](backend/services/assessment_helpers.py)
 
@@ -457,7 +472,7 @@ Nguồn: [`assessment_helpers.py`](backend/services/assessment_helpers.py)
 
 Mô hình SecurityLM 7B có xu hướng phân loại quá mức các gap thành "critical". Thuật toán chuẩn hóa phát hiện thiên lệch này và phân bổ lại nhãn mức độ nghiêm trọng theo tỷ lệ dựa trên điểm rủi ro.
 
-### 5.2 Điều kiện kích hoạt
+### 5.2 Điều kiện kích hoạt (Trigger Condition)
 
 Được định nghĩa trong [`normalize_severity_distribution()`](backend/services/assessment_helpers.py:137):
 
@@ -467,18 +482,21 @@ Trigger: (critical_count / total_gaps) > 0.70 AND total_gaps >= 3
 
 Nếu hơn **70%** gap được đánh dấu `critical`, quá trình chuẩn hóa sẽ được kích hoạt.
 
-### 5.3 Phân bổ mục tiêu
+### 5.3 Phân bổ mục tiêu (Target Distribution)
 
 Dựa trên phân bổ thực tế trong các cuộc kiểm toán ISO:
 
-| Mức độ nghiêm trọng | Tỷ lệ mục tiêu | Chỉ số cắt |
-|---------------------|----------------|------------|
+| Mức độ nghiêm trọng (Severity) | Tỷ lệ mục tiêu (Target %) | Chỉ số cắt (Cutoff Index) |
+|---------------------------------|---------------------------|--------------------------|
 | `critical` | ~25% | `[0, n × 0.25)` |
 | `high` | ~25% | `[n × 0.25, n × 0.50)` |
 | `medium` | ~30% | `[n × 0.50, n × 0.80)` |
 | `low` | ~20% | `[n × 0.80, n)` |
 
 ### 5.4 Thuật toán
+
+<details>
+<summary>📝 Triển khai <code>normalize_severity_distribution()</code></summary>
 
 ```python
 def normalize_severity_distribution(gap_items):
@@ -502,6 +520,8 @@ def normalize_severity_distribution(gap_items):
     return sorted_items
 ```
 
+</details>
+
 ### 5.5 Hằng số
 
 | Hằng số | Giá trị | Nguồn |
@@ -509,10 +529,10 @@ def normalize_severity_distribution(gap_items):
 | `WEIGHT_SCORE` | `{"critical": 4, "high": 3, "medium": 2, "low": 1}` | [`assessment_helpers.py:10`](backend/services/assessment_helpers.py:10) |
 | `SEV_EMOJI` | `{"critical": "🔴", "high": "🟠", "medium": "🟡", "low": "⚪"}` | [`assessment_helpers.py:11`](backend/services/assessment_helpers.py:11) |
 | `SEV_ORDER` | `{"critical": 0, "high": 1, "medium": 2, "low": 3}` | [`assessment_helpers.py:12`](backend/services/assessment_helpers.py:12) |
-| Ngưỡng kích hoạt chuẩn hóa | `> 70%` critical | [`assessment_helpers.py:147`](backend/services/assessment_helpers.py:147) |
+| Threshold (Ngưỡng) kích hoạt chuẩn hóa | `> 70%` critical | [`assessment_helpers.py:147`](backend/services/assessment_helpers.py:147) |
 | Số mục tối thiểu để chuẩn hóa | `3` | [`assessment_helpers.py:143`](backend/services/assessment_helpers.py:143) |
 
-### 5.6 Ánh xạ mức độ nghiêm trọng đa framework
+### 5.6 Ánh xạ mức độ nghiêm trọng đa framework (Cross-Framework Severity Mapping)
 
 Ánh xạ [`WEIGHT_SCORE`](backend/services/controls_catalog.py:159) được dùng chung cho các framework:
 
@@ -550,17 +570,17 @@ Result: 2 critical, 3 high, 3 medium, 2 low
 
 ---
 
-## 6. Bảo vệ đầu vào an toàn
+## 6. 🛡️ Bảo vệ đầu vào an toàn (Input Safety Guard)
 
 Nguồn: [`chat_service.py`](backend/services/chat_service.py), [`model_guard.py`](backend/services/model_guard.py)
 
-### 6.1 Phát hiện Prompt Injection (tiêm lệnh vào prompt)
+### 6.1 Phát hiện Prompt Injection (Tiêm lệnh vào prompt)
 
 Được định nghĩa trong [`sanitize_user_input()`](backend/services/chat_service.py:43):
 
-Hai mẫu regex phát hiện các nỗ lực tiêm lệnh vào prompt:
+Hai mẫu regex phát hiện các nỗ lực Prompt Injection (tiêm lệnh vào prompt):
 
-**Mẫu 1 — Cụm từ tiêm lệnh** ([`_INJECTION_PATTERNS`](backend/services/chat_service.py:29)):
+**Mẫu 1 — Injection phrases (Cụm từ tiêm lệnh)** ([`_INJECTION_PATTERNS`](backend/services/chat_service.py:29)):
 
 ```regex
 ignore\s+previous\s+instructions
@@ -572,15 +592,15 @@ ignore\s+previous\s+instructions
 |<\|im_end\|>
 ```
 
-**Mẫu 2 — Tiền tố system** ([`_SYSTEM_PREFIX_RE`](backend/services/chat_service.py:40)):
+**Mẫu 2 — System prefix (Tiền tố system)** ([`_SYSTEM_PREFIX_RE`](backend/services/chat_service.py:40)):
 
 ```regex
 ^\s*system\s*:
 ```
 
-Khớp `system:` chỉ ở **đầu** tin nhắn (để tránh dương tính giả trong văn bản thông thường).
+Fuzzy Matching (Khớp mờ) `system:` chỉ ở **đầu** tin nhắn (để tránh dương tính giả trong văn bản thông thường).
 
-### 6.2 Thuật toán phát hiện
+### 6.2 Thuật toán phát hiện (Detection Algorithm)
 
 ```python
 def sanitize_user_input(text):
@@ -592,7 +612,7 @@ def sanitize_user_input(text):
 
 **Hành động**: trả về HTTP 400 ngay lập tức — không làm sạch/xóa, từ chối hoàn toàn.
 
-### 6.3 Loại bỏ token đặc biệt
+### 6.3 Loại bỏ token đặc biệt (Special Token Stripping)
 
 Được định nghĩa trong [`SPECIAL_TOKENS`](backend/services/chat_service.py:22):
 
@@ -623,7 +643,7 @@ class ModelGuard:
         return all(status == "present" for status in state.values())
 ```
 
-**Chiến lược phân giải đường dẫn**: kiểm tra hai đường dẫn ứng viên cho mỗi mô hình:
+**Chiến lược phân giải đường dẫn (Resolution strategy)**: kiểm tra hai đường dẫn ứng viên cho mỗi mô hình:
 1. `{MODELS_PATH}/{model_id}` (đường dẫn đầy đủ)
 2. `{MODELS_PATH}/{basename(model_id)}` (chỉ tên file)
 
@@ -647,20 +667,20 @@ Kiểm tra sức khỏe: gửi yêu cầu suy luận tối thiểu (`"hi"`, `max
 
 | Phương pháp | Ưu điểm | Nhược điểm | Trạng thái |
 |-------------|---------|------------|------------|
-| **Khớp mẫu regex (hiện tại)** | Nhanh, không có độ trễ, tất định | Giới hạn ở các mẫu đã biết | ✅ Đã triển khai |
+| **Regex pattern matching — Khớp mẫu regex (hiện tại)** | Nhanh, không có độ trễ, tất định | Giới hạn ở các mẫu đã biết | ✅ Đã triển khai |
 | Bộ phân loại injection dựa trên ML | Phát hiện tấn công mới | Cần dữ liệu huấn luyện, tăng độ trễ | Chưa triển khai |
 | Tự kiểm tra bằng LLM | Độ chính xác cao | Tốn kém, rủi ro đệ quy | Chưa triển khai |
 | Phân tích perplexity cấp token | Phát hiện đầu vào bất thường | Phức tạp, phụ thuộc mô hình | Chưa triển khai |
 
 ---
 
-## 7. Chuỗi dự phòng Cloud LLM
+## 7. ☁️ Chuỗi dự phòng Cloud LLM (Cloud LLM Fallback Chain)
 
 Nguồn: [`cloud_llm_service.py`](backend/services/cloud_llm_service.py)
 
 ### 7.1 Cơ chế hoạt động
 
-Dự phòng đa tầng theo nhà cung cấp với theo dõi giới hạn tốc độ theo từng khóa API và dự phòng khả dụng theo từng mô hình.
+Dự phòng đa tầng theo nhà cung cấp với theo dõi giới hạn tốc độ (Rate Limit) theo từng khóa API và dự phòng khả dụng theo từng mô hình.
 
 ```mermaid
 flowchart TD
@@ -677,18 +697,18 @@ flowchart TD
     LO -->|fail| ERR3[Local-only mode error]
 ```
 
-### 7.2 Ánh xạ tác vụ - mô hình
+### 7.2 Ánh xạ tác vụ - mô hình (Task-Model Mapping)
 
 Được định nghĩa trong [`TASK_MODEL_MAP`](backend/services/cloud_llm_service.py:15):
 
-| Loại tác vụ | Mô hình |
-|-------------|---------|
+| Loại tác vụ (Task Type) | Mô hình (Model) |
+|--------------------------|-----------------|
 | `iso_analysis` | `gemini-3-flash-preview` |
 | `complex` | `gemini-3-pro-preview` |
 | `chat` | `gemini-3-flash-preview` |
 | `default` | `gemini-3-flash-preview` |
 
-### 7.3 Chuỗi dự phòng mô hình
+### 7.3 Chuỗi dự phòng mô hình (Model Fallback Chain)
 
 Được định nghĩa trong [`FALLBACK_CHAIN`](backend/services/cloud_llm_service.py:22):
 
@@ -698,15 +718,18 @@ gemini-3-flash-preview → gemini-3-pro-preview → gpt-5-mini → claude-sonnet
 
 Với mỗi mô hình trong chuỗi, **tất cả các khóa API** được thử luân phiên (round-robin) trước khi chuyển sang mô hình tiếp theo.
 
-### 7.4 Xử lý giới hạn tốc độ (Rate Limit)
+### 7.4 Xử lý giới hạn tốc độ (Rate Limit Handling)
 
 Được định nghĩa trong [`CloudLLMService`](backend/services/cloud_llm_service.py:39):
 
 | Tham số | Giá trị |
 |---------|---------|
 | `RATE_LIMIT_COOLDOWN` | **30** giây |
-| Điều kiện kích hoạt | Phản hồi HTTP 429 |
-| Xoay vòng khóa | Luân phiên qua `_key_index` |
+| Điều kiện kích hoạt (Trigger) | Phản hồi HTTP 429 |
+| Xoay vòng khóa (Key rotation) | Luân phiên qua `_key_index` |
+
+<details>
+<summary>📝 Theo dõi cooldown theo từng khóa</summary>
 
 ```python
 # Per-key cooldown tracking
@@ -717,7 +740,9 @@ def _is_rate_limited(key_idx):
     return elapsed < 30  # RATE_LIMIT_COOLDOWN
 ```
 
-### 7.5 Tích hợp Ollama
+</details>
+
+### 7.5 Tích hợp Ollama (Ollama Integration)
 
 Được định nghĩa trong [`_call_ollama()`](backend/services/cloud_llm_service.py:247):
 
@@ -731,12 +756,12 @@ Mã mô hình LocalAI được ánh xạ sang tag mô hình Ollama qua [`_LOCALA
 
 Ollama được chọn khi mô hình có tiền tố đã biết: `gemma3:`, `gemma3n:`, `gemma4:`, `phi4:`, `llama3:`, `mistral:`, `qwen3:`.
 
-### 7.6 Dự phòng chế độ đánh giá
+### 7.6 Dự phòng chế độ đánh giá (Assessment Mode Fallback)
 
 Được định nghĩa trong [`ChatService.assess_system()`](backend/services/chat_service.py:368):
 
-| Chế độ yêu cầu | LocalAI khả dụng | Chế độ thực tế |
-|----------------|:-:|----------------|
+| Chế độ yêu cầu (Requested Mode) | LocalAI khả dụng | Chế độ thực tế (Effective Mode) |
+|---------------------------------|:-:|--------------------------------|
 | `local` | ✅ | `local` |
 | `local` | ❌ (+ có khóa cloud) | `hybrid` |
 | `local` | ❌ (không có khóa cloud) | **Lỗi** |
@@ -744,12 +769,12 @@ Ollama được chọn khi mô hình có tiền tố đã biết: `gemma3:`, `ge
 | `hybrid` | ❌ | `cloud` |
 | `cloud` | bất kỳ | `cloud` |
 
-**Pipeline đánh giá hai giai đoạn**:
+**Pipeline đánh giá hai giai đoạn (Two-phase assessment pipeline)**:
 
-| Giai đoạn | Chế độ Local | Chế độ Hybrid | Chế độ Cloud |
-|-----------|-------------|---------------|-------------|
-| P1: Phân tích Gap | SecurityLM (LocalAI) | SecurityLM (LocalAI) | OpenClaude |
-| P2: Định dạng báo cáo | Meta-Llama (LocalAI) | OpenClaude | OpenClaude |
+| Giai đoạn (Phase) | Chế độ Local | Chế độ Hybrid | Chế độ Cloud |
+|-------------------|-------------|---------------|-------------|
+| P1: Gap Analysis (Phân tích Gap) | SecurityLM (LocalAI) | SecurityLM (LocalAI) | OpenClaude |
+| P2: Report Formatting (Định dạng báo cáo) | Meta-Llama (LocalAI) | OpenClaude | OpenClaude |
 
 Mỗi giai đoạn có **3 lần thử lại** với kiểm tra JSON hợp lệ giữa các lần.
 

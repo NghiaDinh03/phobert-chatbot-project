@@ -4,6 +4,7 @@ import { useState, useEffect, useCallback } from 'react'
 import Link from 'next/link'
 import styles from './page.module.css'
 import { useToast } from '@/components/Toast'
+import { useTranslation } from '@/components/LanguageProvider'
 import { SkeletonTable } from '@/components/Skeleton'
 import { Search, Upload, Trash2, Shield, Database, Lock, Heart, CreditCard, CheckSquare, FileText } from 'lucide-react'
 
@@ -209,6 +210,7 @@ controlDescriptions:
 
 export default function StandardsPage() {
     const { showToast } = useToast()
+    const { t } = useTranslation()
     const [standards, setStandards] = useState({ builtin: [], custom: [] })
     const [loading, setLoading] = useState(true)
     const [uploading, setUploading] = useState(false)
@@ -379,28 +381,28 @@ export default function StandardsPage() {
     return (
         <div className="page-container">
             <div className={styles.header}>
-                <h1 className={styles.title}>Standards Management</h1>
+                <h1 className={styles.title}>{t('standards.pageTitle')}</h1>
                 <p className={styles.subtitle}>
-                    Upload custom standards (JSON/YAML) → Backend parses + ChromaDB indexes → Assessment form auto-renders.
+                    {t('standards.pageSubtitle')}
                 </p>
-                <Link href="/form-iso" className={styles.backLink}>← Back to Assessment</Link>
+                <Link href="/form-iso" className={styles.backLink}>{t('standards.backToAssessment')}</Link>
             </div>
 
             {showFormatGuide && <FormatGuidePanel onClose={() => setShowFormatGuide(false)} />}
 
             <div className={styles.section}>
                 <div className={styles.sectionHeader}>
-                    <h2 className={styles.sectionTitle}>Upload New Standard</h2>
+                    <h2 className={styles.sectionTitle}>{t('standards.uploadNewStandard')}</h2>
                     <div className={styles.sectionActions}>
                         <button className={styles.btnOutline} onClick={downloadSample}>
-                            Download sample JSON
+                            {t('standards.downloadSample')}
                         </button>
                         <label className={styles.btnOutline}>
-                            Validate file
+                            {t('standards.validateFile')}
                             <input type="file" accept=".json,.yaml,.yml" onChange={onValidateSelect} hidden />
                         </label>
                         <button className={styles.btnOutline} onClick={() => setShowFormatGuide(true)}>
-                            Format guide
+                            {t('standards.formatGuide')}
                         </button>
                     </div>
                 </div>
@@ -482,7 +484,7 @@ export default function StandardsPage() {
 
             <div className={styles.section}>
                 <div className={styles.sectionHeader}>
-                    <h2 className={styles.sectionTitle}>Standards Library</h2>
+                    <h2 className={styles.sectionTitle}>{t('standards.standardsLibrary')}</h2>
                     <button className={styles.btnOutline} onClick={fetchStandards} disabled={loading}>
                         Refresh
                     </button>
@@ -493,7 +495,7 @@ export default function StandardsPage() {
                     <input
                         type="text"
                         className={styles.searchBar}
-                        placeholder="Search standards..."
+                        placeholder={t('standards.searchStandards')}
                         value={searchQuery}
                         onChange={e => setSearchQuery(e.target.value)}
                     />
@@ -517,17 +519,17 @@ export default function StandardsPage() {
                         return (
                             <div className={styles.emptySearchState}>
                                 <span className={styles.emptySearchIcon}>🔍</span>
-                                <p className={styles.emptySearchText}>Không tìm thấy tiêu chuẩn nào phù hợp</p>
-                                <p className={styles.emptySearchHint}>Thử từ khóa khác hoặc <button className={styles.linkBtn} onClick={() => setSearchQuery('')}>xóa bộ lọc</button></p>
+                                <p className={styles.emptySearchText}>{t('standards.noSearchResults')}</p>
+                                <p className={styles.emptySearchHint}>{t('standards.tryOtherKeywords')} <button className={styles.linkBtn} onClick={() => setSearchQuery('')}>{t('standards.clearFilter')}</button></p>
                             </div>
                         )
                     }
                     return (
                     <>
                         <div className={styles.groupTitleRow}>
-                            <h3 className={styles.groupTitle}>Built-in Standards</h3>
+                            <h3 className={styles.groupTitle}>{t('standards.builtInStandards')}</h3>
                             <button className={styles.infoIconBtn} onClick={() => setShowFormatGuide(true)}>
-                                View schema
+                                {t('standards.viewSchema') || 'View schema'}
                             </button>
                         </div>
                         <div className={styles.standardGrid}>
@@ -544,19 +546,19 @@ export default function StandardsPage() {
                                         <span>{std.categories} categories</span>
                                     </div>
                                     <div className={styles.cardActions}>
-                                        <Link href="/form-iso" className={styles.btnSmall}>Use in Assessment</Link>
+                                        <Link href="/form-iso" className={styles.btnSmall}>{t('standards.useInAssessment')}</Link>
                                         <button className={styles.btnSmall} onClick={() => setShowFormatGuide(true)}>Schema</button>
                                     </div>
                                 </div>
                             ))}
                         </div>
 
-                        <h3 className={`${styles.groupTitle} ${styles.groupTitleSpaced}`}>Custom Standards (Uploaded)</h3>
-                        {filteredCustom.length === 0 && !q ? (
-                            <div className={styles.emptyBox}>
-                                <p>No custom standards yet.</p>
-                                <p className={styles.emptyHint}>Upload a JSON/YAML file above to add a new standard.</p>
-                            </div>
+                        <h3 className={`${styles.groupTitle} ${styles.groupTitleSpaced}`}>{t('standards.customUploaded')}</h3>
+                       {filteredCustom.length === 0 && !q ? (
+                           <div className={styles.emptyBox}>
+                               <p>{t('standards.noCustom')}</p>
+                               <p className={styles.emptyHint}>{t('standards.noCustomHint')}</p>
+                           </div>
                         ) : filteredCustom.length === 0 ? null : (
                             <div className={styles.standardGrid}>
                                 {filteredCustom.map(std => (
@@ -651,7 +653,7 @@ export default function StandardsPage() {
                             )}
                         </div>
                         <div className={styles.panelFooter}>
-                            <Link href="/form-iso" className={styles.btnPrimary}>Use in Assessment Form</Link>
+                            <Link href="/form-iso" className={styles.btnPrimary}>{t('standards.useInAssessment')}</Link>
                         </div>
                     </div>
                 </>
@@ -659,9 +661,9 @@ export default function StandardsPage() {
 
             <div className={styles.section}>
                 <div className={styles.sectionHeader}>
-                    <h2 className={styles.sectionTitle}>Quick Format Reference</h2>
+                    <h2 className={styles.sectionTitle}>{t('standards.quickFormatRef')}</h2>
                     <button className={styles.btnOutline} onClick={() => setShowFormatGuide(true)}>
-                        Full guide (JSON / YAML / ChromaDB)
+                        {t('standards.fullGuide')}
                     </button>
                 </div>
                 <div className={styles.schemaBox}>

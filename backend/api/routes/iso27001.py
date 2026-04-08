@@ -219,7 +219,8 @@ def process_assessment_bg(assessment_id: str, system_data: dict, model_mode: str
         if evidence_context:
             system_data["notes"] = (system_data.get("notes", "") or "") + evidence_context
 
-        update_assessment_progress(assessment_id, "Kiểm tra LocalAI...", 5)
+        init_msg = "Kết nối Cloud AI..." if model_mode == "cloud" else "Kiểm tra LocalAI..."
+        update_assessment_progress(assessment_id, init_msg, 5)
         result = ChatService.assess_system(
             system_data, model_mode=model_mode,
             progress_callback=lambda msg, pct: update_assessment_progress(assessment_id, msg, pct)

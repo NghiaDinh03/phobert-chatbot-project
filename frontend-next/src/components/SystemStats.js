@@ -1,6 +1,7 @@
 'use client'
 
 import { useState, useEffect, useCallback } from 'react'
+import { useTranslation } from './LanguageProvider'
 import styles from './SystemStats.module.css'
 
 const CACHE_KEY = 'system_stats_cache'
@@ -22,6 +23,7 @@ function setCachedStats(data) {
 }
 
 export default function SystemStats() {
+    const { t } = useTranslation()
     const [stats, setStats] = useState(null)
     const [loading, setLoading] = useState(true)
     const [refreshing, setRefreshing] = useState(false)
@@ -94,7 +96,7 @@ export default function SystemStats() {
         return (
             <div className={styles.wrapper}>
                 <div className={styles.errorCard}>
-                    <p>Unable to connect to system</p>
+                    <p>{t('systemStats.unableToConnect')}</p>
                 </div>
             </div>
         )
@@ -108,40 +110,40 @@ export default function SystemStats() {
 
     const items = [
         {
-            label: 'CPU',
+            label: t('systemStats.cpu'),
             abbr: 'proc',
             value: `${stats.cpu.percent}%`,
             detail: stats.cpu.name,
-            sub: `${stats.cpu.cores} Cores`,
+            sub: `${stats.cpu.cores} ${t('systemStats.cores')}`,
             color: getColor(stats.cpu.percent),
             percent: stats.cpu.percent
         },
         {
-            label: 'RAM',
+            label: t('systemStats.ram'),
             abbr: 'mem',
             value: formatBytes(stats.memory.used),
             unit: 'GB',
-            detail: `${stats.memory.percent}% used`,
-            sub: `Total: ${formatBytes(stats.memory.total)} GB`,
+            detail: `${stats.memory.percent}% ${t('systemStats.used')}`,
+            sub: `${t('systemStats.total')}: ${formatBytes(stats.memory.total)} GB`,
             color: getColor(stats.memory.percent, [60, 85]),
             percent: stats.memory.percent
         },
         {
-            label: 'Disk',
+            label: t('systemStats.disk'),
             abbr: 'stor',
             value: formatBytes(stats.disk.used),
             unit: 'GB',
-            detail: `${stats.disk.percent}% used`,
-            sub: `Total: ${formatBytes(stats.disk.total)} GB`,
+            detail: `${stats.disk.percent}% ${t('systemStats.used')}`,
+            sub: `${t('systemStats.total')}: ${formatBytes(stats.disk.total)} GB`,
             color: getColor(stats.disk.percent, [70, 90]),
             percent: stats.disk.percent
         },
         {
-            label: 'Uptime',
+            label: t('systemStats.uptime'),
             abbr: 'sys',
             value: formatUptime(stats.uptime_seconds),
             detail: stats.platform,
-            sub: 'Operating System',
+            sub: t('systemStats.operatingSystem'),
             color: 'var(--accent-green)',
             percent: 100
         }

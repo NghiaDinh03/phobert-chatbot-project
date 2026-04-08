@@ -3,18 +3,115 @@
     padding: 1.5rem 0 1rem;
 }
 
+.compactHeader {
+    text-align: center;
+    padding: 1rem 0 0.5rem;
+}
+
+.headerRow {
+    margin-bottom: 0.4rem;
+}
+
 .title {
-    font-size: 1.35rem;
+    font-size: 1.25rem;
     font-weight: 700;
-    letter-spacing: -0.5px;
-    margin-bottom: 0.3rem;
+    letter-spacing: -0.4px;
+    margin: 0 0 0.1rem;
     color: var(--text-primary);
+    font-style: normal;
+    font-family: inherit;
 }
 
 .subtitle {
     color: var(--text-muted);
-    font-size: 0.82rem;
+    font-size: 0.78rem;
     line-height: 1.5;
+    margin-bottom: 0.5rem;
+}
+
+.inlineSteps {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    margin-top: 0.5rem;
+}
+
+.inlineStep {
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    padding: 5px 12px;
+    border: none;
+    border-radius: 6px;
+    background: transparent;
+    color: var(--text-muted);
+    font-size: 0.75rem;
+    font-family: inherit;
+    cursor: default;
+    transition: all 0.2s;
+    opacity: 0.4;
+}
+
+.inlineStep:disabled {
+    cursor: not-allowed;
+}
+
+.inlineStepActive {
+    opacity: 1;
+    color: var(--accent-blue);
+    background: rgba(59, 130, 246, 0.08);
+    font-weight: 600;
+}
+
+.inlineStepDone {
+    opacity: 0.7;
+    cursor: pointer;
+    color: var(--accent-green, #10b981);
+}
+
+.inlineStepDone:hover {
+    opacity: 1;
+}
+
+.inlineStepNum {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 20px;
+    height: 20px;
+    border-radius: 50%;
+    font-size: 0.68rem;
+    font-weight: 700;
+    background: color-mix(in srgb, var(--text-muted) 15%, transparent);
+    color: var(--text-secondary);
+    flex-shrink: 0;
+    line-height: 1;
+}
+
+.inlineStepActive .inlineStepNum {
+    background: var(--accent-blue);
+    color: #fff;
+}
+
+.inlineStepDone .inlineStepNum {
+    background: var(--accent-green, #10b981);
+    color: #fff;
+    font-size: 0.72rem;
+}
+
+.inlineStepLabel {
+    white-space: nowrap;
+}
+
+@media (max-width: 700px) {
+    .inlineSteps {
+        flex-wrap: wrap;
+        gap: 4px;
+    }
+    .inlineStepLabel {
+        display: none;
+    }
 }
 
 .templateLink {
@@ -31,11 +128,11 @@
 .tabs {
     display: flex;
     gap: 2px;
-    margin: 0 auto 1.25rem;
+    margin: 0 auto 0.6rem;
     background: var(--bg-subtle, rgba(255,255,255,0.04));
     padding: 3px;
     border-radius: 10px;
-    max-width: 480px;
+    max-width: 380px;
     border: 1px solid var(--border);
 }
 
@@ -167,14 +264,7 @@
 /* ── Step banner: "Step X of 4 — Title" ────────────────────────────────────── */
 
 .stepBanner {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    gap: 8px;
-    margin: 0 0 1.25rem;
-    font-size: 0.8rem;
-    color: var(--text-secondary);
-    animation: fadeIn 0.2s ease;
+    display: none;
 }
 
 .stepBannerCount {
@@ -1818,6 +1908,44 @@
 .reportActionBtnSecondary:hover {
     color: var(--text-muted);
     border-color: var(--border-active);
+}
+
+.reEvalGroup {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    margin-left: auto;
+}
+
+.reEvalLabel {
+    font-size: 0.72rem;
+    color: var(--text-dim);
+    margin-right: 4px;
+    white-space: nowrap;
+}
+
+.reEvalBtn {
+    padding: 4px 10px;
+    border-radius: 6px;
+    font-size: 0.72rem;
+    font-family: inherit;
+    background: var(--btn-ghost-bg);
+    border: 1px solid var(--btn-ghost-border);
+    color: var(--text-muted);
+    cursor: pointer;
+    transition: all 0.15s;
+    white-space: nowrap;
+}
+
+.reEvalBtn:hover:not(:disabled) {
+    border-color: var(--accent-blue);
+    color: var(--accent-blue);
+    background: rgba(59, 130, 246, 0.08);
+}
+
+.reEvalBtn:disabled {
+    opacity: 0.4;
+    cursor: not-allowed;
 }
 
 /* ═══════════════════════════════════════════════════════════

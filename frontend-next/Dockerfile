@@ -24,6 +24,11 @@ COPY --from=builder /app/public ./public
 COPY --from=builder --chown=nextjs:nodejs /app/.next/standalone ./
 COPY --from=builder --chown=nextjs:nodejs /app/.next/static ./.next/static
 
+# docs/ is mounted via docker-compose volume (dev) or COPY'd at build-time
+# when context is project root (prod). The directory must exist at /app/docs
+# for the /api/docs/[...slug] route to resolve markdown files.
+RUN mkdir -p /app/docs && chown nextjs:nodejs /app/docs
+
 USER nextjs
 EXPOSE 3000
 ENV PORT=3000
