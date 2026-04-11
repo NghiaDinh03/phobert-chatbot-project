@@ -14,6 +14,7 @@ Reference direction:
 - Shared components: `frontend-next/src/components/`
 - Static data: `frontend-next/src/data/`
 - API client: `frontend-next/src/lib/api.js`
+- i18n translations: `frontend-next/src/i18n/`
 - Next config: `frontend-next/next.config.js`
 - Package manifest: `frontend-next/package.json`
 
@@ -30,6 +31,7 @@ Reference direction:
 - `frontend-next/src/components/` — shared components.
 - `frontend-next/src/data/` — static data (standards, controls, templates).
 - `frontend-next/src/lib/` — utilities (API client).
+- `frontend-next/src/i18n/` — translation files (en.json, vi.json).
 
 ## Pages
 
@@ -40,6 +42,7 @@ Reference direction:
 - `/analytics` — dashboard with charts.
 - `/templates` — template library.
 - `/landing` — landing page.
+- `/settings` — language, docs library, user guides.
 
 ## Component patterns
 
@@ -50,7 +53,8 @@ Reference direction:
 - State management: React `useState`/`useReducer`, no external state library.
 - Theming: ThemeProvider context for dark/light mode.
 - Icons: lucide-react library.
-- Markdown: react-markdown + remark-gfm.
+- Markdown: react-markdown + remark-gfm + rehype-raw + react-syntax-highlighter.
+- Reusable markdown renderer: `src/components/MarkdownRenderer.js`.
 
 ## API client patterns (`src/lib/api.js`)
 
@@ -66,6 +70,13 @@ Reference direction:
 - Keyboard navigation support.
 - Color contrast compliance (both themes).
 
+## i18n rules
+
+- All UI-visible text must use `t('key')` — never hardcode strings in components.
+- Vietnamese (vi.json): pure Vietnamese. No parenthesized English like "Settings (Cài đặt)".
+- English (en.json): pure English. No Vietnamese annotations.
+- Exception: genuine technical terms with no Vietnamese equivalent (RAG, SIEM, Annex A, ChromaDB, Pipeline, etc.) stay in English in both languages.
+
 ## Rules
 
 - Never import from `backend/` — frontend and backend are separate containers.
@@ -75,7 +86,18 @@ Reference direction:
 - Use `localStorage` for session persistence (chat sessions, theme preference).
 - No direct backend URL references — always use `/api/` proxy path.
 
-Code quality policy:
-- No verbose comments or tutorial-style explanations in components.
-- No banner decorations.
-- Only comment non-obvious UI logic or browser-specific workarounds.
+## Comment policy
+
+Allowed:
+- CSS section dividers: `/* ── Section Name ── */`
+- JSX section markers: `{/* Section Name */}`
+- One-line JSDoc on exported components.
+- Bug-fix references: `BUG N FIX: reason`
+- Non-obvious logic or browser workaround notes.
+
+Forbidden:
+- Tutorial-style explanations ("This function does X because Y").
+- Banner decorations or ASCII art.
+- Obvious comments ("// set state", "// return value", "// import React").
+- Inline translations in comments.
+- Commented-out dead code (delete it).

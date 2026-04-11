@@ -44,7 +44,14 @@ export async function POST(request) {
             let detail = `Backend error: ${res.status}`
             try {
                 const parsed = JSON.parse(errBody)
-                if (parsed.detail) detail = parsed.detail
+                if (Array.isArray(parsed.detail)) {
+                    // Pydantic validation errors — extract human-readable messages
+                    detail = parsed.detail.map(e => e.msg || e.message || JSON.stringify(e)).join('; ')
+                } else if (typeof parsed.detail === 'string') {
+                    detail = parsed.detail
+                } else if (parsed.detail) {
+                    detail = JSON.stringify(parsed.detail)
+                }
             } catch { }
             // Return as SSE error so frontend can handle it gracefully
             const errorPayload = `data: ${JSON.stringify({ step: 'error', data: { error: true, response: detail } })}\n\n`

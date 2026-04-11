@@ -312,7 +312,7 @@ class CloudLLMService:
 
     @classmethod
     def _call_ollama(cls, model: str, messages: List[Dict], temperature: float = 0.7,
-                     max_tokens: int = 512) -> Dict[str, Any]:
+                     max_tokens: int = 1024) -> Dict[str, Any]:
         ollama_url = settings.OLLAMA_URL
         resolved = resolve_ollama_model(model)
         if resolved != model:
@@ -324,9 +324,20 @@ class CloudLLMService:
         if len(trimmed) < len(messages):
             logger.info(f"[Ollama] Trimmed messages {len(messages)} → {len(trimmed)} to reduce context")
 
-        # Always cap at 512 tokens — CPU inference can't handle large outputs
-        effective_max_tokens = max(64, min(512, max_tokens))
-        logger.info(f"[Ollama] Requesting model={resolved}, messages={len(trimmed)}, max_tokens={effective_max_tokens}")
+        # Truncate user message content if too long — rough 4 chars/token estimate.
+        # Gemma4 has 8K context, but on CPU we want to keep prompt ≤ 4K tokens so
+        # there's room for 1K output tokens.
+        MAX_PROMPT_CHARS = 12000  # ~3000 tokens
+        for i, msg in enumerate(trimmed):
+            if msg.get("role") == "user" and len(msg.get("content", "")) > MAX_PROMPT_CHARS:
+                original_len = len(msg["content"])
+                trimmed[i] = {**msg, "content": msg["content"][:MAX_PROMPT_CHARS] + "\n\n[... nội dung đã rút gọn để phù hợp context model local ...]"}
+                logger.info(f"[Ollama] Truncated user message {original_len} → {MAX_PROMPT_CHARS} chars")
+
+        # Cap at 1024 tokens for CPU inference — balances quality vs latency
+        effective_max_tokens = max(64, min(1024, max_tokens))
+        total_chars = sum(len(m.get("content", "")) for m in trimmed)
+        logger.info(f"[Ollama] Requesting model={resolved}, messages={len(trimmed)}, total_chars={total_chars}, max_tokens={effective_max_tokens}")
         model = resolved
         try:
             response = requests.post(

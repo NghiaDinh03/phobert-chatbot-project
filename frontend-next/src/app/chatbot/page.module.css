@@ -41,6 +41,8 @@
     color: var(--text-dim);
 }
 
+/* ── Layout ─────────────────────────────────────────────────────────────────── */
+
 .layout {
     display: flex;
     height: calc(100vh - 52px);
@@ -61,6 +63,8 @@
     from { opacity: 0; }
     to { opacity: 1; }
 }
+
+/* ── Sidebar ────────────────────────────────────────────────────────────────── */
 
 .sidebar {
     position: fixed;
@@ -203,6 +207,8 @@
     color: var(--accent-red);
 }
 
+/* ── Main content ───────────────────────────────────────────────────────────── */
+
 .main {
     flex: 1;
     display: flex;
@@ -291,11 +297,14 @@
     color: var(--accent-blue);
 }
 
+/* ── Chat area ──────────────────────────────────────────────────────────────── */
+
 .chatArea {
     flex: 1;
     overflow-y: auto;
-    padding: 1rem 1.5rem;
+    padding: 1.25rem 1.5rem;
     scroll-behavior: smooth;
+    position: relative;
 }
 
 .chatArea > * {
@@ -304,6 +313,8 @@
     margin-right: auto;
 }
 
+/* ── Welcome / Empty state ──────────────────────────────────────────────────── */
+
 .welcome {
     display: flex;
     flex-direction: column;
@@ -311,12 +322,25 @@
     justify-content: center;
     height: 100%;
     text-align: center;
-    padding: 2rem 0;
+    padding: 2rem 1rem;
     animation: fadeIn 0.3s ease;
 }
 
 .welcomeHeading {
-    margin-bottom: 2rem;
+    margin-bottom: 2.5rem;
+}
+
+.emptyIcon {
+    width: 56px;
+    height: 56px;
+    border-radius: 16px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin: 0 auto 1rem;
+    background: linear-gradient(135deg, rgba(79, 142, 247, 0.12), rgba(139, 108, 247, 0.12));
+    border: 1px solid rgba(79, 142, 247, 0.15);
+    color: var(--accent-blue);
 }
 
 .welcomeTitle {
@@ -324,38 +348,40 @@
     font-weight: 700;
     letter-spacing: -0.3px;
     color: var(--text-primary);
-    margin-bottom: 0.4rem;
+    margin-bottom: 0.5rem;
 }
 
 .welcomeSub {
     color: var(--text-muted);
-    font-size: 0.82rem;
+    font-size: 0.84rem;
     line-height: 1.6;
+    max-width: 400px;
 }
 
 .chips {
     display: flex;
     flex-wrap: wrap;
-    gap: 6px;
+    gap: 8px;
     justify-content: center;
-    max-width: 540px;
+    max-width: 560px;
 }
 
 .chip {
     display: flex;
     align-items: center;
-    padding: 7px 14px;
-    border-radius: 8px;
-    font-size: 0.78rem;
+    padding: 10px 16px;
+    border-radius: 10px;
+    font-size: 0.8rem;
     font-weight: 500;
     background: var(--chip-bg);
     border: 1px solid var(--chip-border);
     color: var(--text-secondary);
     cursor: pointer;
-    transition: background 0.15s ease, border-color 0.15s ease, color 0.15s ease, transform 0.15s ease;
+    transition: background 0.15s ease, border-color 0.15s ease, color 0.15s ease, transform 0.15s ease, box-shadow 0.15s ease;
     font-family: inherit;
     letter-spacing: 0.1px;
     text-align: left;
+    line-height: 1.45;
 }
 
 .chip:hover {
@@ -363,6 +389,7 @@
     border-color: var(--chip-hover-border);
     color: var(--accent-blue);
     transform: translateY(-1px);
+    box-shadow: var(--shadow-sm);
 }
 
 @keyframes fadeIn {
@@ -370,11 +397,14 @@
     to { opacity: 1; transform: translateY(0); }
 }
 
+/* ── Messages ───────────────────────────────────────────────────────────────── */
+
 .msgList {
     display: flex;
     flex-direction: column;
-    gap: 1.1rem;
+    gap: 1.25rem;
     padding-top: 0.5rem;
+    padding-bottom: 1rem;
 }
 
 .msg {
@@ -397,10 +427,12 @@
     justify-content: flex-start;
 }
 
+/* ── Avatars ────────────────────────────────────────────────────────────────── */
+
 .avatar {
-    width: 28px;
-    height: 28px;
-    border-radius: 7px;
+    width: 30px;
+    height: 30px;
+    border-radius: 8px;
     display: flex;
     align-items: center;
     justify-content: center;
@@ -414,9 +446,9 @@
 }
 
 .avatarUser {
-    width: 28px;
-    height: 28px;
-    border-radius: 7px;
+    width: 30px;
+    height: 30px;
+    border-radius: 8px;
     display: flex;
     align-items: center;
     justify-content: center;
@@ -429,10 +461,12 @@
     letter-spacing: 0.2px;
 }
 
+/* ── Bubbles ────────────────────────────────────────────────────────────────── */
+
 .bubble {
-    max-width: 72%;
-    padding: 0.75rem 1rem;
-    border-radius: 12px;
+    max-width: 70%;
+    padding: 0.85rem 1rem;
+    border-radius: 14px;
     font-size: 0.875rem;
     line-height: 1.65;
     position: relative;
@@ -441,15 +475,18 @@
 
 .bubbleUser {
     background: var(--user-bubble);
-    color: white;
-    border-radius: 12px 12px 3px 12px;
+    color: #f0f4ff;
+    border-radius: 14px 14px 4px 14px;
+    box-shadow: 0 1px 4px rgba(0, 0, 0, 0.15);
+    white-space: pre-wrap;
+    word-break: break-word;
 }
 
 .bubbleBot {
     background: var(--bot-bubble);
     border: 1px solid var(--bot-bubble-border);
     color: var(--text-primary);
-    border-radius: 12px 12px 12px 3px;
+    border-radius: 14px 14px 14px 4px;
     transition: box-shadow 0.18s ease;
 }
 
@@ -457,8 +494,21 @@
     box-shadow: var(--shadow-sm);
 }
 
+/* BUG N FIX: user bubble timestamp was nearly invisible (white on blue gradient) */
+.bubbleUser .time {
+    color: rgba(255, 255, 255, 0.6);
+    opacity: 1;
+}
+
+.bubbleUser .msgMeta .badge {
+    background: rgba(255, 255, 255, 0.15);
+    color: rgba(255, 255, 255, 0.85);
+}
+
+/* ── Markdown inside bot bubble ─────────────────────────────────────────────── */
+
 .md p {
-    margin-bottom: 0.35rem;
+    margin-bottom: 0.4rem;
 }
 
 .md p:last-child {
@@ -522,12 +572,45 @@
     font-weight: 600;
 }
 
+.md a {
+    color: var(--accent-blue);
+    text-decoration: underline;
+    text-underline-offset: 2px;
+}
+
+.md a:hover {
+    opacity: 0.85;
+}
+
+.md blockquote {
+    border-left: 3px solid var(--accent-blue);
+    padding-left: 0.75rem;
+    margin: 0.4rem 0;
+    color: var(--text-muted);
+    font-style: italic;
+}
+
+/* ── Message meta (badges + time) ───────────────────────────────────────────── */
+
+.msgMeta {
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    flex-wrap: wrap;
+    margin-top: 6px;
+    padding-top: 6px;
+    border-top: 1px solid rgba(255, 255, 255, 0.04);
+}
+
+.bubbleUser .msgMeta {
+    border-top-color: rgba(255, 255, 255, 0.1);
+}
+
 .time {
-    display: block;
-    font-size: 0.6rem;
+    display: inline-block;
+    font-size: 0.62rem;
     color: var(--text-dim);
-    opacity: 0.55;
-    margin-top: 5px;
+    opacity: 0.7;
 }
 
 .badge {
@@ -538,11 +621,12 @@
     border-radius: 4px;
     background: var(--badge-bg);
     color: var(--badge-color);
-    margin-top: 5px;
     margin-right: 4px;
     letter-spacing: 0.3px;
     text-transform: uppercase;
 }
+
+/* ── Sources list ───────────────────────────────────────────────────────────── */
 
 .sourcesList {
     display: flex;
@@ -569,6 +653,43 @@
 .sourceItem:hover {
     background: var(--chip-hover-bg);
 }
+
+/* ── Copy button — hidden by default, shown on hover ────────────────────────── */
+
+.copyBtn {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    margin-top: 6px;
+    padding: 3px 9px;
+    border-radius: 5px;
+    border: 1px solid var(--border);
+    background: var(--bg-muted);
+    color: var(--text-dim);
+    font-size: 0.68rem;
+    font-weight: 500;
+    cursor: pointer;
+    transition: background 0.15s ease, color 0.15s ease, border-color 0.15s ease, opacity 0.15s ease;
+    font-family: inherit;
+    letter-spacing: 0.1px;
+    opacity: 0;
+}
+
+.bubbleBot:hover .copyBtn {
+    opacity: 1;
+}
+
+.copyBtn:hover {
+    background: var(--blue-subtle);
+    border-color: var(--border-active);
+    color: var(--accent-blue);
+}
+
+.copyBtn.copyBtnVisible {
+    opacity: 1;
+}
+
+/* ── Typing indicator ───────────────────────────────────────────────────────── */
 
 .typingWrap {
     display: flex;
@@ -610,7 +731,7 @@
     color: var(--text-dim);
     animation: statusFade 0.25s ease;
     white-space: nowrap;
-    max-width: 220px;
+    max-width: 280px;
     overflow: hidden;
     text-overflow: ellipsis;
 }
@@ -620,13 +741,38 @@
     to { opacity: 1; transform: translateX(0); }
 }
 
-.msgMeta {
+/* ── Scroll to bottom button ────────────────────────────────────────────────── */
+
+.scrollBottom {
+    position: absolute;
+    bottom: 16px;
+    left: 50%;
+    transform: translateX(-50%);
+    z-index: 15;
     display: flex;
     align-items: center;
-    gap: 5px;
-    flex-wrap: wrap;
-    margin-top: 4px;
+    justify-content: center;
+    width: 36px;
+    height: 36px;
+    border-radius: 50%;
+    background: var(--bg-card);
+    border: 1px solid var(--border-light);
+    color: var(--text-muted);
+    cursor: pointer;
+    box-shadow: var(--shadow-md);
+    transition: background 0.15s ease, color 0.15s ease, transform 0.15s ease, box-shadow 0.15s ease;
+    animation: fadeIn 0.2s ease;
 }
+
+.scrollBottom:hover {
+    background: var(--accent-blue);
+    color: white;
+    border-color: var(--accent-blue);
+    transform: translateX(-50%) translateY(-2px);
+    box-shadow: var(--shadow-lg);
+}
+
+/* ── Input footer ───────────────────────────────────────────────────────────── */
 
 .inputFooter {
     display: flex;
@@ -644,7 +790,7 @@
     display: flex;
     align-items: center;
     justify-content: space-between;
-    padding: 0.45rem 1.5rem 0;
+    padding: 0.5rem 1.5rem 0;
     max-width: 860px;
     margin: 0 auto;
     width: 100%;
@@ -655,6 +801,8 @@
     color: var(--text-dim);
     letter-spacing: 0.1px;
 }
+
+/* ── Model picker ───────────────────────────────────────────────────────────── */
 
 .modelPicker {
     position: relative;
@@ -702,6 +850,11 @@
     font-size: 0.52rem;
     opacity: 0.5;
     flex-shrink: 0;
+    transition: transform 0.18s ease;
+}
+
+.modelChevronOpen {
+    transform: rotate(180deg);
 }
 
 .modelDropdown {
@@ -806,9 +959,11 @@
     opacity: 0.75;
 }
 
+/* ── Input bar (textarea version) ───────────────────────────────────────────── */
+
 .inputBar {
     display: flex;
-    align-items: center;
+    align-items: flex-end;
     gap: 8px;
     padding: 0.45rem 1.5rem 0.85rem;
     max-width: 860px;
@@ -817,11 +972,11 @@
     flex-shrink: 0;
 }
 
-.inputBar button {
-    width: 38px;
-    height: 38px;
+.inputBar button[type="submit"] {
+    width: 40px;
+    height: 40px;
     border: none;
-    border-radius: 9px;
+    border-radius: 10px;
     background: var(--accent-blue);
     color: white;
     cursor: pointer;
@@ -830,74 +985,23 @@
     justify-content: center;
     transition: opacity 0.15s ease, transform 0.15s ease, box-shadow 0.15s ease;
     flex-shrink: 0;
-    box-shadow: 0 1px 4px rgba(79, 142, 247, 0.25);
+    box-shadow: 0 2px 8px rgba(79, 142, 247, 0.3);
+    margin-bottom: 2px;
 }
 
-.inputBar button:hover:not(:disabled) {
+.inputBar button[type="submit"]:hover:not(:disabled) {
     opacity: 0.9;
-    box-shadow: 0 3px 10px rgba(79, 142, 247, 0.35);
+    box-shadow: 0 4px 14px rgba(79, 142, 247, 0.4);
     transform: translateY(-1px);
 }
 
-.inputBar button:disabled {
+.inputBar button[type="submit"]:disabled {
     opacity: 0.2;
     cursor: not-allowed;
     transform: none;
 }
 
-/* ── Improvement 5: Typewriter / streaming cursor ─────────────────────────── */
-
-.streamingCursor::after {
-    content: '▋';
-    display: inline-block;
-    margin-left: 1px;
-    animation: blink 1s step-end infinite;
-    color: var(--accent-blue);
-    font-size: 0.85em;
-    vertical-align: baseline;
-    line-height: 1;
-}
-
-@keyframes blink {
-    0%, 100% { opacity: 1; }
-    50% { opacity: 0; }
-}
-
-/* ── Empty state icon ─────────────────────────────────────────────────────── */
-
-.emptyIcon {
-    font-size: 2.5rem;
-    margin-bottom: 0.75rem;
-    line-height: 1;
-}
-
-/* ── Copy button on assistant messages ────────────────────────────────────── */
-
-.copyBtn {
-    display: inline-flex;
-    align-items: center;
-    gap: 4px;
-    margin-top: 6px;
-    padding: 3px 9px;
-    border-radius: 5px;
-    border: 1px solid var(--border);
-    background: var(--bg-muted);
-    color: var(--text-dim);
-    font-size: 0.68rem;
-    font-weight: 500;
-    cursor: pointer;
-    transition: background 0.15s ease, color 0.15s ease, border-color 0.15s ease;
-    font-family: inherit;
-    letter-spacing: 0.1px;
-}
-
-.copyBtn:hover {
-    background: var(--blue-subtle);
-    border-color: var(--border-active);
-    color: var(--accent-blue);
-}
-
-/* ── Character counter ─────────────────────────────────────────────────────── */
+/* ── Input wrapper with textarea ────────────────────────────────────────────── */
 
 .inputWrap {
     flex: 1;
@@ -907,46 +1011,55 @@
     gap: 2px;
 }
 
-.inputWrap input {
+.inputWrap textarea {
     flex: 1;
     background: var(--bg-card);
     border: 1px solid var(--border);
-    border-radius: 9px;
+    border-radius: 12px;
     padding: 10px 14px;
+    padding-right: 60px;
     color: var(--text-primary);
     font-size: 0.86rem;
     outline: none;
     font-family: inherit;
     transition: border-color 0.18s ease, box-shadow 0.18s ease;
-    line-height: 1.4;
+    line-height: 1.5;
+    resize: none;
+    min-height: 42px;
+    max-height: 50vh;
+    overflow-y: auto;
 }
 
-.inputWrap input:focus {
+.inputWrap textarea:focus {
     border-color: var(--input-focus-border);
     box-shadow: 0 0 0 3px var(--blue-subtle);
 }
 
-.inputWrap input::placeholder {
+.inputWrap textarea::placeholder {
     color: var(--text-dim);
     font-size: 0.83rem;
 }
 
-.inputWrap input:disabled {
+.inputWrap textarea:disabled {
     opacity: 0.3;
 }
 
 .charCounter {
-    font-size: 0.61rem;
+    position: absolute;
+    right: 10px;
+    bottom: 8px;
+    font-size: 0.6rem;
     color: var(--text-dim);
-    text-align: right;
-    padding-right: 2px;
     transition: color 0.15s ease;
     line-height: 1;
+    pointer-events: none;
+    opacity: 0.7;
 }
 
 .charCounterWarn {
     color: var(--accent-red);
     font-weight: 600;
+    opacity: 1;
 }
 
 /* ── Focused model option (keyboard nav) ───────────────────────────────────── */
@@ -956,29 +1069,6 @@
     color: var(--text-primary);
     outline: 2px solid var(--border-active);
     outline-offset: -2px;
-}
-
-@media (max-width: 640px) {
-    .topBar,
-    .inputToolbar,
-    .inputBar {
-        padding-left: 1rem;
-        padding-right: 1rem;
-    }
-
-    .chatArea {
-        padding-left: 1rem;
-        padding-right: 1rem;
-    }
-
-    .bubble {
-        max-width: 84%;
-    }
-
-    .chips {
-        flex-direction: column;
-        align-items: stretch;
-    }
 }
 
 /* ── Blinking cursor (streaming) ────────────────────────────────────────────── */
@@ -1034,17 +1124,6 @@
     to   { transform: rotate(360deg); }
 }
 
-/* ── Chevron open state ─────────────────────────────────────────────────────── */
-
-.modelChevronOpen {
-    transform: rotate(180deg);
-    transition: transform 0.18s ease;
-}
-
-.modelChevron {
-    transition: transform 0.18s ease;
-}
-
 /* ── Session search input ───────────────────────────────────────────────────── */
 
 .sessionSearch {
@@ -1067,4 +1146,35 @@
 
 .sessionSearch::placeholder {
     color: var(--text-dim);
+}
+
+/* ── Responsive ─────────────────────────────────────────────────────────────── */
+
+@media (max-width: 640px) {
+    .topBar,
+    .inputToolbar,
+    .inputBar {
+        padding-left: 1rem;
+        padding-right: 1rem;
+    }
+
+    .chatArea {
+        padding-left: 0.75rem;
+        padding-right: 0.75rem;
+    }
+
+    .bubble {
+        max-width: 85%;
+    }
+
+    .chips {
+        flex-direction: column;
+        align-items: stretch;
+    }
+
+    .scrollBottom {
+        bottom: 12px;
+        width: 32px;
+        height: 32px;
+    }
 }

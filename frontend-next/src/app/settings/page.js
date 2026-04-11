@@ -1,12 +1,11 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useCallback, useRef } from 'react'
 import { useRouter } from 'next/navigation'
-import ReactMarkdown from 'react-markdown'
-import remarkGfm from 'remark-gfm'
 import { useTranslation } from '@/components/LanguageProvider'
+import MarkdownRenderer from '@/components/MarkdownRenderer'
 import styles from './page.module.css'
-import { Globe, Check, BookOpen, Shield, ChevronRight, FileText, Server, Database, BarChart2, Brain, FlaskConical, Building2, ClipboardList, HardDrive, FileCode, Layers } from 'lucide-react'
+import { Globe, Check, BookOpen, Shield, ChevronRight, ChevronLeft, FileText, Server, Database, BarChart2, Brain, FlaskConical, Building2, ClipboardList, HardDrive, FileCode, Layers, X, Maximize2, Minimize2, ArrowUp } from 'lucide-react'
 
 const LANGUAGES = [
     { code: 'en', labelKey: 'settings.langEnglish', subKey: 'settings.langEnglishSub' },
@@ -36,6 +35,10 @@ export default function SettingsPage() {
     const [docContent, setDocContent] = useState(null)
     const [docTitle, setDocTitle] = useState('')
     const [docLoading, setDocLoading] = useState(false)
+    const [docLang, setDocLang] = useState('en')
+    const [expanded, setExpanded] = useState(false)
+    const [showScrollTop, setShowScrollTop] = useState(false)
+    const bodyRef = useRef(null)
 
     const handleSelect = (code) => {
         setLocale(code)
@@ -44,32 +47,62 @@ export default function SettingsPage() {
         return () => clearTimeout(timer)
     }
 
-    const openDoc = async (doc) => {
+    const openDoc = useCallback(async (doc) => {
         const file = locale === 'vi' && doc.fileVi ? doc.fileVi : doc.fileEn
         const dir = locale === 'vi' && doc.fileVi ? 'vi' : 'en'
         const url = `/api/docs/${dir}/${file}`
         setDocTitle(t(doc.titleKey))
+        setDocLang(dir)
         setDocLoading(true)
         setDocContent(null)
+        setExpanded(false)
         try {
             const res = await fetch(url)
             if (res.ok) {
                 const text = await res.text()
                 setDocContent(text)
             } else {
-                setDocContent(`> Failed to load document (HTTP ${res.status})`)
+                setDocContent(`> ⚠️ Failed to load document (HTTP ${res.status})`)
             }
         } catch (e) {
-            setDocContent(`> Network error: ${e.message}`)
+            setDocContent(`> ⚠️ Network error: ${e.message}`)
         } finally {
             setDocLoading(false)
         }
-    }
+    }, [locale, t])
 
-    const closeDoc = () => {
+    const closeDoc = useCallback(() => {
         setDocContent(null)
         setDocTitle('')
-    }
+        setDocLoading(false)
+        setExpanded(false)
+    }, [])
+
+    const handleBodyScroll = useCallback(() => {
+        if (bodyRef.current) {
+            setShowScrollTop(bodyRef.current.scrollTop > 300)
+        }
+    }, [])
+
+    const scrollToTop = useCallback(() => {
+        bodyRef.current?.scrollTo({ top: 0, behavior: 'smooth' })
+    }, [])
+
+    useEffect(() => {
+        const handleEsc = (e) => {
+            if (e.key === 'Escape') closeDoc()
+        }
+        if (docContent !== null || docLoading) {
+            document.addEventListener('keydown', handleEsc)
+            document.body.style.overflow = 'hidden'
+        }
+        return () => {
+            document.removeEventListener('keydown', handleEsc)
+            document.body.style.overflow = ''
+        }
+    }, [docContent, docLoading, closeDoc])
+
+    const isOpen = docContent !== null || docLoading
 
     return (
         <div className="page-container">
@@ -179,26 +212,57 @@ export default function SettingsPage() {
                 </div>
             </div>
 
-            {/* Document Viewer Modal */}
-            {(docContent !== null || docLoading) && (
+            {/* Document Viewer - Full Screen Overlay */}
+            {isOpen && (
                 <>
                     <div className={styles.docOverlay} onClick={closeDoc} />
-                    <div className={styles.docViewer}>
+                    <div className={`${styles.docViewer} ${expanded ? styles.docViewerExpanded : ''}`}>
                         <div className={styles.docViewerHeader}>
-                            <h3 className={styles.docViewerTitle}>{docTitle}</h3>
-                            <button className={styles.docViewerClose} onClick={closeDoc}>✕</button>
+                            <div className={styles.docViewerHeaderLeft}>
+                                <button className={styles.docViewerBack} onClick={closeDoc} aria-label="Close">
+                                    <ChevronLeft size={16} />
+                                </button>
+                                <div className={styles.docViewerTitleGroup}>
+                                    <h3 className={styles.docViewerTitle}>{docTitle}</h3>
+                                    <span className={`${styles.docViewerLangBadge} ${docLang === 'vi' ? styles.docLangVi : styles.docLangEn}`}>
+                                        {docLang.toUpperCase()}
+                                    </span>
+                                </div>
+                            </div>
+                            <div className={styles.docViewerHeaderRight}>
+                                <button
+                                    className={styles.docViewerBtn}
+                                    onClick={() => setExpanded(e => !e)}
+                                    aria-label={expanded ? 'Minimize' : 'Maximize'}
+                                >
+                                    {expanded ? <Minimize2 size={14} /> : <Maximize2 size={14} />}
+                                </button>
+                                <button className={styles.docViewerClose} onClick={closeDoc} aria-label="Close">
+                                    <X size={16} />
+                                </button>
+                            </div>
                         </div>
-                        <div className={styles.docViewerBody}>
+                        <div
+                            className={`${styles.docViewerBody} ${expanded ? styles.docBodyExpanded : ''}`}
+                            ref={bodyRef}
+                            onScroll={handleBodyScroll}
+                        >
                             {docLoading ? (
-                                <div className={styles.docViewerLoading}>{t('common.loading')}</div>
+                                <div className={styles.docViewerLoading}>
+                                    <div className={styles.loadingSpinner} />
+                                    <span>{t('common.loading')}</span>
+                                </div>
                             ) : (
-                                <div className={`${styles.docViewerContent} ${styles.md}`}>
-                                    <ReactMarkdown remarkPlugins={[remarkGfm]}>
-                                        {docContent || ''}
-                                    </ReactMarkdown>
+                                <div className={`${styles.docViewerContent} ${expanded ? styles.docContentExpanded : ''}`}>
+                                    <MarkdownRenderer content={docContent || ''} />
                                 </div>
                             )}
                         </div>
+                        {showScrollTop && !docLoading && (
+                            <button className={styles.scrollTopBtn} onClick={scrollToTop} aria-label="Scroll to top">
+                                <ArrowUp size={15} />
+                            </button>
+                        )}
                     </div>
                 </>
             )}

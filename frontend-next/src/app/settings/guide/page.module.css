@@ -104,9 +104,17 @@
     cursor: pointer;
     transition: all 0.15s ease;
     text-align: left;
-    white-space: nowrap;
+    width: 100%;
+}
+
+.tocItem svg {
+    flex-shrink: 0;
+}
+
+.tocItem span {
     overflow: hidden;
     text-overflow: ellipsis;
+    white-space: nowrap;
 }
 
 .tocItem:hover {

@@ -136,6 +136,7 @@ services:
       - OLLAMA_MAX_LOADED_MODELS=2
       - OLLAMA_KEEP_ALIVE=24h
       - OLLAMA_LOAD_TIMEOUT=30m
+      - OLLAMA_MAX_QUEUE=10
     volumes:
       - ollama_data:/root/.ollama
     networks:

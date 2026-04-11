@@ -98,76 +98,73 @@ export default function AssessmentGuidePage() {
                     <section id="overview" className={styles.section}>
                         <h2 className={styles.sectionTitle}>
                             <BookOpen size={18} />
-                            1. Tổng quan về tính năng Assessment
+                            {t('guide.sec1Title')}
                         </h2>
                         <div className={styles.card}>
-                            <p className={styles.paragraph}>
-                                Tính năng <strong>Assessment</strong> (Đánh giá An toàn Thông tin) cho phép bạn thực hiện đánh giá mức độ tuân thủ
-                                các tiêu chuẩn bảo mật quốc tế và Việt Nam một cách <strong>tự động</strong> bằng AI.
-                            </p>
+                            <p className={styles.paragraph} dangerouslySetInnerHTML={{ __html: t('guide.sec1Desc') }} />
                             <div className={styles.highlightBox}>
-                                <strong>🎯 Mục đích chính:</strong>
+                                <strong>{t('guide.sec1Purpose')}</strong>
                                 <ul className={styles.bulletList}>
-                                    <li>Xác định <strong>GAP</strong> (khoảng trống) giữa hiện trạng bảo mật và yêu cầu tiêu chuẩn</li>
-                                    <li>Đưa ra <strong>Risk Register</strong> (sổ đăng ký rủi ro) với mức độ ưu tiên</li>
-                                    <li>Tạo báo cáo <strong>Markdown</strong> chuyên nghiệp có thể xuất PDF</li>
-                                    <li>Hỗ trợ nhiều tiêu chuẩn: ISO 27001, TCVN 11930, NIST CSF, PCI DSS, HIPAA, GDPR, SOC 2</li>
+                                    <li dangerouslySetInnerHTML={{ __html: t('guide.sec1Bullet1') }} />
+                                    <li dangerouslySetInnerHTML={{ __html: t('guide.sec1Bullet2') }} />
+                                    <li dangerouslySetInnerHTML={{ __html: t('guide.sec1Bullet3') }} />
+                                    <li>{t('guide.sec1Bullet4')}</li>
                                 </ul>
                             </div>
 
-                            <h4 className={styles.subHeading}>Các tiêu chuẩn được hỗ trợ</h4>
+                            <h4 className={styles.subHeading}>{t('guide.sec1SubSupported')}</h4>
                             <div className={styles.tableWrap}>
                                 <table className={styles.table}>
                                     <thead>
                                         <tr>
-                                            <th>Tiêu chuẩn</th>
-                                            <th>Phạm vi</th>
-                                            <th>Số Controls</th>
-                                            <th>Phù hợp với</th>
+                                            <th>{t('guide.sec1ThStandard')}</th>
+                                            <th>{t('guide.sec1ThScope')}</th>
+                                            <th>{t('guide.sec1ThControls')}</th>
+                                            <th>{t('guide.sec1ThSuitableFor')}</th>
                                         </tr>
                                     </thead>
                                     <tbody>
                                         <tr>
                                             <td><strong>ISO 27001:2022</strong></td>
-                                            <td>Quốc tế</td>
-                                            <td>93 controls (Annex A)</td>
-                                            <td>Mọi tổ chức muốn chứng nhận quốc tế</td>
+                                            <td>{t('guide.sec1Iso27001Scope')}</td>
+                                            <td>{t('guide.sec1Iso27001Controls')}</td>
+                                            <td>{t('guide.sec1Iso27001Suitable')}</td>
                                         </tr>
                                         <tr>
                                             <td><strong>TCVN 11930:2017</strong></td>
-                                            <td>Việt Nam</td>
-                                            <td>34 controls</td>
-                                            <td>Cơ quan nhà nước, HTTT theo Nghị định 85</td>
+                                            <td>{t('guide.sec1TcvnScope')}</td>
+                                            <td>{t('guide.sec1TcvnControls')}</td>
+                                            <td>{t('guide.sec1TcvnSuitable')}</td>
                                         </tr>
                                         <tr>
                                             <td><strong>NIST CSF 2.0</strong></td>
-                                            <td>Hoa Kỳ</td>
-                                            <td>Theo framework</td>
-                                            <td>Tổ chức lớn, hạ tầng trọng yếu</td>
+                                            <td>{t('guide.sec1NistScope')}</td>
+                                            <td>{t('guide.sec1NistControls')}</td>
+                                            <td>{t('guide.sec1NistSuitable')}</td>
                                         </tr>
                                         <tr>
                                             <td><strong>PCI DSS 4.0</strong></td>
-                                            <td>Quốc tế</td>
-                                            <td>Theo domain</td>
-                                            <td>Tổ chức xử lý thanh toán thẻ</td>
+                                            <td>{t('guide.sec1PciScope')}</td>
+                                            <td>{t('guide.sec1PciControls')}</td>
+                                            <td>{t('guide.sec1PciSuitable')}</td>
                                         </tr>
                                         <tr>
                                             <td><strong>HIPAA</strong></td>
-                                            <td>Hoa Kỳ</td>
-                                            <td>Security Rule</td>
-                                            <td>Y tế, bệnh viện, bảo hiểm</td>
+                                            <td>{t('guide.sec1HipaaScope')}</td>
+                                            <td>{t('guide.sec1HipaaControls')}</td>
+                                            <td>{t('guide.sec1HipaaSuitable')}</td>
                                         </tr>
                                         <tr>
                                             <td><strong>GDPR</strong></td>
-                                            <td>Châu Âu</td>
-                                            <td>Theo điều khoản</td>
-                                            <td>Tổ chức xử lý dữ liệu công dân EU</td>
+                                            <td>{t('guide.sec1GdprScope')}</td>
+                                            <td>{t('guide.sec1GdprControls')}</td>
+                                            <td>{t('guide.sec1GdprSuitable')}</td>
                                         </tr>
                                         <tr>
                                             <td><strong>SOC 2</strong></td>
-                                            <td>Quốc tế</td>
-                                            <td>Trust Criteria</td>
-                                            <td>SaaS, dịch vụ đám mây, fintech</td>
+                                            <td>{t('guide.sec1Soc2Scope')}</td>
+                                            <td>{t('guide.sec1Soc2Controls')}</td>
+                                            <td>{t('guide.sec1Soc2Suitable')}</td>
                                         </tr>
                                     </tbody>
                                 </table>
@@ -179,49 +176,46 @@ export default function AssessmentGuidePage() {
                     <section id="workflow" className={styles.section}>
                         <h2 className={styles.sectionTitle}>
                             <Layers size={18} />
-                            2. Quy trình đánh giá 4 bước
+                            {t('guide.sec2Title')}
                         </h2>
                         <div className={styles.card}>
-                            <p className={styles.paragraph}>
-                                Assessment sử dụng quy trình <strong>4 bước tuần tự</strong> (wizard). Mỗi bước thu thập thông tin khác nhau
-                                để AI có đủ dữ liệu phân tích chính xác nhất.
-                            </p>
+                            <p className={styles.paragraph} dangerouslySetInnerHTML={{ __html: t('guide.sec2Desc') }} />
                             <div className={styles.stepsFlow}>
                                 <div className={styles.stepFlowItem}>
                                     <div className={styles.stepFlowNum}>1</div>
                                     <div className={styles.stepFlowContent}>
-                                        <strong>Tổ chức & Tiêu chuẩn</strong>
-                                        <span>Thông tin doanh nghiệp, chọn tiêu chuẩn, phạm vi đánh giá</span>
+                                        <strong>{t('guide.sec2Step1Title')}</strong>
+                                        <span>{t('guide.sec2Step1Desc')}</span>
                                     </div>
                                 </div>
                                 <div className={styles.stepFlowArrow}>→</div>
                                 <div className={styles.stepFlowItem}>
                                     <div className={`${styles.stepFlowNum} ${styles.stepFlowNum2}`}>2</div>
                                     <div className={styles.stepFlowContent}>
-                                        <strong>Hạ tầng & Kỹ thuật</strong>
-                                        <span>Máy chủ, firewall, VPN, backup, SIEM, cloud</span>
+                                        <strong>{t('guide.sec2Step2Title')}</strong>
+                                        <span>{t('guide.sec2Step2Desc')}</span>
                                     </div>
                                 </div>
                                 <div className={styles.stepFlowArrow}>→</div>
                                 <div className={styles.stepFlowItem}>
                                     <div className={`${styles.stepFlowNum} ${styles.stepFlowNum3}`}>3</div>
                                     <div className={styles.stepFlowContent}>
-                                        <strong>Biện pháp kiểm soát</strong>
-                                        <span>Tick (✓) các controls đã triển khai + upload bằng chứng</span>
+                                        <strong>{t('guide.sec2Step3Title')}</strong>
+                                        <span>{t('guide.sec2Step3Desc')}</span>
                                     </div>
                                 </div>
                                 <div className={styles.stepFlowArrow}>→</div>
                                 <div className={styles.stepFlowItem}>
                                     <div className={`${styles.stepFlowNum} ${styles.stepFlowNum4}`}>4</div>
                                     <div className={styles.stepFlowContent}>
-                                        <strong>Tổng kết & Gửi</strong>
-                                        <span>Mô tả topology, chọn AI mode, review → Bắt đầu Đánh giá</span>
+                                        <strong>{t('guide.sec2Step4Title')}</strong>
+                                        <span>{t('guide.sec2Step4Desc')}</span>
                                     </div>
                                 </div>
                             </div>
                             <div className={styles.tipBox}>
-                                <strong>💡 Mẹo:</strong> Form tự động lưu <strong>Draft</strong> (bản nháp) vào trình duyệt.
-                                Bạn có thể đóng trang và quay lại — dữ liệu vẫn còn. Nút <code>✕ Xóa</code> sẽ xóa draft.
+                                <strong>{t('guide.sec2Tip')}</strong>{' '}
+                                <span dangerouslySetInnerHTML={{ __html: t('guide.sec2TipText') }} />
                             </div>
                         </div>
                     </section>
@@ -230,114 +224,114 @@ export default function AssessmentGuidePage() {
                     <section id="step1" className={styles.section}>
                         <h2 className={styles.sectionTitle}>
                             <Landmark size={18} />
-                            3. Bước 1 — Thông tin Tổ chức & Tiêu chuẩn
+                            {t('guide.sec3Title')}
                         </h2>
                         <div className={styles.card}>
                             <p className={styles.paragraph}>
-                                Bước đầu tiên thu thập thông tin cơ bản về tổ chức và lựa chọn tiêu chuẩn đánh giá.
+                                {t('guide.sec3Desc')}
                             </p>
 
-                            <h4 className={styles.subHeading}>Các trường thông tin</h4>
+                            <h4 className={styles.subHeading}>{t('guide.sec3SubFields')}</h4>
                             <div className={styles.tableWrap}>
                                 <table className={styles.table}>
                                     <thead>
                                         <tr>
-                                            <th>Trường</th>
-                                            <th>Bắt buộc</th>
-                                            <th>Mô tả</th>
-                                            <th>Ví dụ</th>
+                                            <th>{t('guide.sec3ThField')}</th>
+                                            <th>{t('guide.sec3ThRequired')}</th>
+                                            <th>{t('guide.sec3ThDescription')}</th>
+                                            <th>{t('guide.sec3ThExample')}</th>
                                         </tr>
                                     </thead>
                                     <tbody>
                                         <tr>
-                                            <td><strong>Tiêu chuẩn đánh giá</strong></td>
-                                            <td><span className={styles.required}>✱ Có</span></td>
-                                            <td>Chọn framework bảo mật để đánh giá. Quyết định bộ Checklist ở Bước 3.</td>
+                                            <td><strong>{t('guide.sec3FieldStandard')}</strong></td>
+                                            <td><span className={styles.required}>{t('guide.sec3FieldStandardReq')}</span></td>
+                                            <td>{t('guide.sec3FieldStandardDesc')}</td>
                                             <td>ISO 27001:2022</td>
                                         </tr>
                                         <tr>
-                                            <td><strong>Tên tổ chức</strong></td>
-                                            <td><span className={styles.required}>✱ Có</span></td>
-                                            <td>Tên công ty / doanh nghiệp / cơ quan</td>
-                                            <td>Công ty Cổ phần ABC Tech</td>
+                                            <td><strong>{t('guide.sec3FieldOrgName')}</strong></td>
+                                            <td><span className={styles.required}>{t('guide.sec3FieldOrgNameReq')}</span></td>
+                                            <td>{t('guide.sec3FieldOrgNameDesc')}</td>
+                                            <td>{t('guide.sec3FieldOrgNameEx')}</td>
                                         </tr>
                                         <tr>
-                                            <td><strong>Quy mô</strong></td>
-                                            <td>Không</td>
-                                            <td>Nhỏ (&lt;50 NV), Trung bình (50-200), Lớn (&gt;200)</td>
-                                            <td>Trung bình</td>
+                                            <td><strong>{t('guide.sec3FieldSize')}</strong></td>
+                                            <td>{t('guide.sec3FieldSizeReq')}</td>
+                                            <td>{t('guide.sec3FieldSizeDesc')}</td>
+                                            <td>{t('guide.sec3FieldSizeEx')}</td>
                                         </tr>
                                         <tr>
-                                            <td><strong>Lĩnh vực</strong></td>
-                                            <td>Không</td>
-                                            <td>Ngành nghề kinh doanh chính</td>
-                                            <td>Tài chính, Fintech</td>
+                                            <td><strong>{t('guide.sec3FieldIndustry')}</strong></td>
+                                            <td>{t('guide.sec3FieldIndustryReq')}</td>
+                                            <td>{t('guide.sec3FieldIndustryDesc')}</td>
+                                            <td>{t('guide.sec3FieldIndustryEx')}</td>
                                         </tr>
                                         <tr>
-                                            <td><strong>Trạng thái tuân thủ</strong></td>
-                                            <td>Không</td>
-                                            <td>Mức độ triển khai hiện tại</td>
-                                            <td>Đang xây dựng chính sách</td>
+                                            <td><strong>{t('guide.sec3FieldCompliance')}</strong></td>
+                                            <td>{t('guide.sec3FieldComplianceReq')}</td>
+                                            <td>{t('guide.sec3FieldComplianceDesc')}</td>
+                                            <td>{t('guide.sec3FieldComplianceEx')}</td>
                                         </tr>
                                         <tr>
-                                            <td><strong>Tổng nhân viên</strong></td>
-                                            <td>Không</td>
-                                            <td>Tổng số người trong tổ chức</td>
+                                            <td><strong>{t('guide.sec3FieldEmployees')}</strong></td>
+                                            <td>{t('guide.sec3FieldEmployeesReq')}</td>
+                                            <td>{t('guide.sec3FieldEmployeesDesc')}</td>
                                             <td>120</td>
                                         </tr>
                                         <tr>
-                                            <td><strong>Nhân sự IT/Bảo mật</strong></td>
-                                            <td>Không</td>
-                                            <td>Số người trong bộ phận IT & Security</td>
+                                            <td><strong>{t('guide.sec3FieldItSec')}</strong></td>
+                                            <td>{t('guide.sec3FieldItSecReq')}</td>
+                                            <td>{t('guide.sec3FieldItSecDesc')}</td>
                                             <td>8</td>
                                         </tr>
                                     </tbody>
                                 </table>
                             </div>
 
-                            <h4 className={styles.subHeading}>Phạm vi đánh giá (Scope)</h4>
+                            <h4 className={styles.subHeading}>{t('guide.sec3SubScope')}</h4>
                             <p className={styles.paragraph}>
-                                Bạn có 3 lựa chọn phạm vi:
+                                {t('guide.sec3ScopeDesc')}
                             </p>
                             <div className={styles.tableWrap}>
                                 <table className={styles.table}>
                                     <thead>
                                         <tr>
-                                            <th>Phạm vi</th>
-                                            <th>Khi nào chọn</th>
-                                            <th>Ví dụ</th>
+                                            <th>{t('guide.sec3ThScopeType')}</th>
+                                            <th>{t('guide.sec3ThScopeWhen')}</th>
+                                            <th>{t('guide.sec3ThExample')}</th>
                                         </tr>
                                     </thead>
                                     <tbody>
                                         <tr>
-                                            <td><strong>🏢 Toàn bộ tổ chức</strong></td>
-                                            <td>Lần đầu đánh giá, chuẩn bị chứng nhận ISO</td>
-                                            <td>Đánh giá toàn công ty gồm 5 phòng ban, 3 hệ thống</td>
+                                            <td><strong>{t('guide.sec3ScopeFullLabel')}</strong></td>
+                                            <td>{t('guide.sec3ScopeFullWhen')}</td>
+                                            <td>{t('guide.sec3ScopeFullEx')}</td>
                                         </tr>
                                         <tr>
-                                            <td><strong>👥 Theo phòng ban</strong></td>
-                                            <td>Đánh giá nội bộ từng bộ phận</td>
-                                            <td>Chỉ đánh giá Phòng IT + Phòng Kế toán</td>
+                                            <td><strong>{t('guide.sec3ScopeDeptLabel')}</strong></td>
+                                            <td>{t('guide.sec3ScopeDeptWhen')}</td>
+                                            <td>{t('guide.sec3ScopeDeptEx')}</td>
                                         </tr>
                                         <tr>
-                                            <td><strong>🖥️ Theo hệ thống</strong></td>
-                                            <td>Đánh giá ứng dụng / hệ thống cụ thể</td>
-                                            <td>Core Banking System, Portal khách hàng</td>
+                                            <td><strong>{t('guide.sec3ScopeSysLabel')}</strong></td>
+                                            <td>{t('guide.sec3ScopeSysWhen')}</td>
+                                            <td>{t('guide.sec3ScopeSysEx')}</td>
                                         </tr>
                                     </tbody>
                                 </table>
                             </div>
 
                             <div className={styles.exampleBox}>
-                                <strong>📋 Ví dụ thao tác:</strong>
+                                <strong>{t('guide.sec3ExampleTitle')}</strong>
                                 <ol className={styles.orderedList}>
-                                    <li>Chọn tiêu chuẩn <code>ISO 27001:2022</code> từ dropdown</li>
-                                    <li>Nhập tên: <code>Ngân hàng TMCP Sài Gòn</code></li>
-                                    <li>Chọn quy mô: <code>Lớn (Trên 200 NV)</code></li>
-                                    <li>Lĩnh vực: <code>Tài chính - Ngân hàng</code></li>
-                                    <li>Trạng thái: <code>Đang xây dựng chính sách</code></li>
-                                    <li>Scope: <code>🏢 Toàn bộ tổ chức</code></li>
-                                    <li>Bấm <strong>Tiếp theo →</strong></li>
+                                    <li dangerouslySetInnerHTML={{ __html: t('guide.sec3ExampleStep1') }} />
+                                    <li dangerouslySetInnerHTML={{ __html: t('guide.sec3ExampleStep2') }} />
+                                    <li dangerouslySetInnerHTML={{ __html: t('guide.sec3ExampleStep3') }} />
+                                    <li dangerouslySetInnerHTML={{ __html: t('guide.sec3ExampleStep4') }} />
+                                    <li dangerouslySetInnerHTML={{ __html: t('guide.sec3ExampleStep5') }} />
+                                    <li dangerouslySetInnerHTML={{ __html: t('guide.sec3ExampleStep6') }} />
+                                    <li dangerouslySetInnerHTML={{ __html: t('guide.sec3ExampleStep7') }} />
                                 </ol>
                             </div>
                         </div>
@@ -347,71 +341,70 @@ export default function AssessmentGuidePage() {
                     <section id="step2" className={styles.section}>
                         <h2 className={styles.sectionTitle}>
                             <Server size={18} />
-                            4. Bước 2 — Hạ tầng & Kỹ thuật mạng
+                            {t('guide.sec4Title')}
                         </h2>
                         <div className={styles.card}>
                             <p className={styles.paragraph}>
-                                Mô tả hạ tầng công nghệ hiện có. Thông tin càng chi tiết, AI càng đánh giá chính xác.
+                                {t('guide.sec4Desc')}
                             </p>
 
                             <div className={styles.tableWrap}>
                                 <table className={styles.table}>
                                     <thead>
                                         <tr>
-                                            <th>Trường</th>
-                                            <th>Mô tả</th>
-                                            <th>Ví dụ thực tế</th>
+                                            <th>{t('guide.sec4ThField')}</th>
+                                            <th>{t('guide.sec4ThDescription')}</th>
+                                            <th>{t('guide.sec4ThRealExample')}</th>
                                         </tr>
                                     </thead>
                                     <tbody>
                                         <tr>
-                                            <td><strong>Máy chủ</strong></td>
-                                            <td>Tổng số Physical + VM</td>
-                                            <td><code>25</code> (5 physical + 20 VM trên VMware)</td>
+                                            <td><strong>{t('guide.sec4FieldServers')}</strong></td>
+                                            <td>{t('guide.sec4FieldServersDesc')}</td>
+                                            <td dangerouslySetInnerHTML={{ __html: t('guide.sec4FieldServersEx') }} />
                                         </tr>
                                         <tr>
-                                            <td><strong>Firewall (Tường lửa)</strong></td>
-                                            <td>Thiết bị bảo vệ vùng biên mạng</td>
-                                            <td><code>FortiGate 200F tại biên, Palo Alto PA-220 internal</code></td>
+                                            <td><strong>{t('guide.sec4FieldFirewall')}</strong></td>
+                                            <td>{t('guide.sec4FieldFirewallDesc')}</td>
+                                            <td dangerouslySetInnerHTML={{ __html: t('guide.sec4FieldFirewallEx') }} />
                                         </tr>
                                         <tr>
-                                            <td><strong>Cloud (Đám mây)</strong></td>
-                                            <td>Nền tảng cloud đang sử dụng</td>
-                                            <td><code>AWS (EC2, S3, RDS) + Azure AD</code></td>
+                                            <td><strong>{t('guide.sec4FieldCloud')}</strong></td>
+                                            <td>{t('guide.sec4FieldCloudDesc')}</td>
+                                            <td dangerouslySetInnerHTML={{ __html: t('guide.sec4FieldCloudEx') }} />
                                         </tr>
                                         <tr>
-                                            <td><strong>AV/EDR (Chống mã độc)</strong></td>
-                                            <td>Phần mềm Antivirus / Endpoint Detection</td>
-                                            <td><code>CrowdStrike Falcon trên tất cả endpoint</code></td>
+                                            <td><strong>{t('guide.sec4FieldAvEdr')}</strong></td>
+                                            <td>{t('guide.sec4FieldAvEdrDesc')}</td>
+                                            <td dangerouslySetInnerHTML={{ __html: t('guide.sec4FieldAvEdrEx') }} />
                                         </tr>
                                         <tr>
-                                            <td><strong>Backup (Sao lưu)</strong></td>
-                                            <td>Giải pháp sao lưu & khôi phục</td>
-                                            <td><code>Veeam Backup, NAS Synology, offsite hàng tuần</code></td>
+                                            <td><strong>{t('guide.sec4FieldBackup')}</strong></td>
+                                            <td>{t('guide.sec4FieldBackupDesc')}</td>
+                                            <td dangerouslySetInnerHTML={{ __html: t('guide.sec4FieldBackupEx') }} />
                                         </tr>
                                         <tr>
-                                            <td><strong>SIEM (Ghi log tập trung)</strong></td>
-                                            <td>Hệ thống thu thập & phân tích log bảo mật</td>
-                                            <td><code>Wazuh + ELK Stack, lưu 12 tháng</code></td>
+                                            <td><strong>{t('guide.sec4FieldSiem')}</strong></td>
+                                            <td>{t('guide.sec4FieldSiemDesc')}</td>
+                                            <td dangerouslySetInnerHTML={{ __html: t('guide.sec4FieldSiemEx') }} />
                                         </tr>
                                         <tr>
-                                            <td><strong>Sự cố 12 tháng</strong></td>
-                                            <td>Số lượng incident bảo mật trong 1 năm qua</td>
-                                            <td><code>3</code> (1 Phishing, 1 DDoS, 1 Brute-force)</td>
+                                            <td><strong>{t('guide.sec4FieldIncidents')}</strong></td>
+                                            <td>{t('guide.sec4FieldIncidentsDesc')}</td>
+                                            <td dangerouslySetInnerHTML={{ __html: t('guide.sec4FieldIncidentsEx') }} />
                                         </tr>
                                         <tr>
-                                            <td><strong>VPN</strong></td>
-                                            <td>Có cấu hình VPN cho nhân viên từ xa không</td>
-                                            <td>✅ Có — <code>Fortinet SSL VPN, 200 users</code></td>
+                                            <td><strong>{t('guide.sec4FieldVpn')}</strong></td>
+                                            <td>{t('guide.sec4FieldVpnDesc')}</td>
+                                            <td dangerouslySetInnerHTML={{ __html: t('guide.sec4FieldVpnEx') }} />
                                         </tr>
                                     </tbody>
                                 </table>
                             </div>
 
                             <div className={styles.tipBox}>
-                                <strong>💡 Mẹo:</strong> Không cần điền tất cả. Nhưng các trường <strong>Firewall</strong>,
-                                <strong> AV/EDR</strong>, <strong>Backup</strong> rất quan trọng — giúp AI đánh giá chính xác mức
-                                tuân thủ cho controls liên quan đến <strong>A.8 Công nghệ</strong>.
+                                <strong>{t('guide.sec4Tip')}</strong>{' '}
+                                <span dangerouslySetInnerHTML={{ __html: t('guide.sec4TipText') }} />
                             </div>
                         </div>
                     </section>
@@ -420,108 +413,101 @@ export default function AssessmentGuidePage() {
                     <section id="step3" className={styles.section}>
                         <h2 className={styles.sectionTitle}>
                             <CheckSquare size={18} />
-                            5. Bước 3 — Biện pháp kiểm soát (Controls Checklist)
+                            {t('guide.sec5Title')}
                         </h2>
                         <div className={styles.card}>
-                            <p className={styles.paragraph}>
-                                Đây là bước <strong>quan trọng nhất</strong>. Bạn đánh dấu (✓) vào các <strong>Controls</strong> (biện pháp kiểm soát)
-                                mà tổ chức <strong>đã thực sự triển khai</strong> trong thực tế.
-                            </p>
+                            <p className={styles.paragraph} dangerouslySetInnerHTML={{ __html: t('guide.sec5Desc') }} />
 
-                            <h4 className={styles.subHeading}>Cấu trúc Controls theo ISO 27001:2022</h4>
+                            <h4 className={styles.subHeading}>{t('guide.sec5SubStructure')}</h4>
                             <div className={styles.tableWrap}>
                                 <table className={styles.table}>
                                     <thead>
                                         <tr>
-                                            <th>Nhóm</th>
-                                            <th>Số lượng</th>
-                                            <th>Nội dung chính</th>
+                                            <th>{t('guide.sec5ThGroup')}</th>
+                                            <th>{t('guide.sec5ThCount')}</th>
+                                            <th>{t('guide.sec5ThMainContent')}</th>
                                         </tr>
                                     </thead>
                                     <tbody>
                                         <tr>
-                                            <td><strong>A.5 Tổ chức</strong> (Organizational)</td>
-                                            <td>37 controls</td>
-                                            <td>Chính sách, vai trò, IAM, nhà cung cấp, sự cố, BCP/DR, pháp lý</td>
+                                            <td dangerouslySetInnerHTML={{ __html: t('guide.sec5GroupOrg') }} />
+                                            <td>{t('guide.sec5GroupOrgCount')}</td>
+                                            <td>{t('guide.sec5GroupOrgContent')}</td>
                                         </tr>
                                         <tr>
-                                            <td><strong>A.6 Con người</strong> (People)</td>
-                                            <td>8 controls</td>
-                                            <td>Tuyển dụng, đào tạo, NDA, remote work, báo cáo sự cố</td>
+                                            <td dangerouslySetInnerHTML={{ __html: t('guide.sec5GroupPeople') }} />
+                                            <td>{t('guide.sec5GroupPeopleCount')}</td>
+                                            <td>{t('guide.sec5GroupPeopleContent')}</td>
                                         </tr>
                                         <tr>
-                                            <td><strong>A.7 Vật lý</strong> (Physical)</td>
-                                            <td>14 controls</td>
-                                            <td>An ninh vật lý, CCTV, UPS, bảo trì, hủy thiết bị</td>
+                                            <td dangerouslySetInnerHTML={{ __html: t('guide.sec5GroupPhysical') }} />
+                                            <td>{t('guide.sec5GroupPhysicalCount')}</td>
+                                            <td>{t('guide.sec5GroupPhysicalContent')}</td>
                                         </tr>
                                         <tr>
-                                            <td><strong>A.8 Công nghệ</strong> (Technological)</td>
-                                            <td>34 controls</td>
-                                            <td>Endpoint, PAM, MFA, malware, backup, SIEM, firewall, crypto, SDLC</td>
+                                            <td dangerouslySetInnerHTML={{ __html: t('guide.sec5GroupTech') }} />
+                                            <td>{t('guide.sec5GroupTechCount')}</td>
+                                            <td>{t('guide.sec5GroupTechContent')}</td>
                                         </tr>
                                     </tbody>
                                 </table>
                             </div>
 
-                            <h4 className={styles.subHeading}>Hệ thống trọng số (Weight System)</h4>
-                            <p className={styles.paragraph}>
-                                Mỗi control có 1 trong 4 mức trọng số. Điểm tuân thủ được tính theo <strong>weighted score</strong> —
-                                controls quan trọng ảnh hưởng nhiều hơn đến % tuân thủ tổng.
-                            </p>
+                            <h4 className={styles.subHeading}>{t('guide.sec5SubWeight')}</h4>
+                            <p className={styles.paragraph} dangerouslySetInnerHTML={{ __html: t('guide.sec5WeightDesc') }} />
                             <div className={styles.tableWrap}>
                                 <table className={styles.table}>
                                     <thead>
                                         <tr>
-                                            <th>Trọng số</th>
-                                            <th>Điểm</th>
-                                            <th>Ý nghĩa</th>
-                                            <th>Ví dụ Control</th>
+                                            <th>{t('guide.sec5ThWeight')}</th>
+                                            <th>{t('guide.sec5ThPoints')}</th>
+                                            <th>{t('guide.sec5ThMeaning')}</th>
+                                            <th>{t('guide.sec5ThExampleControl')}</th>
                                         </tr>
                                     </thead>
                                     <tbody>
                                         <tr>
                                             <td><span className={styles.weightCritical}>critical</span></td>
-                                            <td><strong>4 điểm</strong></td>
-                                            <td>Tối quan trọng — thiếu sẽ tạo rủi ro nghiêm trọng</td>
-                                            <td>A.5.15 Kiểm soát truy cập, A.8.7 Anti-Malware</td>
+                                            <td dangerouslySetInnerHTML={{ __html: t('guide.sec5CriticalPoints') }} />
+                                            <td>{t('guide.sec5CriticalMeaning')}</td>
+                                            <td>{t('guide.sec5CriticalExample')}</td>
                                         </tr>
                                         <tr>
                                             <td><span className={styles.weightHigh}>high</span></td>
-                                            <td><strong>3 điểm</strong></td>
-                                            <td>Quan trọng — nên triển khai sớm</td>
-                                            <td>A.5.9 Kiểm kê tài sản, A.8.22 Phân tách mạng</td>
+                                            <td dangerouslySetInnerHTML={{ __html: t('guide.sec5HighPoints') }} />
+                                            <td>{t('guide.sec5HighMeaning')}</td>
+                                            <td>{t('guide.sec5HighExample')}</td>
                                         </tr>
                                         <tr>
                                             <td><span className={styles.weightMedium}>medium</span></td>
-                                            <td><strong>2 điểm</strong></td>
-                                            <td>Trung bình — cải thiện bảo mật tổng thể</td>
-                                            <td>A.5.7 Threat Intelligence, A.8.6 Capacity Planning</td>
+                                            <td dangerouslySetInnerHTML={{ __html: t('guide.sec5MediumPoints') }} />
+                                            <td>{t('guide.sec5MediumMeaning')}</td>
+                                            <td>{t('guide.sec5MediumExample')}</td>
                                         </tr>
                                         <tr>
                                             <td><span className={styles.weightLow}>low</span></td>
-                                            <td><strong>1 điểm</strong></td>
-                                            <td>Thấp — nice-to-have, ít ảnh hưởng trực tiếp</td>
-                                            <td>A.5.6 Liên lạc nhóm chuyên gia, A.8.17 NTP</td>
+                                            <td dangerouslySetInnerHTML={{ __html: t('guide.sec5LowPoints') }} />
+                                            <td>{t('guide.sec5LowMeaning')}</td>
+                                            <td>{t('guide.sec5LowExample')}</td>
                                         </tr>
                                     </tbody>
                                 </table>
                             </div>
 
                             <div className={styles.exampleBox}>
-                                <strong>📋 Ví dụ thao tác Bước 3:</strong>
+                                <strong>{t('guide.sec5ExampleTitle')}</strong>
                                 <ol className={styles.orderedList}>
-                                    <li>Mở nhóm <strong>A.5 Tổ chức</strong> bằng cách click vào tiêu đề</li>
-                                    <li>Tick ✓ vào <code>A.5.1 — Chính sách an toàn thông tin</code> (nếu đã ban hành)</li>
-                                    <li>Click icon <code>ⓘ</code> bên cạnh control để xem chi tiết yêu cầu + upload bằng chứng</li>
-                                    <li>Dùng nút <strong>Chọn tất cả thuộc nhóm này</strong> nếu đã triển khai đầy đủ 1 nhóm</li>
-                                    <li>Quan sát thanh <strong>% tuân thủ</strong> realtime ở đầu trang</li>
+                                    <li dangerouslySetInnerHTML={{ __html: t('guide.sec5ExampleStep1') }} />
+                                    <li dangerouslySetInnerHTML={{ __html: t('guide.sec5ExampleStep2') }} />
+                                    <li dangerouslySetInnerHTML={{ __html: t('guide.sec5ExampleStep3') }} />
+                                    <li dangerouslySetInnerHTML={{ __html: t('guide.sec5ExampleStep4') }} />
+                                    <li dangerouslySetInnerHTML={{ __html: t('guide.sec5ExampleStep5') }} />
                                 </ol>
                             </div>
 
                             <div className={styles.warningBox}>
-                                <strong>⚠️ Lưu ý quan trọng:</strong> Chỉ tick những controls <strong>đã triển khai thực tế</strong>.
-                                Tick sai sẽ khiến AI đánh giá lệch. Nếu đang triển khai dở, <strong>không nên tick</strong> — hãy ghi vào
-                                phần <strong>Ghi chú</strong> ở Bước 4.
+                                <strong>{t('guide.sec5Warning')}</strong>{' '}
+                                <span dangerouslySetInnerHTML={{ __html: t('guide.sec5WarningText') }} />
                             </div>
                         </div>
                     </section>
@@ -530,22 +516,18 @@ export default function AssessmentGuidePage() {
                     <section id="step4" className={styles.section}>
                         <h2 className={styles.sectionTitle}>
                             <FileText size={18} />
-                            6. Bước 4 — Mô tả hệ thống & Tổng kết
+                            {t('guide.sec6Title')}
                         </h2>
                         <div className={styles.card}>
                             <p className={styles.paragraph}>
-                                Bước cuối cùng trước khi gửi đánh giá. Bạn mô tả kiến trúc mạng (topology) bằng văn bản
-                                và chọn chế độ AI.
+                                {t('guide.sec6Desc')}
                             </p>
 
-                            <h4 className={styles.subHeading}>Mô tả Kiến trúc mạng / Topology</h4>
-                            <p className={styles.paragraph}>
-                                Đây là phần <strong>free-text</strong> — bạn viết bằng ngôn ngữ tự nhiên. AI sẽ phân tích
-                                để hiểu kiến trúc hệ thống.
-                            </p>
+                            <h4 className={styles.subHeading}>{t('guide.sec6SubTopology')}</h4>
+                            <p className={styles.paragraph} dangerouslySetInnerHTML={{ __html: t('guide.sec6TopologyDesc') }} />
 
                             <div className={styles.exampleBox}>
-                                <strong>📝 Ví dụ mô tả topology hoàn chỉnh:</strong>
+                                <strong>{t('guide.sec6TopologyExample')}</strong>
                                 <div className={styles.codeBlock}>
                                     {`Mạng chia 5 VLAN:
 - VLAN 10 (Server): 20 VM trên VMware ESXi 7.0
@@ -568,26 +550,24 @@ EDR: CrowdStrike Falcon trên 100% endpoint.`}
                                 </div>
                             </div>
 
-                            <h4 className={styles.subHeading}>Phần Ghi chú bổ sung</h4>
+                            <h4 className={styles.subHeading}>{t('guide.sec6SubNotes')}</h4>
                             <div className={styles.bulletList}>
-                                <li>Sự cố gần đây: <strong>Phishing</strong> (lừa đảo email), <strong>Ransomware</strong> (mã độc tống tiền), <strong>DDoS</strong> (tấn công từ chối dịch vụ)</li>
-                                <li>Lỗ hổng đã biết nhưng chưa vá (Known Vulnerabilities)</li>
-                                <li>Yêu cầu tuân thủ đặc thù: <strong>PCI-DSS</strong> (thanh toán thẻ), <strong>HIPAA</strong> (y tế)</li>
-                                <li>Kế hoạch nâng cấp hạ tầng sắp tới (Roadmap)</li>
-                                <li>Ngân sách ATTT (Security Budget) dự kiến</li>
+                                <li dangerouslySetInnerHTML={{ __html: t('guide.sec6NotesBullet1') }} />
+                                <li dangerouslySetInnerHTML={{ __html: t('guide.sec6NotesBullet2') }} />
+                                <li dangerouslySetInnerHTML={{ __html: t('guide.sec6NotesBullet3') }} />
+                                <li dangerouslySetInnerHTML={{ __html: t('guide.sec6NotesBullet4') }} />
+                                <li>{t('guide.sec6NotesBullet5')}</li>
                             </div>
 
-                            <h4 className={styles.subHeading}>Bảng tổng kết trước khi gửi</h4>
-                            <p className={styles.paragraph}>
-                                Trước khi bấm <strong>Bắt đầu Đánh giá</strong>, hệ thống hiển thị bảng tổng kết:
-                            </p>
+                            <h4 className={styles.subHeading}>{t('guide.sec6SubSummary')}</h4>
+                            <p className={styles.paragraph} dangerouslySetInnerHTML={{ __html: t('guide.sec6SummaryDesc') }} />
                             <div className={styles.summaryPreview}>
-                                <div className={styles.summaryItem}><span>Tiêu chuẩn:</span> <strong>ISO 27001:2022</strong></div>
-                                <div className={styles.summaryItem}><span>Tổ chức:</span> <strong>Ngân hàng TMCP Sài Gòn</strong></div>
-                                <div className={styles.summaryItem}><span>Quy mô:</span> <strong>500 nhân sự (25 máy chủ)</strong></div>
-                                <div className={styles.summaryItem}><span>Phạm vi:</span> <strong>🏢 Toàn bộ tổ chức</strong></div>
-                                <div className={styles.summaryItem}><span>Tuân thủ sơ bộ:</span> <strong>62/93 Controls (71.8%)</strong></div>
-                                <div className={styles.summaryItem}><span>Chế độ AI:</span> <strong>⚡ Hybrid (SecurityLM + OpenClaude)</strong></div>
+                                <div className={styles.summaryItem}><span>{t('guide.sec6SummaryStandard')}</span> <strong>ISO 27001:2022</strong></div>
+                                <div className={styles.summaryItem}><span>{t('guide.sec6SummaryOrg')}</span> <strong>{t('guide.sec6SummaryOrgValue')}</strong></div>
+                                <div className={styles.summaryItem}><span>{t('guide.sec6SummarySize')}</span> <strong>{t('guide.sec6SummarySizeValue')}</strong></div>
+                                <div className={styles.summaryItem}><span>{t('guide.sec6SummaryScope')}</span> <strong>{t('guide.sec6SummaryScopeValue')}</strong></div>
+                                <div className={styles.summaryItem}><span>{t('guide.sec6SummaryCompliance')}</span> <strong>{t('guide.sec6SummaryComplianceValue')}</strong></div>
+                                <div className={styles.summaryItem}><span>{t('guide.sec6SummaryAiMode')}</span> <strong>{t('guide.sec6SummaryAiModeValue')}</strong></div>
                             </div>
                         </div>
                     </section>
@@ -596,30 +576,27 @@ EDR: CrowdStrike Falcon trên 100% endpoint.`}
                     <section id="ai-modes" className={styles.section}>
                         <h2 className={styles.sectionTitle}>
                             <Zap size={18} />
-                            7. Chế độ AI (Model Mode)
+                            {t('guide.sec7Title')}
                         </h2>
                         <div className={styles.card}>
-                            <p className={styles.paragraph}>
-                                Hệ thống hỗ trợ 3 chế độ AI với mức bảo mật và chất lượng khác nhau.
-                                Chọn chế độ phù hợp tùy vào <strong>độ nhạy cảm</strong> của dữ liệu.
-                            </p>
+                            <p className={styles.paragraph} dangerouslySetInnerHTML={{ __html: t('guide.sec7Desc') }} />
 
                             <div className={styles.aiModeGrid}>
                                 <div className={`${styles.aiModeCard} ${styles.aiModeLocal}`}>
                                     <div className={styles.aiModeHeader}>
                                         <Lock size={20} />
                                         <h4>Local Only</h4>
-                                        <span className={styles.aiModeBadge}>🔒 Bảo mật cao nhất</span>
+                                        <span className={styles.aiModeBadge}>{t('guide.sec7LocalBadge')}</span>
                                     </div>
                                     <div className={styles.aiModeFlow}>
                                         <span>📋 Form</span> → <span className={styles.flowLocal}>🖥️ SecurityLM</span> → <span className={styles.flowLocal}>🖥️ SecurityLM</span> → <span>📄 Report</span>
                                     </div>
                                     <ul className={styles.aiModeDetails}>
-                                        <li><strong>Dữ liệu:</strong> Không rời khỏi server cục bộ</li>
-                                        <li><strong>Phase 1 + 2:</strong> Đều chạy trên máy local (SecurityLM)</li>
-                                        <li><strong>Thời gian:</strong> 2–5 phút</li>
-                                        <li><strong>Phù hợp:</strong> Air-gap, dữ liệu mật, quân sự, chính phủ</li>
-                                        <li><strong>Nhược điểm:</strong> Báo cáo cơ bản hơn, cần GPU/RAM mạnh</li>
+                                        <li><strong>{t('guide.sec7LocalData')}</strong> {t('guide.sec7LocalDataDesc')}</li>
+                                        <li><strong>{t('guide.sec7LocalPhase')}</strong> {t('guide.sec7LocalPhaseDesc')}</li>
+                                        <li><strong>{t('guide.sec7LocalTime')}</strong> {t('guide.sec7LocalTimeDesc')}</li>
+                                        <li><strong>{t('guide.sec7LocalFit')}</strong> {t('guide.sec7LocalFitDesc')}</li>
+                                        <li><strong>{t('guide.sec7LocalCon')}</strong> {t('guide.sec7LocalConDesc')}</li>
                                     </ul>
                                 </div>
 
@@ -627,17 +604,17 @@ EDR: CrowdStrike Falcon trên 100% endpoint.`}
                                     <div className={styles.aiModeHeader}>
                                         <Zap size={20} />
                                         <h4>Hybrid</h4>
-                                        <span className={`${styles.aiModeBadge} ${styles.aiModeBadgeRecommend}`}>⚡ Khuyên dùng</span>
+                                        <span className={`${styles.aiModeBadge} ${styles.aiModeBadgeRecommend}`}>{t('guide.sec7HybridBadge')}</span>
                                     </div>
                                     <div className={styles.aiModeFlow}>
-                                        <span>📋 Form</span> → <span className={styles.flowLocal}>🖥️ SecurityLM</span> → <span>📊 GAP ẩn danh</span> → <span className={styles.flowCloud}>☁️ OpenClaude</span> → <span>📄 Report</span>
+                                        <span>📋 Form</span> → <span className={styles.flowLocal}>🖥️ SecurityLM</span> → <span>📊 GAP</span> → <span className={styles.flowCloud}>☁️ OpenClaude</span> → <span>📄 Report</span>
                                     </div>
                                     <ul className={styles.aiModeDetails}>
-                                        <li><strong>Dữ liệu hạ tầng:</strong> Chỉ xử lý local — IP, config không gửi cloud</li>
-                                        <li><strong>Phase 1:</strong> SecurityLM phân tích GAP cục bộ</li>
-                                        <li><strong>Phase 2:</strong> Kết quả GAP (đã ẩn danh) → Cloud format báo cáo</li>
-                                        <li><strong>Thời gian:</strong> 1–3 phút</li>
-                                        <li><strong>Phù hợp:</strong> Hầu hết tổ chức — cân bằng bảo mật & chất lượng</li>
+                                        <li><strong>{t('guide.sec7HybridData')}</strong> {t('guide.sec7HybridDataDesc')}</li>
+                                        <li><strong>{t('guide.sec7HybridPhase1')}</strong> {t('guide.sec7HybridPhase1Desc')}</li>
+                                        <li><strong>{t('guide.sec7HybridPhase2')}</strong> {t('guide.sec7HybridPhase2Desc')}</li>
+                                        <li><strong>{t('guide.sec7HybridTime')}</strong> {t('guide.sec7HybridTimeDesc')}</li>
+                                        <li><strong>{t('guide.sec7HybridFit')}</strong> {t('guide.sec7HybridFitDesc')}</li>
                                     </ul>
                                 </div>
 
@@ -645,25 +622,24 @@ EDR: CrowdStrike Falcon trên 100% endpoint.`}
                                     <div className={styles.aiModeHeader}>
                                         <Cloud size={20} />
                                         <h4>Cloud Only</h4>
-                                        <span className={styles.aiModeBadge}>☁️ Chất lượng cao nhất</span>
+                                        <span className={styles.aiModeBadge}>{t('guide.sec7CloudBadge')}</span>
                                     </div>
                                     <div className={styles.aiModeFlow}>
                                         <span>📋 Form</span> → <span className={styles.flowCloud}>☁️ OpenClaude P1</span> → <span className={styles.flowCloud}>☁️ OpenClaude P2</span> → <span>📄 Report</span>
                                     </div>
                                     <ul className={styles.aiModeDetails}>
-                                        <li><strong>⚠️ Dữ liệu:</strong> Toàn bộ gửi lên cloud (bao gồm hạ tầng, firewall, server)</li>
-                                        <li><strong>Phase 1 + 2:</strong> Đều xử lý trên OpenClaude</li>
-                                        <li><strong>Thời gian:</strong> 30–60 giây</li>
-                                        <li><strong>Phù hợp:</strong> Dữ liệu không nhạy cảm, demo, đào tạo</li>
-                                        <li><strong>Ưu điểm:</strong> Báo cáo chi tiết nhất, phân tích sâu nhất</li>
+                                        <li><strong>{t('guide.sec7CloudData')}</strong> {t('guide.sec7CloudDataDesc')}</li>
+                                        <li><strong>{t('guide.sec7CloudPhase')}</strong> {t('guide.sec7CloudPhaseDesc')}</li>
+                                        <li><strong>{t('guide.sec7CloudTime')}</strong> {t('guide.sec7CloudTimeDesc')}</li>
+                                        <li><strong>{t('guide.sec7CloudFit')}</strong> {t('guide.sec7CloudFitDesc')}</li>
+                                        <li><strong>{t('guide.sec7CloudPro')}</strong> {t('guide.sec7CloudProDesc')}</li>
                                     </ul>
                                 </div>
                             </div>
 
                             <div className={styles.warningBox}>
-                                <strong>⚠️ Quan trọng về bảo mật:</strong> Nếu tổ chức xử lý dữ liệu nhạy cảm (thông tin khách hàng,
-                                dữ liệu y tế, tài chính), hãy chọn <strong>Local Only</strong> hoặc <strong>Hybrid</strong>.
-                                Chế độ Cloud gửi <strong>toàn bộ</strong> thông tin hạ tầng lên internet.
+                                <strong>{t('guide.sec7SecurityWarning')}</strong>{' '}
+                                <span dangerouslySetInnerHTML={{ __html: t('guide.sec7SecurityWarningText') }} />
                             </div>
                         </div>
                     </section>
@@ -672,110 +648,108 @@ EDR: CrowdStrike Falcon trên 100% endpoint.`}
                     <section id="results" className={styles.section}>
                         <h2 className={styles.sectionTitle}>
                             <TrendingUp size={18} />
-                            8. Đọc hiểu Kết quả đánh giá
+                            {t('guide.sec8Title')}
                         </h2>
                         <div className={styles.card}>
-                            <p className={styles.paragraph}>
-                                Sau khi AI hoàn thành phân tích, tab <strong>Kết quả</strong> sẽ hiển thị báo cáo gồm nhiều phần:
-                            </p>
+                            <p className={styles.paragraph} dangerouslySetInnerHTML={{ __html: t('guide.sec8Desc') }} />
 
-                            <h4 className={styles.subHeading}>8.1 Score Hero (Bảng điểm tổng quan)</h4>
+                            <h4 className={styles.subHeading}>{t('guide.sec8Sub1')}</h4>
                             <div className={styles.tableWrap}>
                                 <table className={styles.table}>
                                     <thead>
                                         <tr>
-                                            <th>Thành phần</th>
-                                            <th>Mô tả</th>
+                                            <th>{t('guide.sec8ThComponent')}</th>
+                                            <th>{t('guide.sec8ThDescription')}</th>
                                         </tr>
                                     </thead>
                                     <tbody>
                                         <tr>
-                                            <td><strong>Gauge (Đồng hồ %)</strong></td>
-                                            <td>Hiển thị % tuân thủ tổng (weighted). Màu sắc thay đổi theo mức: xanh ≥80%, xanh dương ≥50%, vàng ≥25%, đỏ &lt;25%</td>
+                                            <td><strong>{t('guide.sec8GaugeLabel')}</strong></td>
+                                            <td>{t('guide.sec8GaugeDesc')}</td>
                                         </tr>
                                         <tr>
-                                            <td><strong>Compliance Badge</strong></td>
-                                            <td>✅ Tuân thủ cao | 🟡 Tuân thủ một phần | 🟠 Tuân thủ thấp | 🔴 Không tuân thủ</td>
+                                            <td><strong>{t('guide.sec8BadgeLabel')}</strong></td>
+                                            <td>{t('guide.sec8BadgeDesc')}</td>
                                         </tr>
                                         <tr>
-                                            <td><strong>Controls đạt / Còn thiếu / Tổng</strong></td>
-                                            <td>Số liệu cụ thể: VD <code>62 / 31 / 93</code></td>
+                                            <td><strong>{t('guide.sec8ControlsLabel')}</strong></td>
+                                            <td dangerouslySetInnerHTML={{ __html: t('guide.sec8ControlsDesc') }} />
                                         </tr>
                                         <tr>
-                                            <td><strong>Model Chips</strong></td>
-                                            <td>AI model đã sử dụng (VD: SecurityLM, Semantic RAG)</td>
+                                            <td><strong>{t('guide.sec8ModelChipsLabel')}</strong></td>
+                                            <td>{t('guide.sec8ModelChipsDesc')}</td>
                                         </tr>
                                     </tbody>
                                 </table>
                             </div>
 
-                            <h4 className={styles.subHeading}>8.2 Phân tích theo Category (Weighted Breakdown)</h4>
+                            <h4 className={styles.subHeading}>{t('guide.sec8Sub2')}</h4>
                             <p className={styles.paragraph}>
-                                Bảng thanh tiến trình cho từng nhóm controls, hiển thị:
+                                {t('guide.sec8CategoryDesc')}
                             </p>
                             <div className={styles.bulletList}>
-                                <li>Tên category (VD: A.5 Tổ chức, A.8 Công nghệ)</li>
-                                <li>% tuân thủ có trọng số (không phải đếm đơn giản)</li>
-                                <li>Số controls đạt / tổng controls trong nhóm</li>
-                                <li>Điểm đạt / điểm tối đa</li>
+                                <li>{t('guide.sec8CategoryBullet1')}</li>
+                                <li>{t('guide.sec8CategoryBullet2')}</li>
+                                <li>{t('guide.sec8CategoryBullet3')}</li>
+                                <li>{t('guide.sec8CategoryBullet4')}</li>
                             </div>
 
-                            <h4 className={styles.subHeading}>8.3 Dashboard cấu trúc (Structured Data)</h4>
+                            <h4 className={styles.subHeading}>{t('guide.sec8Sub3')}</h4>
                             <div className={styles.tableWrap}>
                                 <table className={styles.table}>
                                     <thead>
                                         <tr>
-                                            <th>Phần</th>
-                                            <th>Nội dung</th>
+                                            <th>{t('guide.sec8ThSection')}</th>
+                                            <th>{t('guide.sec8ThContent')}</th>
                                         </tr>
                                     </thead>
                                     <tbody>
                                         <tr>
-                                            <td><strong>Phân loại Rủi ro</strong></td>
-                                            <td>Đếm số GAP theo severity: Critical / High / Medium / Low</td>
+                                            <td><strong>{t('guide.sec8DashRisk')}</strong></td>
+                                            <td>{t('guide.sec8DashRiskDesc')}</td>
                                         </tr>
                                         <tr>
-                                            <td><strong>Tuân thủ theo Trọng số</strong></td>
-                                            <td>% tuân thủ riêng cho mỗi mức weight (critical, high, medium, low)</td>
+                                            <td><strong>{t('guide.sec8DashWeight')}</strong></td>
+                                            <td>{t('guide.sec8DashWeightDesc')}</td>
                                         </tr>
                                         <tr>
-                                            <td><strong>Controls Thiếu Ưu tiên Cao</strong></td>
-                                            <td>Top 8 controls chưa triển khai nhưng severity critical/high</td>
+                                            <td><strong>{t('guide.sec8DashGaps')}</strong></td>
+                                            <td>{t('guide.sec8DashGapsDesc')}</td>
                                         </tr>
                                     </tbody>
                                 </table>
                             </div>
 
-                            <h4 className={styles.subHeading}>8.4 Mức đánh giá tuân thủ</h4>
+                            <h4 className={styles.subHeading}>{t('guide.sec8Sub4')}</h4>
                             <div className={styles.tableWrap}>
                                 <table className={styles.table}>
                                     <thead>
                                         <tr>
-                                            <th>% Tuân thủ</th>
-                                            <th>Mức</th>
-                                            <th>Ý nghĩa</th>
+                                            <th>{t('guide.sec8ThCompliance')}</th>
+                                            <th>{t('guide.sec8ThLevel')}</th>
+                                            <th>{t('guide.sec8ThImplication')}</th>
                                         </tr>
                                     </thead>
                                     <tbody>
                                         <tr>
                                             <td><span className={styles.scoreGreen}>≥ 80%</span></td>
-                                            <td>✅ Tuân thủ cao</td>
-                                            <td>Sẵn sàng cho audit chứng nhận, chỉ cần hoàn thiện chi tiết</td>
+                                            <td>{t('guide.sec8Level1')}</td>
+                                            <td>{t('guide.sec8Level1Desc')}</td>
                                         </tr>
                                         <tr>
                                             <td><span className={styles.scoreBlue}>50% – 79%</span></td>
-                                            <td>🟡 Tuân thủ một phần</td>
-                                            <td>Có nền tảng tốt, cần bổ sung nhiều controls nữa</td>
+                                            <td>{t('guide.sec8Level2')}</td>
+                                            <td>{t('guide.sec8Level2Desc')}</td>
                                         </tr>
                                         <tr>
                                             <td><span className={styles.scoreAmber}>25% – 49%</span></td>
-                                            <td>🟠 Tuân thủ thấp</td>
-                                            <td>Mới bắt đầu, cần xây dựng roadmap triển khai có ưu tiên</td>
+                                            <td>{t('guide.sec8Level3')}</td>
+                                            <td>{t('guide.sec8Level3Desc')}</td>
                                         </tr>
                                         <tr>
                                             <td><span className={styles.scoreRed}>&lt; 25%</span></td>
-                                            <td>🔴 Không tuân thủ</td>
-                                            <td>Rủi ro rất cao, cần hành động ngay lập tức</td>
+                                            <td>{t('guide.sec8Level4')}</td>
+                                            <td>{t('guide.sec8Level4Desc')}</td>
                                         </tr>
                                     </tbody>
                                 </table>
@@ -787,45 +761,40 @@ EDR: CrowdStrike Falcon trên 100% endpoint.`}
                     <section id="history" className={styles.section}>
                         <h2 className={styles.sectionTitle}>
                             <History size={18} />
-                            9. Lịch sử đánh giá & Kho mẫu (Templates)
+                            {t('guide.sec9Title')}
                         </h2>
                         <div className={styles.card}>
-                            <h4 className={styles.subHeading}>Tab Lịch sử</h4>
-                            <p className={styles.paragraph}>
-                                Tất cả đánh giá được lưu trên server. Tab <strong>Lịch sử</strong> hiển thị:
-                            </p>
+                            <h4 className={styles.subHeading}>{t('guide.sec9SubHistory')}</h4>
+                            <p className={styles.paragraph} dangerouslySetInnerHTML={{ __html: t('guide.sec9HistoryDesc') }} />
                             <div className={styles.bulletList}>
-                                <li>Tên tổ chức + ngày giờ đánh giá</li>
-                                <li>Tiêu chuẩn đã dùng (ISO 27001, TCVN 11930...)</li>
-                                <li>% tuân thủ khi hoàn thành</li>
-                                <li>Trạng thái: ✅ Hoàn thành | ⏳ Đang xử lý | ❌ Thất bại | 🔄 Chờ</li>
+                                <li>{t('guide.sec9HistoryBullet1')}</li>
+                                <li>{t('guide.sec9HistoryBullet2')}</li>
+                                <li>{t('guide.sec9HistoryBullet3')}</li>
+                                <li>{t('guide.sec9HistoryBullet4')}</li>
                             </div>
 
                             <div className={styles.exampleBox}>
-                                <strong>📋 Thao tác trên Lịch sử:</strong>
+                                <strong>{t('guide.sec9HistoryActionsTitle')}</strong>
                                 <ul className={styles.bulletList}>
-                                    <li><strong>Xem →</strong> : Mở lại kết quả đánh giá đã hoàn thành</li>
-                                    <li><strong>Theo dõi →</strong> : Xem tiến trình đánh giá đang chạy</li>
-                                    <li><strong>Thử lại</strong> : Quay về Bước 4 để gửi lại (khi thất bại)</li>
-                                    <li><strong>🗑️</strong> : Xóa đánh giá (có xác nhận trước khi xóa)</li>
-                                    <li><strong>🔄 Làm mới</strong> : Refresh danh sách lịch sử</li>
+                                    <li dangerouslySetInnerHTML={{ __html: t('guide.sec9HistoryAction1') }} />
+                                    <li dangerouslySetInnerHTML={{ __html: t('guide.sec9HistoryAction2') }} />
+                                    <li dangerouslySetInnerHTML={{ __html: t('guide.sec9HistoryAction3') }} />
+                                    <li dangerouslySetInnerHTML={{ __html: t('guide.sec9HistoryAction4') }} />
+                                    <li dangerouslySetInnerHTML={{ __html: t('guide.sec9HistoryAction5') }} />
                                 </ul>
                             </div>
 
-                            <h4 className={styles.subHeading}>Tab Kho Mẫu (Templates)</h4>
-                            <p className={styles.paragraph}>
-                                Kho mẫu chứa dữ liệu hệ thống thực tế (ngân hàng, bệnh viện, startup...) đã cấu hình sẵn.
-                                Hữu ích cho: <strong>demo</strong>, <strong>đào tạo</strong>, <strong>benchmark</strong>, <strong>so sánh</strong>.
-                            </p>
+                            <h4 className={styles.subHeading}>{t('guide.sec9SubTemplates')}</h4>
+                            <p className={styles.paragraph} dangerouslySetInnerHTML={{ __html: t('guide.sec9TemplatesDesc') }} />
 
                             <div className={styles.exampleBox}>
-                                <strong>📋 Cách sử dụng Template:</strong>
+                                <strong>{t('guide.sec9TemplatesTitle')}</strong>
                                 <ol className={styles.orderedList}>
-                                    <li>Chuyển sang tab <strong>Mẫu</strong></li>
-                                    <li>Lọc theo tiêu chuẩn (ISO 27001 / TCVN 11930)</li>
-                                    <li>Xem thông tin: nhân sự, máy chủ, IT staff, mức tuân thủ</li>
-                                    <li>Bấm <strong>Phân tích hệ thống này →</strong></li>
-                                    <li>Hệ thống tự điền toàn bộ form → bạn chỉnh sửa nếu cần → Đánh giá</li>
+                                    <li dangerouslySetInnerHTML={{ __html: t('guide.sec9TemplateStep1') }} />
+                                    <li>{t('guide.sec9TemplateStep2')}</li>
+                                    <li>{t('guide.sec9TemplateStep3')}</li>
+                                    <li dangerouslySetInnerHTML={{ __html: t('guide.sec9TemplateStep4') }} />
+                                    <li>{t('guide.sec9TemplateStep5')}</li>
                                 </ol>
                             </div>
                         </div>
@@ -835,23 +804,20 @@ EDR: CrowdStrike Falcon trên 100% endpoint.`}
                     <section id="evidence" className={styles.section}>
                         <h2 className={styles.sectionTitle}>
                             <Upload size={18} />
-                            10. Upload bằng chứng triển khai (Evidence)
+                            {t('guide.sec10Title')}
                         </h2>
                         <div className={styles.card}>
-                            <p className={styles.paragraph}>
-                                Mỗi control có thể đính kèm <strong>bằng chứng</strong> (evidence) — file minh chứng đã triển khai thực tế.
-                                AI sẽ phân tích nội dung file khi tạo báo cáo.
-                            </p>
+                            <p className={styles.paragraph} dangerouslySetInnerHTML={{ __html: t('guide.sec10Desc') }} />
 
-                            <h4 className={styles.subHeading}>Cách upload bằng chứng</h4>
+                            <h4 className={styles.subHeading}>{t('guide.sec10SubHow')}</h4>
                             <ol className={styles.orderedList}>
-                                <li>Ở Bước 3, click icon <code>ⓘ</code> bên cạnh bất kỳ control nào</li>
-                                <li>Panel chi tiết mở ra — cuộn xuống phần <strong>Upload bằng chứng</strong></li>
-                                <li>Kéo-thả (drag & drop) file vào vùng upload, hoặc bấm <strong>📎 Chọn file</strong></li>
-                                <li>Hỗ trợ nhiều file cùng lúc, tối đa <strong>10MB/file</strong></li>
+                                <li dangerouslySetInnerHTML={{ __html: t('guide.sec10HowStep1') }} />
+                                <li dangerouslySetInnerHTML={{ __html: t('guide.sec10HowStep2') }} />
+                                <li dangerouslySetInnerHTML={{ __html: t('guide.sec10HowStep3') }} />
+                                <li dangerouslySetInnerHTML={{ __html: t('guide.sec10HowStep4') }} />
                             </ol>
 
-                            <h4 className={styles.subHeading}>Định dạng file hỗ trợ</h4>
+                            <h4 className={styles.subHeading}>{t('guide.sec10SubFormats')}</h4>
                             <div className={styles.fileFormats}>
                                 <span className={styles.formatBadge}>.pdf</span>
                                 <span className={styles.formatBadge}>.png</span>
@@ -867,35 +833,35 @@ EDR: CrowdStrike Falcon trên 100% endpoint.`}
                             </div>
 
                             <div className={styles.exampleBox}>
-                                <strong>📋 Ví dụ bằng chứng cho từng control:</strong>
+                                <strong>{t('guide.sec10EvidenceTitle')}</strong>
                                 <div className={styles.tableWrap}>
                                     <table className={styles.table}>
                                         <thead>
                                             <tr>
-                                                <th>Control</th>
-                                                <th>Loại bằng chứng</th>
+                                                <th>{t('guide.sec10ThControl')}</th>
+                                                <th>{t('guide.sec10ThEvidence')}</th>
                                             </tr>
                                         </thead>
                                         <tbody>
                                             <tr>
-                                                <td><strong>A.5.1</strong> Chính sách ATTT</td>
-                                                <td>File PDF chính sách đã phê duyệt, có chữ ký ban giám đốc</td>
+                                                <td dangerouslySetInnerHTML={{ __html: t('guide.sec10Ev1Control') }} />
+                                                <td>{t('guide.sec10Ev1Desc')}</td>
                                             </tr>
                                             <tr>
-                                                <td><strong>A.6.3</strong> Đào tạo ATTT</td>
-                                                <td>Slide đào tạo, danh sách nhân viên đã tham gia, điểm kiểm tra</td>
+                                                <td dangerouslySetInnerHTML={{ __html: t('guide.sec10Ev2Control') }} />
+                                                <td>{t('guide.sec10Ev2Desc')}</td>
                                             </tr>
                                             <tr>
-                                                <td><strong>A.8.7</strong> Anti-Malware</td>
-                                                <td>Screenshot dashboard EDR, report quét virus, policy config</td>
+                                                <td dangerouslySetInnerHTML={{ __html: t('guide.sec10Ev3Control') }} />
+                                                <td>{t('guide.sec10Ev3Desc')}</td>
                                             </tr>
                                             <tr>
-                                                <td><strong>A.8.15</strong> SIEM Logging</td>
-                                                <td>Export config SIEM, sample log, dashboard screenshot</td>
+                                                <td dangerouslySetInnerHTML={{ __html: t('guide.sec10Ev4Control') }} />
+                                                <td>{t('guide.sec10Ev4Desc')}</td>
                                             </tr>
                                             <tr>
-                                                <td><strong>A.8.20</strong> Firewall</td>
-                                                <td>Firewall rule export (.conf), network diagram, access policy</td>
+                                                <td dangerouslySetInnerHTML={{ __html: t('guide.sec10Ev5Control') }} />
+                                                <td>{t('guide.sec10Ev5Desc')}</td>
                                             </tr>
                                         </tbody>
                                     </table>
@@ -903,8 +869,8 @@ EDR: CrowdStrike Falcon trên 100% endpoint.`}
                             </div>
 
                             <div className={styles.tipBox}>
-                                <strong>💡 Mẹo:</strong> Bạn có thể bấm <strong>👁️</strong> để xem trước nội dung file đã upload.
-                                Bấm <strong>✕</strong> để xóa file. Tổng số file đính kèm hiển thị ở badge bên cạnh tiêu đề.
+                                <strong>{t('guide.sec10Tip')}</strong>{' '}
+                                <span dangerouslySetInnerHTML={{ __html: t('guide.sec10TipText') }} />
                             </div>
                         </div>
                     </section>
@@ -913,57 +879,57 @@ EDR: CrowdStrike Falcon trên 100% endpoint.`}
                     <section id="export" className={styles.section}>
                         <h2 className={styles.sectionTitle}>
                             <Download size={18} />
-                            11. Xuất báo cáo (Export)
+                            {t('guide.sec11Title')}
                         </h2>
                         <div className={styles.card}>
                             <p className={styles.paragraph}>
-                                Sau khi đánh giá hoàn thành, bạn có nhiều cách xuất & chia sẻ báo cáo:
+                                {t('guide.sec11Desc')}
                             </p>
 
                             <div className={styles.tableWrap}>
                                 <table className={styles.table}>
                                     <thead>
                                         <tr>
-                                            <th>Hành động</th>
-                                            <th>Mô tả</th>
-                                            <th>Dùng khi</th>
+                                            <th>{t('guide.sec11ThAction')}</th>
+                                            <th>{t('guide.sec11ThDescription')}</th>
+                                            <th>{t('guide.sec11ThUseWhen')}</th>
                                         </tr>
                                     </thead>
                                     <tbody>
                                         <tr>
-                                            <td><strong>Copy report</strong></td>
-                                            <td>Copy toàn bộ nội dung Markdown vào clipboard</td>
-                                            <td>Dán vào email, Slack, Confluence, Notion</td>
+                                            <td><strong>{t('guide.sec11CopyReport')}</strong></td>
+                                            <td>{t('guide.sec11CopyReportDesc')}</td>
+                                            <td>{t('guide.sec11CopyReportWhen')}</td>
                                         </tr>
                                         <tr>
-                                            <td><strong>📄 Xem / Xuất PDF</strong></td>
-                                            <td>Mở tab mới với HTML đẹp → Ctrl+P để in/lưu PDF</td>
-                                            <td>Gửi cho khách hàng, ban giám đốc</td>
+                                            <td><strong>{t('guide.sec11ViewPdf')}</strong></td>
+                                            <td>{t('guide.sec11ViewPdfDesc')}</td>
+                                            <td>{t('guide.sec11ViewPdfWhen')}</td>
                                         </tr>
                                         <tr>
-                                            <td><strong>📥 Tải PDF (Server)</strong></td>
-                                            <td>Server tạo PDF và tải về trực tiếp</td>
-                                            <td>Lưu trữ chính thức, đính kèm hồ sơ</td>
+                                            <td><strong>{t('guide.sec11DownloadPdf')}</strong></td>
+                                            <td>{t('guide.sec11DownloadPdfDesc')}</td>
+                                            <td>{t('guide.sec11DownloadPdfWhen')}</td>
                                         </tr>
                                         <tr>
-                                            <td><strong>🖨️ In báo cáo</strong></td>
-                                            <td>Mở dialog in của trình duyệt</td>
-                                            <td>In giấy cho cuộc họp</td>
+                                            <td><strong>{t('guide.sec11Print')}</strong></td>
+                                            <td>{t('guide.sec11PrintDesc')}</td>
+                                            <td>{t('guide.sec11PrintWhen')}</td>
                                         </tr>
                                         <tr>
-                                            <td><strong>📥 Tải JSON</strong></td>
-                                            <td>Export dữ liệu cấu trúc (compliance %, risk counts, weight breakdown)</td>
-                                            <td>Tích hợp dashboard/BI ngoài (Grafana, Power BI)</td>
+                                            <td><strong>{t('guide.sec11DownloadJson')}</strong></td>
+                                            <td>{t('guide.sec11DownloadJsonDesc')}</td>
+                                            <td>{t('guide.sec11DownloadJsonWhen')}</td>
                                         </tr>
                                         <tr>
-                                            <td><strong>← Đánh giá mới</strong></td>
-                                            <td>Quay về form nhập liệu để đánh giá lại</td>
-                                            <td>Đánh giá tổ chức khác hoặc sau khi cải thiện</td>
+                                            <td><strong>{t('guide.sec11NewAssessment')}</strong></td>
+                                            <td>{t('guide.sec11NewAssessmentDesc')}</td>
+                                            <td>{t('guide.sec11NewAssessmentWhen')}</td>
                                         </tr>
                                         <tr>
-                                            <td><strong>Đánh giá lại (Local/Hybrid/Cloud)</strong></td>
-                                            <td>Gửi lại form với chế độ AI khác</td>
-                                            <td>So sánh kết quả giữa các AI model</td>
+                                            <td><strong>{t('guide.sec11Reassess')}</strong></td>
+                                            <td>{t('guide.sec11ReassessDesc')}</td>
+                                            <td>{t('guide.sec11ReassessWhen')}</td>
                                         </tr>
                                     </tbody>
                                 </table>
@@ -975,34 +941,31 @@ EDR: CrowdStrike Falcon trên 100% endpoint.`}
                     <section id="scoring" className={styles.section}>
                         <h2 className={styles.sectionTitle}>
                             <Shield size={18} />
-                            12. Công thức tính điểm tuân thủ (Weighted Scoring)
+                            {t('guide.sec12Title')}
                         </h2>
                         <div className={styles.card}>
-                            <p className={styles.paragraph}>
-                                Điểm tuân thủ <strong>không phải</strong> đếm đơn giản (VD: 62/93 = 66.7%). Hệ thống dùng
-                                <strong> weighted scoring</strong> — controls có trọng số critical ảnh hưởng gấp 4 lần controls low.
-                            </p>
+                            <p className={styles.paragraph} dangerouslySetInnerHTML={{ __html: t('guide.sec12Desc') }} />
 
                             <div className={styles.formulaBox}>
-                                <h4>Công thức:</h4>
+                                <h4>{t('guide.sec12FormulaTitle')}</h4>
                                 <div className={styles.formula}>
-                                    <code>% Tuân thủ = (Tổng điểm controls đã tick) / (Tổng điểm tối đa) × 100</code>
+                                    <code>{t('guide.sec12Formula')}</code>
                                 </div>
-                                <p>Trong đó: critical = 4 điểm, high = 3, medium = 2, low = 1</p>
+                                <p>{t('guide.sec12FormulaNote')}</p>
                             </div>
 
-                            <h4 className={styles.subHeading}>Ví dụ tính toán thực tế</h4>
+                            <h4 className={styles.subHeading}>{t('guide.sec12SubExample')}</h4>
                             <div className={styles.exampleBox}>
-                                <strong>📊 Ví dụ: Tổ chức A đã tick 62/93 controls (ISO 27001)</strong>
+                                <strong>{t('guide.sec12ExampleTitle')}</strong>
                                 <div className={styles.tableWrap}>
                                     <table className={styles.table}>
                                         <thead>
                                             <tr>
-                                                <th>Trọng số</th>
-                                                <th>Tổng controls</th>
-                                                <th>Đã tick</th>
-                                                <th>Điểm đạt</th>
-                                                <th>Điểm tối đa</th>
+                                                <th>{t('guide.sec12ThWeight')}</th>
+                                                <th>{t('guide.sec12ThTotalControls')}</th>
+                                                <th>{t('guide.sec12ThChecked')}</th>
+                                                <th>{t('guide.sec12ThScoreAchieved')}</th>
+                                                <th>{t('guide.sec12ThMaxScore')}</th>
                                             </tr>
                                         </thead>
                                         <tbody>
@@ -1035,7 +998,7 @@ EDR: CrowdStrike Falcon trên 100% endpoint.`}
                                                 <td>16 × 1 = 16</td>
                                             </tr>
                                             <tr className={styles.totalRow}>
-                                                <td><strong>Tổng</strong></td>
+                                                <td><strong>{t('guide.sec12Total')}</strong></td>
                                                 <td><strong>93</strong></td>
                                                 <td><strong>62</strong></td>
                                                 <td><strong>176</strong></td>
@@ -1044,12 +1007,8 @@ EDR: CrowdStrike Falcon trên 100% endpoint.`}
                                         </tbody>
                                     </table>
                                 </div>
-                                <p className={styles.paragraph} style={{ marginTop: '0.75rem' }}>
-                                    <strong>% Tuân thủ = 176 / 244 × 100 = 72.1%</strong> (thay vì 66.7% nếu đếm đơn giản)
-                                </p>
-                                <p className={styles.paragraph}>
-                                    → Vì tổ chức A tick được nhiều controls <strong>critical</strong> (18/22), weighted score cao hơn.
-                                </p>
+                                <p className={styles.paragraph} style={{ marginTop: '0.75rem' }} dangerouslySetInnerHTML={{ __html: t('guide.sec12Result') }} />
+                                <p className={styles.paragraph} dangerouslySetInnerHTML={{ __html: t('guide.sec12Explanation') }} />
                             </div>
                         </div>
                     </section>
@@ -1058,95 +1017,67 @@ EDR: CrowdStrike Falcon trên 100% endpoint.`}
                     <section id="faq" className={styles.section}>
                         <h2 className={styles.sectionTitle}>
                             <AlertTriangle size={18} />
-                            13. Câu hỏi thường gặp (FAQ)
+                            {t('guide.sec13Title')}
                         </h2>
                         <div className={styles.card}>
-                            <Collapse title="Đánh giá mất bao lâu?">
+                            <Collapse title={t('guide.sec13Q1')}>
                                 <p className={styles.paragraph}>
-                                    Tùy chế độ AI:
+                                    {t('guide.sec13Q1Intro')}
                                 </p>
                                 <ul className={styles.bulletList}>
-                                    <li><strong>Cloud:</strong> 30–60 giây</li>
-                                    <li><strong>Hybrid:</strong> 1–3 phút</li>
-                                    <li><strong>Local:</strong> 2–5 phút (phụ thuộc cấu hình máy)</li>
+                                    <li dangerouslySetInnerHTML={{ __html: t('guide.sec13Q1Cloud') }} />
+                                    <li dangerouslySetInnerHTML={{ __html: t('guide.sec13Q1Hybrid') }} />
+                                    <li dangerouslySetInnerHTML={{ __html: t('guide.sec13Q1Local') }} />
                                 </ul>
-                                <p className={styles.paragraph}>
-                                    Bạn <strong>không cần chờ</strong> — có thể chuyển tab hoặc đóng trình duyệt. Hệ thống xử lý ngầm
-                                    và lưu kết quả. Quay lại tab <strong>Lịch sử</strong> để xem khi nào xong.
-                                </p>
+                                <p className={styles.paragraph} dangerouslySetInnerHTML={{ __html: t('guide.sec13Q1Note') }} />
                             </Collapse>
 
-                            <Collapse title="Lỗi 'could not load model' hoặc 'rpc error' nghĩa là gì?">
-                                <p className={styles.paragraph}>
-                                    <strong>Nguyên nhân:</strong> LocalAI không load được model — thường do thiếu RAM/VRAM hoặc model file chưa tải.
-                                </p>
-                                <p className={styles.paragraph}>
-                                    <strong>Giải pháp:</strong> Chuyển sang chế độ <strong>Hybrid</strong> hoặc <strong>Cloud</strong> ở Bước 4
-                                    rồi đánh giá lại. Hoặc kiểm tra Docker container <code>localai</code> có đang chạy không.
-                                </p>
+                            <Collapse title={t('guide.sec13Q2')}>
+                                <p className={styles.paragraph} dangerouslySetInnerHTML={{ __html: t('guide.sec13Q2Cause') }} />
+                                <p className={styles.paragraph} dangerouslySetInnerHTML={{ __html: t('guide.sec13Q2Fix') }} />
                             </Collapse>
 
-                            <Collapse title="Sự khác nhau giữa 'điểm đếm' và 'weighted score'?">
+                            <Collapse title={t('guide.sec13Q3')}>
                                 <p className={styles.paragraph}>
-                                    <strong>Điểm đếm:</strong> 62/93 controls = 66.7% — mỗi control bằng nhau.
+                                    <span dangerouslySetInnerHTML={{ __html: t('guide.sec13Q3Count') }} />
                                     <br />
-                                    <strong>Weighted score:</strong> Controls critical (×4) ảnh hưởng nhiều hơn low (×1).
-                                    Nên nếu bạn tick được nhiều critical controls, % sẽ cao hơn 66.7%.
+                                    <span dangerouslySetInnerHTML={{ __html: t('guide.sec13Q3Weighted') }} />
                                 </p>
-                                <p className={styles.paragraph}>
-                                    Hệ thống <strong>luôn</strong> dùng weighted score để phản ánh đúng mức độ rủi ro thực tế.
-                                </p>
+                                <p className={styles.paragraph} dangerouslySetInnerHTML={{ __html: t('guide.sec13Q3Note') }} />
                             </Collapse>
 
-                            <Collapse title="Dữ liệu có được lưu không? Ở đâu?">
+                            <Collapse title={t('guide.sec13Q4')}>
                                 <p className={styles.paragraph}>
-                                    <strong>Draft form:</strong> Lưu trong <code>localStorage</code> trình duyệt (tự động, mất khi xóa cache).
+                                    <span dangerouslySetInnerHTML={{ __html: t('guide.sec13Q4Draft') }} />
                                     <br />
-                                    <strong>Kết quả đánh giá:</strong> Lưu trên server backend (thư mục <code>data/assessments/</code>).
-                                    Không mất khi đóng trình duyệt.
+                                    <span dangerouslySetInnerHTML={{ __html: t('guide.sec13Q4Results') }} />
                                 </p>
                             </Collapse>
 
-                            <Collapse title="Có thể đánh giá lại với AI mode khác không?">
-                                <p className={styles.paragraph}>
-                                    <strong>Có.</strong> Sau khi xem kết quả, ở cuối báo cáo có nhóm nút <strong>Đánh giá lại</strong> —
-                                    chọn Local / Hybrid / Cloud. Hệ thống sẽ gửi lại cùng dữ liệu với model khác.
-                                </p>
-                                <p className={styles.paragraph}>
-                                    Hữu ích để <strong>so sánh</strong> chất lượng báo cáo giữa LocalAI vs Cloud AI.
-                                </p>
+                            <Collapse title={t('guide.sec13Q5')}>
+                                <p className={styles.paragraph} dangerouslySetInnerHTML={{ __html: t('guide.sec13Q5Answer') }} />
+                                <p className={styles.paragraph} dangerouslySetInnerHTML={{ __html: t('guide.sec13Q5Note') }} />
                             </Collapse>
 
-                            <Collapse title="Tôi muốn đánh giá theo TCVN 11930 thay vì ISO 27001?">
-                                <p className={styles.paragraph}>
-                                    Ở Bước 1, thay đổi dropdown <strong>Tiêu chuẩn đánh giá</strong> sang <code>TCVN 11930:2017</code>.
-                                    Bộ Checklist ở Bước 3 sẽ tự động chuyển sang 34 controls theo TCVN 11930
-                                    (Mạng, Máy chủ, Ứng dụng, Dữ liệu, Vận hành).
-                                </p>
-                                <p className={styles.paragraph}>
-                                    <strong>Lưu ý:</strong> Khi đổi tiêu chuẩn, danh sách controls đã tick sẽ bị reset.
-                                </p>
+                            <Collapse title={t('guide.sec13Q6')}>
+                                <p className={styles.paragraph} dangerouslySetInnerHTML={{ __html: t('guide.sec13Q6Answer') }} />
+                                <p className={styles.paragraph} dangerouslySetInnerHTML={{ __html: t('guide.sec13Q6Note') }} />
                             </Collapse>
 
-                            <Collapse title="Làm sao tải mẫu báo cáo PDF chuyên nghiệp?">
+                            <Collapse title={t('guide.sec13Q7')}>
                                 <p className={styles.paragraph}>
-                                    Sau khi đánh giá xong:
+                                    {t('guide.sec13Q7Intro')}
                                 </p>
                                 <ol className={styles.orderedList}>
-                                    <li>Bấm <strong>📄 Xem / Xuất PDF</strong> — mở tab mới với HTML đẹp</li>
-                                    <li>Bấm <strong>🖨️ In / Lưu PDF</strong> (hoặc <code>Ctrl+P</code>)</li>
-                                    <li>Chọn <strong>Lưu thành PDF</strong> → <strong>Lưu</strong></li>
+                                    <li dangerouslySetInnerHTML={{ __html: t('guide.sec13Q7Step1') }} />
+                                    <li dangerouslySetInnerHTML={{ __html: t('guide.sec13Q7Step2') }} />
+                                    <li dangerouslySetInnerHTML={{ __html: t('guide.sec13Q7Step3') }} />
                                 </ol>
-                                <p className={styles.paragraph}>
-                                    Hoặc bấm <strong>📥 Tải PDF (Server)</strong> để server tạo PDF và tải về trực tiếp.
-                                </p>
+                                <p className={styles.paragraph} dangerouslySetInnerHTML={{ __html: t('guide.sec13Q7Alt') }} />
                             </Collapse>
 
-                            <Collapse title="Assessment hỗ trợ Custom Standard (tiêu chuẩn tự tạo) không?">
-                                <p className={styles.paragraph}>
-                                    <strong>Có.</strong> Nếu bạn đã upload custom standard qua trang <strong>Standards</strong>,
-                                    nó sẽ tự động xuất hiện trong dropdown tiêu chuẩn ở Bước 1 với tag <code>(custom)</code>.
-                                </p>
+                            <Collapse title={t('guide.sec13Q8')}>
+                                <p className={styles.paragraph} dangerouslySetInnerHTML={{ __html: t('guide.sec13Q8Answer') }} />
                             </Collapse>
                         </div>
                     </section>

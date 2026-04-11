@@ -593,12 +593,12 @@ export default function FormISOPage() {
                 return (
                     <div className={styles.stepContent}>
                         <h2 className={styles.sectionTitle}>
-                            Thông tin Tổ chức & Tiêu chuẩn
+                            {t('assessment.step1Title')}
                         </h2>
                         <div className={styles.grid}>
                             <div className={styles.fieldFull}>
                                 <label className={styles.highlightLabel}>
-                                    Tiêu chuẩn đánh giá <span className={styles.required}>*</span>
+                                    {t('assessment.standardLabel')} <span className={styles.required}>*</span>
                                 </label>
                                 <select
                                     className={styles.standardSelect}
@@ -610,101 +610,63 @@ export default function FormISOPage() {
                                     ))}
                                     {standardsLoading && <option disabled>Loading standards...</option>}
                                 </select>
-                                <small className={styles.helperText}>
-                                    Tiêu chuẩn được chọn sẽ quyết định <strong>bộ câu hỏi Checklists</strong> ở Bước 3.
-                                </small>
+                                <small className={styles.helperText} dangerouslySetInnerHTML={{ __html: t('assessment.standardHelp') }} />
                             </div>
 
                             <div className={styles.field}>
-                                <label>Tên tổ chức / Doanh nghiệp <span className={styles.required}>*</span></label>
-                                <input value={form.org_name} onChange={e => set('org_name', e.target.value)} placeholder="VD: Công ty Điện toán ABC" />
+                                <label>{t('assessment.orgName')} <span className={styles.required}>*</span></label>
+                                <input value={form.org_name} onChange={e => set('org_name', e.target.value)} placeholder={t('assessment.orgNamePlaceholder')} />
                             </div>
                             <div className={styles.field}>
-                                <label>Quy mô doanh nghiệp</label>
+                                <label>{t('assessment.orgSize')}</label>
                                 <select value={form.org_size} onChange={e => set('org_size', e.target.value)}>
-                                    <option value="">Chọn quy mô</option>
-                                    <option value="small">Nhỏ (Dưới 50 NV)</option>
-                                    <option value="medium">Trung bình (50-200 NV)</option>
-                                    <option value="large">Lớn (Trên 200 NV)</option>
+                                    <option value="">{t('assessment.orgSizeSelect')}</option>
+                                    <option value="small">{t('assessment.orgSizeSmall')}</option>
+                                    <option value="medium">{t('assessment.orgSizeMedium')}</option>
+                                    <option value="large">{t('assessment.orgSizeLarge')}</option>
                                 </select>
                             </div>
                             <div className={styles.field}>
-                                <label>Lĩnh vực / Ngành nghề</label>
-                                <input value={form.industry} onChange={e => set('industry', e.target.value)} placeholder="VD: Tài chính, Y tế, Bán lẻ..." />
+                                <label>{t('assessment.industry')}</label>
+                                <input value={form.industry} onChange={e => set('industry', e.target.value)} placeholder={t('assessment.industryPlaceholder')} />
                             </div>
                             <div className={styles.field}>
-                                <label>Trạng thái tuân thủ hiện tại</label>
+                                <label>{t('assessment.complianceStatus')}</label>
                                 <select value={form.iso_status} onChange={e => set('iso_status', e.target.value)}>
-                                    <option value="">Chọn trạng thái</option>
-                                    <option value="Chưa triển khai">Chưa có gì, đang tìm hiểu</option>
-                                    <option value="Đang triển khai">Đang xây dựng chính sách</option>
-                                    <option value="Đã chứng nhận">Đã đạt chứng nhận (Tái đánh giá)</option>
+                                    <option value="">{t('assessment.complianceStatusSelect')}</option>
+                                    <option value="Chưa triển khai">{t('assessment.complianceNotStarted')}</option>
+                                    <option value="Đang triển khai">{t('assessment.complianceInProgress')}</option>
+                                    <option value="Đã chứng nhận">{t('assessment.complianceCertified')}</option>
                                 </select>
                             </div>
                             <div className={styles.field}>
-                                <label>Tổng số nhân viên</label>
+                                <label>{t('assessment.totalEmployees')}</label>
                                 <input type="number" value={form.employees || ''} onChange={e => set('employees', parseInt(e.target.value) || 0)} placeholder="0" />
                             </div>
                             <div className={styles.field}>
-                                <label>Số nhân sự IT / Bảo mật</label>
+                                <label>{t('assessment.itStaff')}</label>
                                 <input type="number" value={form.it_staff || ''} onChange={e => set('it_staff', parseInt(e.target.value) || 0)} placeholder="0" />
                             </div>
 
                             <div className={styles.fieldFull}>
                                 <div className={styles.scopeSection}>
                                     <div className={styles.labelWithInfo}>
-                                        <label className={styles.highlightLabel}>Phạm vi đánh giá (Scope)</label>
-                                        <div className={styles.infoWrap}>
-                                            <button
-                                                type="button"
-                                                className={`${styles.infoIcon} ${activeTooltip === 'scope_guide' ? styles.infoIconActive : ''}`}
-                                                onClick={() => setActiveTooltip(activeTooltip === 'scope_guide' ? null : 'scope_guide')}
-                                                title="Hướng dẫn chọn phạm vi"
-                                            >ⓘ</button>
-                                            {activeTooltip === 'scope_guide' && (
-                                                <div className={styles.tooltip}>
-                                                    <div className={styles.tooltipHeader}>
-                                                        <strong>🎯 Hướng dẫn chọn phạm vi đánh giá</strong>
-                                                        <button type="button" className={styles.tooltipClose} onClick={() => setActiveTooltip(null)}>✕</button>
-                                                    </div>
-                                                    <div className={styles.tooltipBody}>
-                                                        <div className={styles.tooltipSection}>
-                                                            <span className={styles.tooltipTag}>🏢 Toàn bộ tổ chức</span>
-                                                            <ul className={styles.tooltipList}>
-                                                                <li>Phù hợp khi lần đầu đánh giá hoặc chuẩn bị chứng nhận ISO</li>
-                                                                <li>Bao gồm tất cả phòng ban, hệ thống, quy trình trong tổ chức</li>
-                                                                <li>AI sẽ đánh giá tổng thể và đưa ra khuyến nghị ưu tiên toàn công ty</li>
-                                                            </ul>
-                                                        </div>
-                                                        <div className={styles.tooltipSection}>
-                                                            <span className={styles.tooltipTag}>👥 Theo phòng ban</span>
-                                                            <ul className={styles.tooltipList}>
-                                                                <li>Phù hợp khi đánh giá nội bộ từng bộ phận riêng lẻ</li>
-                                                                <li>VD: Chỉ đánh giá Phòng IT + Phòng Kế toán</li>
-                                                                <li>Liệt kê tên phòng ban cách nhau bởi dấu phẩy</li>
-                                                            </ul>
-                                                        </div>
-                                                        <div className={styles.tooltipSection}>
-                                                            <span className={styles.tooltipTag}>🖥️ Theo hệ thống</span>
-                                                            <ul className={styles.tooltipList}>
-                                                                <li>Phù hợp khi đánh giá một ứng dụng / hệ thống cụ thể</li>
-                                                                <li>VD: Core Banking, ERP SAP, Portal khách hàng</li>
-                                                                <li>AI sẽ tập trung phân tích rủi ro cho hệ thống đó</li>
-                                                            </ul>
-                                                        </div>
-                                                    </div>
-                                                </div>
-                                            )}
-                                        </div>
+                                        <label className={styles.highlightLabel}>{t('assessment.scopeTitle')}</label>
+                                        <button
+                                            type="button"
+                                            className={`${styles.infoIcon} ${activeTooltip === 'scope_guide' ? styles.infoIconActive : ''}`}
+                                            onClick={() => setActiveTooltip(activeTooltip === 'scope_guide' ? null : 'scope_guide')}
+                                            title={t('assessment.scopeGuideTooltipTitle')}
+                                        >ⓘ</button>
                                     </div>
                                     <p className={styles.helperText}>
-                                        Xác định phạm vi hệ thống / bộ phận nào được đưa vào đánh giá lần này.
+                                        {t('assessment.scopeHelp')}
                                     </p>
                                     <div className={styles.scopeOptions}>
                                         {[
-                                            { value: 'full', icon: '🏢', label: 'Toàn bộ tổ chức', desc: 'Tất cả hệ thống, phòng ban, quy trình' },
-                                            { value: 'by_department', icon: '👥', label: 'Theo phòng ban', desc: 'Một hoặc vài phòng ban cụ thể' },
-                                            { value: 'by_system', icon: '🖥️', label: 'Theo hệ thống', desc: 'Một hệ thống / ứng dụng nhất định' }
+                                            { value: 'full', icon: '🏢', label: t('assessment.scopeFull'), desc: t('assessment.scopeFullDesc') },
+                                            { value: 'by_department', icon: '👥', label: t('assessment.scopeDepartment'), desc: t('assessment.scopeDepartmentDesc') },
+                                            { value: 'by_system', icon: '🖥️', label: t('assessment.scopeSystem'), desc: t('assessment.scopeSystemDesc') }
                                         ].map(opt => (
                                             <label
                                                 key={opt.value}
@@ -734,8 +696,8 @@ export default function FormISOPage() {
                                             <div className={styles.labelWithInfo}>
                                                 <label>
                                                     {form.assessment_scope === 'by_department'
-                                                        ? 'Phòng ban được đánh giá'
-                                                        : 'Hệ thống / ứng dụng được đánh giá'}
+                                                        ? t('assessment.scopeDeptLabel')
+                                                        : t('assessment.scopeSysLabel')}
                                                     <span className={styles.required}> *</span>
                                                 </label>
                                             </div>
@@ -744,13 +706,13 @@ export default function FormISOPage() {
                                                 value={form.scope_description}
                                                 onChange={e => set('scope_description', e.target.value)}
                                                 placeholder={form.assessment_scope === 'by_department'
-                                                    ? 'VD: Phòng IT, Phòng Kế toán, Phòng Kinh doanh'
-                                                    : 'VD: Hệ thống ERP SAP, Portal khách hàng, Core Banking'}
+                                                    ? t('assessment.scopeDeptPlaceholder')
+                                                    : t('assessment.scopeSysPlaceholder')}
                                             />
                                             <p className={styles.helperText} style={{ marginBottom: 0 }}>
                                                 {form.assessment_scope === 'by_department'
-                                                    ? 'Liệt kê tên phòng ban, cách nhau bởi dấu phẩy. AI sẽ tập trung đánh giá các bộ phận này.'
-                                                    : 'Mô tả ngắn gọn tên và chức năng hệ thống. AI sẽ phân tích rủi ro tập trung cho hệ thống đó.'}
+                                                    ? t('assessment.scopeDeptHelp')
+                                                    : t('assessment.scopeSysHelp')}
                                             </p>
                                         </div>
                                     )}
@@ -763,41 +725,41 @@ export default function FormISOPage() {
                 return (
                     <div className={styles.stepContent}>
                         <h2 className={styles.sectionTitle}>
-                            Hạ tầng & Kỹ thuật mạng
+                            {t('assessment.step2Title')}
                         </h2>
                         <div className={styles.grid}>
                             <div className={styles.field}>
-                                <label>Số lượng máy chủ (Physical & VM)</label>
+                                <label>{t('assessment.serversLabel')}</label>
                                 <input type="number" value={form.servers || ''} onChange={e => set('servers', parseInt(e.target.value) || 0)} placeholder="0" />
                             </div>
                             <div className={styles.field}>
-                                <label>Tường lửa (Firewall)</label>
-                                <textarea className={styles.autoTextarea} value={form.firewalls} onChange={e => set('firewalls', e.target.value)} placeholder="VD: FortiGate 100F, Palo Alto..." rows={2} />
+                                <label>{t('assessment.firewallLabel')}</label>
+                                <textarea className={styles.autoTextarea} value={form.firewalls} onChange={e => set('firewalls', e.target.value)} placeholder={t('assessment.firewallPlaceholder')} rows={2} />
                             </div>
                             <div className={styles.field}>
-                                <label>Dịch vụ đám mây (Cloud)</label>
-                                <textarea className={styles.autoTextarea} value={form.cloud_provider} onChange={e => set('cloud_provider', e.target.value)} placeholder="VD: AWS, Azure, Google Cloud..." rows={2} />
+                                <label>{t('assessment.cloudLabel')}</label>
+                                <textarea className={styles.autoTextarea} value={form.cloud_provider} onChange={e => set('cloud_provider', e.target.value)} placeholder={t('assessment.cloudPlaceholder')} rows={2} />
                             </div>
                             <div className={styles.field}>
-                                <label>Giải pháp chống mã độc (AV/EDR)</label>
-                                <textarea className={styles.autoTextarea} value={form.antivirus} onChange={e => set('antivirus', e.target.value)} placeholder="VD: CrowdStrike, Kaspersky..." rows={2} />
+                                <label>{t('assessment.antivirusLabel')}</label>
+                                <textarea className={styles.autoTextarea} value={form.antivirus} onChange={e => set('antivirus', e.target.value)} placeholder={t('assessment.antivirusPlaceholder')} rows={2} />
                             </div>
                             <div className={styles.field}>
-                                <label>Công nghệ sao lưu (Backup)</label>
-                                <textarea className={styles.autoTextarea} value={form.backup_solution} onChange={e => set('backup_solution', e.target.value)} placeholder="VD: Veeam Backup, NAS Synology..." rows={2} />
+                                <label>{t('assessment.backupLabel')}</label>
+                                <textarea className={styles.autoTextarea} value={form.backup_solution} onChange={e => set('backup_solution', e.target.value)} placeholder={t('assessment.backupPlaceholder')} rows={2} />
                             </div>
                             <div className={styles.field}>
-                                <label>Hệ thống ghi nhật ký (SIEM/Log)</label>
-                                <textarea className={styles.autoTextarea} value={form.siem} onChange={e => set('siem', e.target.value)} placeholder="VD: Wazuh, Splunk, ElasticSearch..." rows={2} />
+                                <label>{t('assessment.siemLabel')}</label>
+                                <textarea className={styles.autoTextarea} value={form.siem} onChange={e => set('siem', e.target.value)} placeholder={t('assessment.siemPlaceholder')} rows={2} />
                             </div>
                             <div className={styles.field}>
-                                <label>Sự cố an ninh mạng (12 tháng qua)</label>
+                                <label>{t('assessment.incidentsLabel')}</label>
                                 <input type="number" value={form.incidents_12m || ''} onChange={e => set('incidents_12m', parseInt(e.target.value) || 0)} placeholder="0" />
                             </div>
                             <div className={styles.fieldCheckbox}>
                                 <label className={styles.checkLabel}>
                                     <input type="checkbox" checked={form.vpn} onChange={e => set('vpn', e.target.checked)} />
-                                    <span>Hệ thống có cấu hình VPN cho nhân viên từ xa</span>
+                                    <span>{t('assessment.vpnLabel')}</span>
                                 </label>
                             </div>
                         </div>
@@ -809,12 +771,12 @@ export default function FormISOPage() {
                         <div className={styles.controlHeader}>
                             <div>
                                 <h2 className={styles.sectionTitle}>
-                                    Biện pháp kiểm soát (Controls)
+                                    {t('assessment.controlsTitle')}
                                 </h2>
-                                <p className={styles.helperText}>Tiêu chuẩn: <strong>{currentStandard.name}</strong></p>
+                                <p className={styles.helperText} dangerouslySetInnerHTML={{ __html: t('assessment.controlsStandard', { name: currentStandard.name }) }} />
                             </div>
                             <div className={styles.counterBadge}>
-                                <span className={styles.countNum}>{form.implemented_controls.length}</span> / {totalControls} Đạt
+                                <span className={styles.countNum}>{form.implemented_controls.length}</span> / {totalControls} {t('assessment.passed')}
                             </div>
                         </div>
 
@@ -825,10 +787,10 @@ export default function FormISOPage() {
                                     style={{ width: `${compliancePercent}%` }}
                                 />
                             </div>
-                            <span className={styles.complianceLabel}>{compliancePercent}% tuân thủ</span>
+                            <span className={styles.complianceLabel}>{t('assessment.controlsCompliancePct', { percent: compliancePercent })}</span>
                         </div>
 
-                        <p className={styles.helperText}>Đánh dấu (✓) vào các biện pháp mà tổ chức <strong>đã triển khai thực tế</strong>:</p>
+                        <p className={styles.helperText} dangerouslySetInnerHTML={{ __html: t('assessment.controlsHelp') }} />
 
                         <div className={styles.accordionContainer}>
                             {currentStandard.controls.map((category, catIdx) => {
@@ -864,7 +826,7 @@ export default function FormISOPage() {
                                                             checked={isAllSelected}
                                                             onChange={() => toggleCategoryAll(category.controls, isAllSelected)}
                                                         />
-                                                        <strong>Chọn tất cả thuộc nhóm này</strong>
+                                                        <strong>{t('assessment.selectAllGroup')}</strong>
                                                     </label>
                                                 </div>
                                                 <div className={styles.controlGrid}>
@@ -885,7 +847,7 @@ export default function FormISOPage() {
                                                                             <span
                                                                                 className={styles.weightBadge}
                                                                                 style={{ borderColor: WEIGHT_COLOR[w], color: WEIGHT_COLOR[w] }}
-                                                                                title={`Mức độ quan trọng: ${WEIGHT_LABEL[w]} (${WEIGHT_SCORE[w]} điểm)`}
+                                                                                title={`${t('assessment.weightImportance')}: ${WEIGHT_LABEL[w]} (${WEIGHT_SCORE[w]} ${t('assessment.points')})`}
                                                                             >{w}</span>
                                                                         </div>
                                                                         <span className={styles.ctrlLabel}>{ctrl.label}</span>
@@ -895,7 +857,7 @@ export default function FormISOPage() {
                                                                     type="button"
                                                                     className={`${styles.infoIcon} ${activeTooltip === ctrl.id ? styles.infoIconActive : ''}`}
                                                                     onClick={(e) => { e.stopPropagation(); const newId = activeTooltip === ctrl.id ? null : ctrl.id; setActiveTooltip(newId); if (newId) fetchEvidenceForControl(newId) }}
-                                                                    title="Chi tiết & upload bằng chứng"
+                                                                    title={t('assessment.controlDetailEvidence')}
                                                                 >ⓘ</button>
                                                             </div>
                                                         )
@@ -913,129 +875,63 @@ export default function FormISOPage() {
                 return (
                     <div className={styles.stepContent}>
                         <h2 className={styles.sectionTitle}>
-                            Mô tả hệ thống & Tổng kết
+                            {t('assessment.step4Title')}
                         </h2>
-                        <p className={styles.helperText}>Diễn giải kiến trúc mạng hoặc đặc thù hệ thống để AI đưa ra đánh giá chính xác nhất:</p>
+                        <p className={styles.helperText}>{t('assessment.step4Desc')}</p>
 
                         <div className={styles.fieldFull}>
                             <div className={styles.labelWithInfo}>
-                                <label>Mô tả kiến trúc mạng / Topology</label>
-                                <div className={styles.infoWrap}>
-                                    <button
-                                        type="button"
-                                        className={styles.infoIcon}
-                                        onClick={() => setActiveTooltip(activeTooltip === 'topology_guide' ? null : 'topology_guide')}
-                                        title="Hướng dẫn mô tả hệ thống"
-                                    >ⓘ</button>
-                                    {activeTooltip === 'topology_guide' && (
-                                        <div className={`${styles.tooltip} ${styles.tooltipWide}`}>
-                                            <div className={styles.tooltipHeader}>
-                                                <strong>💡 Hướng dẫn mô tả hệ thống</strong>
-                                                <button type="button" className={styles.tooltipClose} onClick={() => setActiveTooltip(null)}>✕</button>
-                                            </div>
-                                            <div className={styles.tooltipBody}>
-                                                <p className={styles.tooltipNote}>Chưa hỗ trợ đọc ảnh/file. Vui lòng <strong>mô tả bằng văn bản</strong> theo gợi ý:</p>
-                                                <div className={styles.tooltipSection}>
-                                                    <span className={styles.tooltipTag}>🌐 Network Architecture (Kiến trúc mạng)</span>
-                                                    <ul className={styles.tooltipList}>
-                                                        <li>Số lượng <strong>VLAN</strong> (Virtual LAN) và mục đích: Server, User, Guest, Management</li>
-                                                        <li><strong>DMZ Zone</strong> (Vùng mạng biên): có không, chứa Web Server, Mail Gateway, DNS</li>
-                                                        <li><strong>Firewall</strong> (Tường lửa): model, vị trí biên mạng / giữa các security zone</li>
-                                                        <li>Internet uplink: số <strong>ISP</strong>, có <strong>BGP failover</strong> / load balancing không</li>
-                                                    </ul>
-                                                </div>
-                                                <div className={styles.tooltipSection}>
-                                                    <span className={styles.tooltipTag}>🖥️ Server Infrastructure (Hạ tầng máy chủ)</span>
-                                                    <ul className={styles.tooltipList}>
-                                                        <li>Máy chủ vật lý (Physical) vs <strong>VM</strong> (Virtual Machine) — nền tảng: VMware / Hyper-V / KVM</li>
-                                                        <li>OS: Windows Server / Linux / cả hai</li>
-                                                        <li>Dịch vụ: <strong>AD</strong> (Active Directory), DNS, DHCP, Web, Database, Mail</li>
-                                                        <li><strong>HA</strong> (High Availability) / Clustering / Load Balancer nếu có</li>
-                                                    </ul>
-                                                </div>
-                                                <div className={styles.tooltipSection}>
-                                                    <span className={styles.tooltipTag}>🔒 Security Stack (Giải pháp bảo mật)</span>
-                                                    <ul className={styles.tooltipList}>
-                                                        <li><strong>EDR/XDR</strong> (Endpoint Detection & Response): tên sản phẩm, phạm vi triển khai</li>
-                                                        <li><strong>SIEM</strong> (Security Information & Event Management): giải pháp, lưu log bao lâu</li>
-                                                        <li><strong>VPN</strong> (Virtual Private Network): IPSec / SSL, ai được dùng</li>
-                                                        <li><strong>Backup</strong> (Sao lưu): giải pháp, tần suất, offsite / cloud</li>
-                                                        <li><strong>WAF</strong> (Web Application Firewall), <strong>IDS/IPS</strong>, <strong>DLP</strong> (Data Loss Prevention) nếu có</li>
-                                                    </ul>
-                                                </div>
-                                                <div className={styles.tooltipSection}>
-                                                    <span className={styles.tooltipTag}>📝 Ví dụ mẫu</span>
-                                                    <p className={styles.tooltipExample}>"Mạng chia 5 VLAN: Server (10), User (20), Guest (99), Management (1), DMZ Zone (50). Firewall FortiGate 200F tại biên, block all inbound mặc định. DMZ chứa Web Server Nginx + Mail Gateway. Core Banking trên 2 server Dell R750 HA Cluster, kết nối qua Cisco Catalyst 9300. VPN SSL cho 200 nhân viên remote. Wazuh SIEM thu log toàn bộ server, lưu 12 tháng."</p>
-                                                </div>
-                                            </div>
-                                        </div>
-                                    )}
-                                </div>
+                                <label>{t('assessment.networkTopology')}</label>
+                                <button
+                                    type="button"
+                                    className={`${styles.infoIcon} ${activeTooltip === 'topology_guide' ? styles.infoIconActive : ''}`}
+                                    onClick={() => setActiveTooltip(activeTooltip === 'topology_guide' ? null : 'topology_guide')}
+                                    title={t('assessment.topologyGuideTooltipTitle')}
+                                >ⓘ</button>
                             </div>
                             <textarea
                                 className={styles.textarea}
                                 value={form.network_diagram}
                                 onChange={e => set('network_diagram', e.target.value)}
-                                placeholder={"Ví dụ:\n- Mạng chia 3 VLAN: Server (10), User (20), WiFi Khách (99)\n- Traffic ra vào đều qua Firewall FortiGate.\n- Server nội bộ không public ra ngoài.\n- Cổng SSH đóng, chỉ truy cập qua VPN nội bộ."}
+                                placeholder={t('assessment.networkTopologyPlaceholder')}
                                 rows={6}
                             />
                         </div>
 
                         <div className={styles.fieldFull}>
                             <div className={styles.labelWithInfo}>
-                                <label>Ghi chú bổ sung (Tùy chọn)</label>
-                                <div className={styles.infoWrap}>
-                                    <button
-                                        type="button"
-                                        className={styles.infoIcon}
-                                        onClick={() => setActiveTooltip(activeTooltip === 'notes_guide' ? null : 'notes_guide')}
-                                        title="Gợi ý ghi chú"
-                                    >ⓘ</button>
-                                    {activeTooltip === 'notes_guide' && (
-                                        <div className={styles.tooltip}>
-                                            <div className={styles.tooltipHeader}>
-                                                <strong>💡 Gợi ý nội dung ghi chú</strong>
-                                                <button type="button" className={styles.tooltipClose} onClick={() => setActiveTooltip(null)}>✕</button>
-                                            </div>
-                                            <div className={styles.tooltipBody}>
-                                                <div className={styles.tooltipSection}>
-                                                    <ul className={styles.tooltipList}>
-                                                        <li>Sự cố gần đây: <strong>Phishing</strong> (lừa đảo qua email), <strong>Ransomware</strong> (mã độc tống tiền), <strong>Data Leak</strong> (rò rỉ dữ liệu)</li>
-                                                        <li>Known vulnerabilities (Lỗ hổng đã biết) nhưng chưa vá</li>
-                                                        <li>Compliance yêu cầu đặc thù: <strong>PCI-DSS</strong> (thanh toán thẻ), <strong>HIPAA</strong> (y tế), <strong>SOC 2</strong></li>
-                                                        <li>Kế hoạch nâng cấp hạ tầng (Roadmap) sắp tới</li>
-                                                        <li>Security budget (Ngân sách ATTT) dự kiến năm nay</li>
-                                                    </ul>
-                                                </div>
-                                            </div>
-                                        </div>
-                                    )}
-                                </div>
+                                <label>{t('assessment.additionalNotes')}</label>
+                                <button
+                                    type="button"
+                                    className={`${styles.infoIcon} ${activeTooltip === 'notes_guide' ? styles.infoIconActive : ''}`}
+                                    onClick={() => setActiveTooltip(activeTooltip === 'notes_guide' ? null : 'notes_guide')}
+                                    title={t('assessment.notesGuideTooltipTitle')}
+                                >ⓘ</button>
                             </div>
                             <textarea
                                 className={styles.textarea}
                                 value={form.notes}
                                 onChange={e => set('notes', e.target.value)}
-                                placeholder="Bất kỳ thông tin về điểm yếu, rủi ro nào bạn đang lo ngại..."
+                                placeholder={t('assessment.notesPlaceholder')}
                                 rows={3}
                             />
                         </div>
 
                         <div className={styles.modelSelectorWrap}>
                             <div className={styles.modelSelectorHeader}>
-                                <h4 className={styles.modelSelectorTitle}>Chế độ AI</h4>
+                                <h4 className={styles.modelSelectorTitle}>{t('assessment.aiMode')}</h4>
                                 <button
                                     type="button"
-                                    className={styles.infoIcon}
+                                    className={`${styles.infoIcon} ${activeTooltip === 'model_info' ? styles.infoIconActive : ''}`}
                                     onClick={() => setActiveTooltip(activeTooltip === 'model_info' ? null : 'model_info')}
-                                    title="Xem chi tiết luồng xử lý dữ liệu"
+                                    title={t('assessment.aiModeDetailTitle')}
                                 >ⓘ</button>
                             </div>
                             <div className={styles.modelCompactRow}>
                                 {[
-                                    { id: 'local', icon: '🔒', label: 'Local Only', badge: 'Bảo mật', badgeColor: styles.modelBadgeSafe },
-                                    { id: 'hybrid', icon: '⚡', label: 'Hybrid', badge: 'Khuyên dùng', badgeColor: styles.modelBadgeDefault },
-                                    { id: 'cloud', icon: '☁️', label: 'Cloud', badge: 'Chất lượng cao', badgeColor: styles.modelBadgeCloud }
+                                    { id: 'local', icon: '🔒', label: t('assessment.aiModeLocal'), badge: t('assessment.aiModeLocalBadge'), badgeColor: styles.modelBadgeSafe },
+                                    { id: 'hybrid', icon: '⚡', label: t('assessment.aiModeHybrid'), badge: t('assessment.aiModeHybridBadge'), badgeColor: styles.modelBadgeDefault },
+                                    { id: 'cloud', icon: '☁️', label: t('assessment.aiModeCloud'), badge: t('assessment.aiModeCloudBadge'), badgeColor: styles.modelBadgeCloud }
                                 ].map(opt => (
                                     <button
                                         key={opt.id}
@@ -1052,90 +948,24 @@ export default function FormISOPage() {
                                 ))}
                             </div>
 
-                            {activeTooltip === 'model_info' && (
-                                <div className={styles.modelDetailPanel}>
-                                    <div className={styles.tooltipHeader}>
-                                        <strong>🔐 Luồng xử lý dữ liệu theo chế độ AI</strong>
-                                        <button type="button" className={styles.tooltipClose} onClick={() => setActiveTooltip(null)}>✕</button>
-                                    </div>
-                                    <div className={styles.modelDetailBody}>
-                                        <div className={styles.modelDetailItem}>
-                                            <div className={styles.modelDetailHead}>
-                                                <span>🔒</span> <strong>Local Only</strong> <span className={styles.modelDetailTag}>SecurityLM</span>
-                                            </div>
-                                            <div className={styles.modelDetailFlow}>
-                                                <span className={styles.flowStep}>📋 Form Data</span>
-                                                <span className={styles.flowArrow}>→</span>
-                                                <span className={`${styles.flowStep} ${styles.flowLocal}`}>🖥️ SecurityLM (Local)</span>
-                                                <span className={styles.flowArrow}>→</span>
-                                                <span className={`${styles.flowStep} ${styles.flowLocal}`}>🖥️ SecurityLM (Local)</span>
-                                                <span className={styles.flowArrow}>→</span>
-                                                <span className={styles.flowStep}>📄 Report</span>
-                                            </div>
-                                            <p className={styles.modelDetailDesc}>
-                                                <strong>Dữ liệu không rời server.</strong> Phase 1 + Phase 2 đều xử lý trên máy cục bộ.
-                                                Phù hợp: air-gap, dữ liệu mật, quân sự. Nhược điểm: chậm hơn, báo cáo cơ bản.
-                                            </p>
-                                        </div>
-                                        <div className={styles.modelDetailDivider} />
-                                        <div className={styles.modelDetailItem}>
-                                            <div className={styles.modelDetailHead}>
-                                                <span>⚡</span> <strong>Hybrid</strong> <span className={styles.modelDetailTag}>SecurityLM → OpenClaude</span>
-                                            </div>
-                                            <div className={styles.modelDetailFlow}>
-                                                <span className={styles.flowStep}>📋 Form Data</span>
-                                                <span className={styles.flowArrow}>→</span>
-                                                <span className={`${styles.flowStep} ${styles.flowLocal}`}>🖥️ SecurityLM (Local)</span>
-                                                <span className={styles.flowArrow}>→</span>
-                                                <span className={styles.flowStep}>📊 Raw GAP (ẩn danh)</span>
-                                                <span className={styles.flowArrow}>→</span>
-                                                <span className={`${styles.flowStep} ${styles.flowCloud}`}>☁️ OpenClaude</span>
-                                                <span className={styles.flowArrow}>→</span>
-                                                <span className={styles.flowStep}>📄 Report</span>
-                                            </div>
-                                            <p className={styles.modelDetailDesc}>
-                                                <strong>Dữ liệu hạ tầng chỉ xử lý local.</strong> Phase 1 phân tích bảo mật cục bộ → kết quả GAP (không chứa IP, config) gửi lên cloud để format báo cáo chuyên nghiệp. Cân bằng bảo mật & chất lượng.
-                                            </p>
-                                        </div>
-                                        <div className={styles.modelDetailDivider} />
-                                        <div className={styles.modelDetailItem}>
-                                            <div className={styles.modelDetailHead}>
-                                                <span>☁️</span> <strong>Cloud Only</strong> <span className={styles.modelDetailTag}>OpenClaude</span>
-                                            </div>
-                                            <div className={styles.modelDetailFlow}>
-                                                <span className={styles.flowStep}>📋 Form Data</span>
-                                                <span className={styles.flowArrow}>→</span>
-                                                <span className={`${styles.flowStep} ${styles.flowCloud}`}>☁️ OpenClaude (Phase 1)</span>
-                                                <span className={styles.flowArrow}>→</span>
-                                                <span className={`${styles.flowStep} ${styles.flowCloud}`}>☁️ OpenClaude (Phase 2)</span>
-                                                <span className={styles.flowArrow}>→</span>
-                                                <span className={styles.flowStep}>📄 Report</span>
-                                            </div>
-                                            <p className={styles.modelDetailDesc}>
-                                                <strong>⚠️ Toàn bộ dữ liệu gửi cloud.</strong> Bao gồm: thông tin hạ tầng, firewall, server, SIEM. Báo cáo chi tiết nhất, tốc độ nhanh. Chỉ dùng khi dữ liệu không nhạy cảm.
-                                            </p>
-                                        </div>
-                                    </div>
-                                </div>
-                            )}
                         </div>
 
                         <div className={styles.summaryBox}>
-                            <h4>Kiểm tra trước khi đánh giá</h4>
+                            <h4>{t('assessment.preSubmitCheck')}</h4>
                             <ul>
-                                <li>Tiêu chuẩn: <strong>{currentStandard.name}</strong></li>
-                                <li>Tổ chức: <strong>{form.org_name || 'Chưa nhập'}</strong></li>
-                                <li>Quy mô: <strong>{form.employees} nhân sự</strong> ({form.servers} máy chủ)</li>
-                                <li>Phạm vi đánh giá: <strong>
-                                    {form.assessment_scope === 'full' ? '🏢 Toàn bộ tổ chức' :
-                                     form.assessment_scope === 'by_department' ? `👥 Theo phòng ban${form.scope_description ? ` — ${form.scope_description}` : ''}` :
-                                     `🖥️ Theo hệ thống${form.scope_description ? ` — ${form.scope_description}` : ''}`}
+                                <li>{t('assessment.preSubmitStandard')}: <strong>{currentStandard.name}</strong></li>
+                                <li>{t('assessment.preSubmitOrg')}: <strong>{form.org_name || t('assessment.preSubmitOrgEmpty')}</strong></li>
+                                <li>{t('assessment.preSubmitSize')}: <strong>{t('assessment.preSubmitEmployees', { count: form.employees })}</strong> ({t('assessment.preSubmitServers', { count: form.servers })})</li>
+                                <li>{t('assessment.preSubmitScope')}: <strong>
+                                    {form.assessment_scope === 'full' ? t('assessment.preSubmitScopeFull') :
+                                     form.assessment_scope === 'by_department' ? `${t('assessment.preSubmitScopeDept')}${form.scope_description ? ` — ${form.scope_description}` : ''}` :
+                                     `${t('assessment.preSubmitScopeSystem')}${form.scope_description ? ` — ${form.scope_description}` : ''}`}
                                 </strong></li>
-                                <li>Mức tuân thủ sơ bộ: <strong>{form.implemented_controls.length}/{totalControls} Controls</strong> ({compliancePercent}%)</li>
-                                <li>Chế độ AI: <strong>
-                                    {form.model_mode === 'local' ? '🔒 LocalAI Only (SecurityLM)' :
-                                     form.model_mode === 'cloud' ? '☁️ Cloud Only (OpenClaude)' :
-                                     '⚡ Hybrid (SecurityLM + OpenClaude)'}
+                                <li>{t('assessment.preSubmitCompliance')}: <strong>{t('assessment.preSubmitControls', { implemented: form.implemented_controls.length, total: totalControls })}</strong> ({compliancePercent}%)</li>
+                                <li>{t('assessment.preSubmitAiMode')}: <strong>
+                                    {form.model_mode === 'local' ? t('assessment.preSubmitAiLocal') :
+                                     form.model_mode === 'cloud' ? t('assessment.preSubmitAiCloud') :
+                                     t('assessment.preSubmitAiHybrid')}
                                 </strong></li>
                             </ul>
                         </div>
@@ -1282,16 +1112,16 @@ export default function FormISOPage() {
                     {result.status === 'failed' || result.error ? (
                         <div className={styles.errorBox}>
                             <h3>{t('assessment.errorTitle')}</h3>
-                            <p className={styles.errorDetail}>{result.report || 'Timeout hoặc lỗi phân tích.'}</p>
+                            <p className={styles.errorDetail}>{result.report || t('assessment.errorTimeout')}</p>
                             {(result.report || '').includes('could not load model') || (result.report || '').includes('rpc error') ? (
                                 <div className={styles.errorGuidance}>
-                                    <strong>🔧 Nguyên nhân:</strong> LocalAI không load được model (thiếu RAM hoặc model file chưa tải).
-                                    <br /><strong>Giải pháp ngay:</strong> Chuyển sang chế độ <strong>Hybrid</strong> hoặc <strong>Cloud</strong> ở Bước 4 → đánh giá lại.
+                                    <strong>🔧 {t('assessment.errorCause')}:</strong> {t('assessment.errorModelLoad')}
+                                    <br /><strong>{t('assessment.errorFix')}:</strong> <span dangerouslySetInnerHTML={{ __html: t('assessment.errorModelLoadFix') }} />
                                 </div>
                             ) : (result.report || '').includes('Busy') || (result.report || '').includes('Tạm dừng') ? (
                                 <div className={styles.errorGuidance}>
-                                    <strong>⏳ Nguyên nhân:</strong> AI đang bận xử lý tác vụ khác (tóm tắt tin tức).
-                                    <br /><strong>Giải pháp:</strong> Chờ 1-2 phút rồi thử lại, hoặc chuyển sang chế độ <strong>Hybrid/Cloud</strong>.
+                                    <strong>⏳ {t('assessment.errorCause')}:</strong> {t('assessment.errorBusy')}
+                                    <br /><strong>{t('assessment.errorFix')}:</strong> <span dangerouslySetInnerHTML={{ __html: t('assessment.errorBusyFix') }} />
                                 </div>
                             ) : null}
                             <div style={{ display: 'flex', gap: '0.75rem', marginTop: '1rem', flexWrap: 'wrap' }}>
@@ -1316,10 +1146,7 @@ export default function FormISOPage() {
                             <h3 className={styles.processingTitle}>{t('assessment.processingTitle')}</h3>
                             <div className={styles.processingTabAway}>
                                 <span>💡</span>
-                                <span>
-                                    <strong>Bạn có thể chuyển sang tab khác</strong> — hệ thống xử lý nền,
-                                    tự động cập nhật khi xong. Quay lại tab <strong>Lịch sử</strong> để xem kết quả.
-                                </span>
+                                <span dangerouslySetInnerHTML={{ __html: t('assessment.processingTabAway') }} />
                             </div>
                             {/* BUG 2 FIX: progress bar driven by server polling data */}
                             <div className={styles.processingProgressWrap}>
@@ -1330,18 +1157,18 @@ export default function FormISOPage() {
                                     />
                                 </div>
                                 <span className={styles.processingProgressMsg}>
-                                    {result.progress?.message || (result.status === 'pending' ? 'Đang xếp hàng...' : 'Đang khởi động...')}
+                                    {result.progress?.message || (result.status === 'pending' ? t('assessment.processingPending') : t('assessment.processingStarting'))}
                                     <span className={styles.processingProgressPct}> {result.progress?.percent || 0}%</span>
                                 </span>
                             </div>
                             <p className={styles.processingDesc}>
-                                Tổ chức: <strong>{result.org_name || form.org_name || '—'}</strong> ·{' '}
+                                {t('assessment.processingOrg')}: <strong>{result.org_name || form.org_name || '—'}</strong> ·{' '}
                                 {getStdLabel(result.standard || form.assessment_standard)} ·{' '}
                                 {form.model_mode === 'local'
-                                    ? 'Local AI — thường mất 2–5 phút.'
+                                    ? t('assessment.processingLocalTime')
                                     : form.model_mode === 'hybrid'
-                                    ? 'Hybrid — thường mất 1–3 phút.'
-                                    : 'Cloud AI — thường mất 30–60 giây.'}
+                                    ? t('assessment.processingHybridTime')
+                                    : t('assessment.processingCloudTime')}
                             </p>
                             {/* BUG 2 FIX: step indicators driven by progress.percent, not hardcoded */}
                             <div className={styles.processingSteps}>
@@ -1358,7 +1185,7 @@ export default function FormISOPage() {
                                                 {ragDone ? '✓' : '1'}
                                             </span>
                                             <div className={styles.procStepText}>
-                                                <span className={styles.procStepLabel}>RAG Lookup</span>
+                                                <span className={styles.procStepLabel}>{t('assessment.ragLookup')}</span>
                                                 <span className={styles.procStepDesc}>ChromaDB — {getStdLabel(result.standard || form.assessment_standard).split('(')[0].trim()}</span>
                                             </div>
                                         </div>
@@ -1371,7 +1198,7 @@ export default function FormISOPage() {
                                                 <span className={styles.procStepLabel}>
                                                     Phase 1 — {form.model_mode === 'cloud' ? 'OpenClaude' : 'SecurityLM'}
                                                 </span>
-                                                <span className={styles.procStepDesc}>Phân tích GAP theo từng category controls</span>
+                                                <span className={styles.procStepDesc}>{t('assessment.gapAnalysis')}</span>
                                             </div>
                                         </div>
                                         <div className={styles.procStep} style={!p1Done ? { opacity: 0.4 } : {}}>
@@ -1380,7 +1207,7 @@ export default function FormISOPage() {
                                                 <span className={styles.procStepLabel}>
                                                     Phase 2 — {form.model_mode === 'local' ? 'Meta-Llama 8B' : 'OpenClaude'}
                                                 </span>
-                                                <span className={styles.procStepDesc}>Định dạng báo cáo Markdown + Risk Register</span>
+                                                <span className={styles.procStepDesc}>{t('assessment.reportFormat')}</span>
                                             </div>
                                         </div>
                                     </>)
@@ -1388,7 +1215,7 @@ export default function FormISOPage() {
                             </div>
                             <div className={styles.pollingInfo} style={{ justifyContent: 'center', marginTop: '0.75rem' }}>
                                 <span className={styles.pollingDot} />
-                                <span>Tự động kiểm tra mỗi {POLL_INTERVAL/1000} giây · ID: <code style={{fontSize:'0.72rem',opacity:0.7}}>{result.id?.slice(0,8)}</code></span>
+                                <span>{t('assessment.autoCheckEvery', { seconds: POLL_INTERVAL/1000 })} · ID: <code style={{fontSize:'0.72rem',opacity:0.7}}>{result.id?.slice(0,8)}</code></span>
                             </div>
                         </div>
                     ) : (
@@ -1403,7 +1230,7 @@ export default function FormISOPage() {
                                 const implCount = result.json_data?.compliance?.implemented_count ?? form.implemented_controls.length
                                 const missingCount = result.json_data?.compliance?.missing_count ?? (totalControls - form.implemented_controls.length)
                                 const totalCount = (implCount + missingCount) || totalControls
-                                const displayOrg = result.org_name || form.org_name || 'Tổ chức'
+                                const displayOrg = result.org_name || form.org_name || t('assessment.processingOrg')
                                 const displayStd = getStdLabel(result.standard || form.assessment_standard)
                                 return (
                             <div className={styles.scoreHero}>
@@ -1426,7 +1253,7 @@ export default function FormISOPage() {
                                                 displayPct >= 25 ? styles.scoreNumPartial :
                                                 styles.scoreNumLow
                                             }`}>{displayPctStr}%</span>
-                                            <span className={styles.scoreUnit}>Tuân thủ</span>
+                                            <span className={styles.scoreUnit}>{t('assessment.complianceLabel')}</span>
                                         </div>
                                     </div>
                                 </div>
@@ -1439,25 +1266,25 @@ export default function FormISOPage() {
                                         displayPct >= 25 ? styles.badgePartial :
                                         styles.badgeLow
                                     }`}>
-                                        {displayPct >= 80 ? '✅ Tuân thủ cao' :
-                                         displayPct >= 50 ? '🟡 Tuân thủ một phần' :
-                                         displayPct >= 25 ? '🟠 Tuân thủ thấp' :
-                                         '🔴 Không tuân thủ'}
+                                        {displayPct >= 80 ? t('assessment.complianceHigh') :
+                                         displayPct >= 50 ? t('assessment.compliancePartial') :
+                                         displayPct >= 25 ? t('assessment.complianceLow') :
+                                         t('assessment.complianceNone')}
                                     </div>
                                     <div className={styles.scoreStats}>
                                         <div className={styles.scoreStat}>
                                             <span className={styles.scoreStatNum}>{implCount}</span>
-                                            <span className={styles.scoreStatLabel}>Controls đạt</span>
+                                            <span className={styles.scoreStatLabel}>{t('assessment.controlsPassed')}</span>
                                         </div>
                                         <div className={styles.scoreStatDivider} />
                                         <div className={styles.scoreStat}>
                                             <span className={styles.scoreStatNum}>{missingCount}</span>
-                                            <span className={styles.scoreStatLabel}>Còn thiếu</span>
+                                            <span className={styles.scoreStatLabel}>{t('assessment.controlsMissing')}</span>
                                         </div>
                                         <div className={styles.scoreStatDivider} />
                                         <div className={styles.scoreStat}>
                                             <span className={styles.scoreStatNum}>{totalCount}</span>
-                                            <span className={styles.scoreStatLabel}>Tổng controls</span>
+                                            <span className={styles.scoreStatLabel}>{t('assessment.controlsTotal')}</span>
                                         </div>
                                     </div>
                                     {result.model_used && (
@@ -1472,7 +1299,7 @@ export default function FormISOPage() {
                             })()}
 
                             <div className={styles.breakdownPanel}>
-                                <h4 className={styles.breakdownTitle}>Phân tích theo Category (Weighted)</h4>
+                                <h4 className={styles.breakdownTitle}>{t('assessment.categoryBreakdown')}</h4>
                                 <div className={styles.breakdownGrid}>
                                     {(resultCategoryBreakdown || categoryBreakdown).map((cat, idx) => (
                                         <div key={idx} className={styles.breakdownItem}>
@@ -1498,8 +1325,8 @@ export default function FormISOPage() {
                                                 />
                                             </div>
                                             <div className={styles.breakdownMeta}>
-                                                <span>{cat.implemented}/{cat.total} controls</span>
-                                                <span>{cat.weightScore}/{cat.maxWeightScore} điểm</span>
+                                                <span>{cat.implemented}/{cat.total} {t('assessment.controls')}</span>
+                                                <span>{cat.weightScore}/{cat.maxWeightScore} {t('assessment.points')}</span>
                                             </div>
                                         </div>
                                     ))}
@@ -1508,10 +1335,10 @@ export default function FormISOPage() {
 
                             {result.json_data && (
                                 <div className={styles.jsonDashboard}>
-                                    <h4 className={styles.jsonDashTitle}>Dashboard Đánh giá (Structured Data)</h4>
+                                    <h4 className={styles.jsonDashTitle}>{t('assessment.dashboardTitle')}</h4>
                                     <div className={styles.jsonDashGrid}>
                                         <div className={styles.jsonDashCard}>
-                                            <div className={styles.jsonDashCardTitle}>Phân loại Rủi ro</div>
+                                            <div className={styles.jsonDashCardTitle}>{t('assessment.riskClassification')}</div>
                                             <div className={styles.riskSummaryRow}>
                                                 {[
                                                     { key: 'critical_gaps', label: 'Critical', color: 'var(--accent-red)' },
@@ -1528,7 +1355,7 @@ export default function FormISOPage() {
                                         </div>
 
                                         <div className={styles.jsonDashCard}>
-                                            <div className={styles.jsonDashCardTitle}>Tuân thủ theo Trọng số</div>
+                                            <div className={styles.jsonDashCardTitle}>{t('assessment.complianceByWeight')}</div>
                                             {['critical','high','medium','low'].map(w => {
                                                 const bd = result.json_data.weight_breakdown?.[w]
                                                 if (!bd || bd.total === 0) return null
@@ -1548,7 +1375,7 @@ export default function FormISOPage() {
 
                                         {result.json_data.top_gaps?.length > 0 && (
                                             <div className={`${styles.jsonDashCard} ${styles.jsonDashCardWide}`}>
-                                                <div className={styles.jsonDashCardTitle}>Controls Thiếu Ưu tiên Cao</div>
+                                                <div className={styles.jsonDashCardTitle}>{t('assessment.highPriorityGaps')}</div>
                                                 <div className={styles.topGapsList}>
                                                     {result.json_data.top_gaps.slice(0, 8).map((gap, i) => (
                                                         <div key={i} className={styles.topGapItem}>
@@ -1566,7 +1393,7 @@ export default function FormISOPage() {
                                         )}
 
                                         <div className={`${styles.jsonDashCard} ${styles.jsonDashExport}`}>
-                                            <div className={styles.jsonDashCardTitle}>Export Dữ liệu</div>
+                                            <div className={styles.jsonDashCardTitle}>{t('assessment.exportData')}</div>
                                             <button
                                                 className={styles.jsonExportBtn}
                                                 onClick={() => {
@@ -1578,10 +1405,9 @@ export default function FormISOPage() {
                                                     a.click()
                                                     URL.revokeObjectURL(url)
                                                 }}
-                                            >📥 Tải JSON</button>
+                                            >{t('assessment.downloadJson')}</button>
                                             <p className={styles.jsonExportNote}>
-                                                Dữ liệu có cấu trúc: compliance %, risk counts, weight breakdown, top gaps.
-                                                Dùng để tích hợp dashboard/BI ngoài.
+                                                {t('assessment.exportNote')}
                                             </p>
                                         </div>
                                     </div>
@@ -1593,7 +1419,7 @@ export default function FormISOPage() {
                                     navigator.clipboard?.writeText(result.report || '')
                                     .catch(() => {})
                                 }}>
-                                    Copy report
+                                    {t('assessment.copyReport')}
                                 </button>
                                 <button className={styles.reportActionBtn} onClick={() => {
                                     // BUG 5 FIX: use server-stored compliance_percent from result
@@ -1601,7 +1427,7 @@ export default function FormISOPage() {
                                         ? parseFloat(result.compliance_percent)
                                         : parseFloat(compliancePercent)
                                     const pdfPctStr = pdfPct.toFixed(1)
-                                    const pdfOrg = result.org_name || form.org_name || 'Tổ chức'
+                                    const pdfOrg = result.org_name || form.org_name || t('assessment.processingOrg')
                                     const pdfStd = getStdLabel(result.standard || form.assessment_standard)
                                     const pdfPctColor = pdfPct >= 80 ? '#10b981' : pdfPct >= 50 ? '#3b82f6' : pdfPct >= 25 ? '#f59e0b' : '#ef4444'
                                     const implCount = result.json_data?.compliance?.implemented_count ?? form.implemented_controls.length
@@ -1651,7 +1477,7 @@ ${escHtml(result.report || '')}
                                     const w = window.open('', '_blank')
                                     if (w) { w.document.write(reportHtml); w.document.close() }
                                 }}>
-                                    📄 Xem / Xuất PDF
+                                    {t('assessment.viewExportPdf')}
                                 </button>
                                 {result.id && (
                                     <button className={styles.reportActionBtn} onClick={async () => {
@@ -1668,11 +1494,11 @@ ${escHtml(result.report || '')}
                                             }
                                         } catch (e) { console.error('PDF export failed:', e) }
                                     }}>
-                                        📥 Tải PDF (Server)
+                                        {t('assessment.downloadPdfServer')}
                                     </button>
                                 )}
                                 <button className={styles.reportActionBtn} onClick={() => window.print()}>
-                                    🖨️ In báo cáo
+                                    {t('assessment.printReport')}
                                 </button>
                                 <button className={styles.reportActionBtnSecondary} onClick={() => setActiveTab('form')}>
                                     {t('assessment.newAssessment')}
@@ -1692,7 +1518,7 @@ ${escHtml(result.report || '')}
                                                 set('model_mode', opt.id)
                                                 setTimeout(() => submit(), 100)
                                             }}
-                                            title={`Đánh giá lại với ${opt.label} AI`}
+                                            title={t('assessment.reAssessWithMode', { mode: opt.label })}
                                         >
                                             {opt.icon} {opt.label}
                                         </button>
@@ -1718,9 +1544,7 @@ ${escHtml(result.report || '')}
                         <h2 className={styles.sectionTitle}>{t('assessment.historyTitle')}</h2>
                         <button className={styles.refreshBtn} onClick={fetchHistory}>{t('assessment.historyRefresh')}</button>
                     </div>
-                    <p className={styles.helperText}>
-                        Hệ thống RAG xử lý ngầm. Báo cáo được lưu trên máy chủ · Tổng: <strong>{assessmentHistory.length}</strong> đánh giá
-                    </p>
+                    <p className={styles.helperText} dangerouslySetInnerHTML={{ __html: t('assessment.historyNote', { count: assessmentHistory.length }) }} />
 
                     {assessmentHistory.length === 0 ? (
                         <div className={styles.emptyHistory}>
@@ -1738,7 +1562,7 @@ ${escHtml(result.report || '')}
                                             <span className={styles.histDate}>{hist.date}</span>
                                         </div>
                                         <div className={styles.histStd}>
-                                            Tiêu chuẩn: <strong>{hist.standard}</strong>
+                                            {t('assessment.historyStandard')}: <strong>{hist.standard}</strong>
                                             {hist.id && (
                                                 <span style={{ marginLeft: '0.5rem', opacity: 0.4, fontSize: '0.68rem', fontFamily: 'monospace' }}>
                                                     #{hist.id.slice(0, 8)}
@@ -1755,7 +1579,7 @@ ${escHtml(result.report || '')}
                                                     hist.compliance_percent >= 25 ? styles.scoreNumPartial :
                                                     styles.scoreNumLow
                                                 }`}>{hist.compliance_percent}%</span>
-                                                <span className={styles.histPercentLabel}>tuân thủ</span>
+                                                <span className={styles.histPercentLabel}>{t('assessment.historyCompliance')}</span>
                                             </>
                                         ) : (
                                             <span className={styles.histPercentLabel} style={{ fontSize: '0.7rem', opacity: 0.4 }}>—</span>
@@ -1794,11 +1618,11 @@ ${escHtml(result.report || '')}
                                                 style={{ color: 'var(--accent-red)', opacity: deletingId === hist.id ? 0.5 : 1 }}
                                                 disabled={deletingId === hist.id}
                                                 onClick={() => {
-                                                    if (window.confirm(`Xóa đánh giá của "${hist.org}" (${hist.date})?\nThao tác này không thể hoàn tác.`)) {
+                                                    if (window.confirm(t('assessment.historyDeleteConfirm', { org: hist.org, date: hist.date }))) {
                                                         deleteAssessment(hist.id)
                                                     }
                                                 }}
-                                                title="Xóa đánh giá này"
+                                                title={t('assessment.deleteAssessment')}
                                             >
                                                 {deletingId === hist.id ? '⏳' : '🗑️'}
                                             </button>
@@ -1816,31 +1640,31 @@ ${escHtml(result.report || '')}
                     <div className={styles.tplHeaderRow}>
                         <div>
                             <h2 className={styles.sectionTitle}>
-                                Kho Mẫu Hệ thống Thực tế
+                                {t('assessment.templatesTitle')}
                             </h2>
-                            <p className={styles.helperText}>Dữ liệu kiến trúc mạng, quản lý truy cập và mức tuân thủ của các tổ chức thực tế.</p>
+                            <p className={styles.helperText}>{t('assessment.templatesDesc')}</p>
                         </div>
                         <button
                             type="button"
                             className={`${styles.infoIcon} ${styles.tplInfoBtn} ${showTplInfo ? styles.infoIconActive : ''}`}
                             onClick={() => setShowTplInfo(!showTplInfo)}
-                            title="Hướng dẫn sử dụng"
+                            title={t('assessment.templatesUsageGuide')}
                         >ℹ</button>
                     </div>
 
                     {showTplInfo && (
                         <div className={styles.tplInfoPanel}>
                             <div className={styles.tooltipHeader}>
-                                <strong>💡 Kho Mẫu là gì?</strong>
+                                <strong>{t('assessment.templatesGuideTitle')}</strong>
                                 <button type="button" className={styles.tooltipClose} onClick={() => setShowTplInfo(false)}>✕</button>
                             </div>
                             <div className={styles.tooltipBody}>
                                 <p style={{ fontSize: '0.82rem', color: 'var(--text-muted)', lineHeight: 1.6, margin: 0 }}>
-                                    Đây là bộ dữ liệu mẫu từ các tổ chức thực tế (ngân hàng, bệnh viện, startup, cơ quan nhà nước...) đã được cấu hình sẵn thông tin hạ tầng và controls tuân thủ.
+                                    {t('assessment.templatesGuideDesc')}
                                     <br /><br />
-                                    <strong>Cách sử dụng:</strong> Chọn một mẫu → Hệ thống tự điền form → Bạn có thể chỉnh sửa thêm → Bấm "Đánh giá" để AI phân tích.
+                                    <span dangerouslySetInnerHTML={{ __html: t('assessment.templatesGuideUsage') }} />
                                     <br /><br />
-                                    Phù hợp cho: Demo, đào tạo, benchmark, so sánh mức tuân thủ giữa các loại tổ chức.
+                                    {t('assessment.templatesGuideFor')}
                                 </p>
                             </div>
                         </div>
@@ -1850,7 +1674,7 @@ ${escHtml(result.report || '')}
                         <button
                             className={`${styles.tplFilterBtn} ${tplFilter === 'all' ? styles.tplFilterActive : ''}`}
                             onClick={() => setTplFilter('all')}
-                        >Tất cả ({ASSESSMENT_TEMPLATES.length})</button>
+                        >{t('common.all')} ({ASSESSMENT_TEMPLATES.length})</button>
                         {ASSESSMENT_STANDARDS.map(std => {
                             const count = ASSESSMENT_TEMPLATES.filter(t => t.standard === std.id).length
                             if (count === 0) return null
@@ -1884,20 +1708,20 @@ ${escHtml(result.report || '')}
                                         <div className={styles.tplStatsRow}>
                                             <div className={styles.tplStatBox}>
                                                 <span className={styles.tplStatNum}>{tpl.data.organization.employees}</span>
-                                                <span className={styles.tplStatLabel}>Nhân sự</span>
+                                                <span className={styles.tplStatLabel}>{t('assessment.employees')}</span>
                                             </div>
                                             <div className={styles.tplStatBox}>
                                                 <span className={styles.tplStatNum}>{tpl.data.infrastructure.servers}</span>
-                                                <span className={styles.tplStatLabel}>Máy chủ</span>
+                                                <span className={styles.tplStatLabel}>{t('assessment.servers')}</span>
                                             </div>
                                             <div className={styles.tplStatBox}>
                                                 <span className={styles.tplStatNum}>{tpl.data.organization.it_staff}</span>
-                                                <span className={styles.tplStatLabel}>IT/Bảo mật</span>
+                                                <span className={styles.tplStatLabel}>{t('assessment.itSecurity')}</span>
                                             </div>
                                         </div>
                                         <div className={styles.tplComplianceSection}>
                                             <div className={styles.tplComplianceHeader}>
-                                                <span className={styles.tplComplianceTitle}>Mức tuân thủ</span>
+                                                <span className={styles.tplComplianceTitle}>{t('assessment.complianceLevel')}</span>
                                                 <span className={styles.tplComplianceValue}>{implemented}/{total} ({percent}%)</span>
                                             </div>
                                             <div className={styles.tplComplianceTrack}>
@@ -1907,7 +1731,7 @@ ${escHtml(result.report || '')}
                                     </div>
                                     <div className={styles.tplCardFooter}>
                                         <button className={styles.tplUseBtn} onClick={() => selectTemplate(tpl)}>
-                                            Phân tích hệ thống này →
+                                            {t('assessment.analyzeSystem')}
                                         </button>
                                     </div>
                                 </div>
@@ -1923,7 +1747,7 @@ ${escHtml(result.report || '')}
             )}
             {activeTooltip && (() => {
                 const ctrlId = activeTooltip
-                if (['topology_guide', 'notes_guide', 'model_info'].includes(ctrlId)) return null
+                if (['scope_guide', 'topology_guide', 'notes_guide', 'model_info'].includes(ctrlId)) return null
                 const desc = allDescriptions[ctrlId]
                 const allControls = currentStandard.controls.flatMap(c => c.controls)
                 const ctrlObj = allControls.find(c => c.id === ctrlId)
@@ -1940,7 +1764,7 @@ ${escHtml(result.report || '')}
                                 <div className={styles.panelHeaderInfo}>
                                     <div className={styles.panelHeaderTop}>
                                         <span className={`${styles.panelBadge} ${isImplemented ? styles.panelBadgeActive : ''}`}>
-                                            {isImplemented ? '✅ Đã triển khai' : '⚠️ Chưa triển khai'}
+                                            {isImplemented ? t('assessment.controlImplemented') : t('assessment.controlNotImplemented')}
                                         </span>
                                         {weightLabel && (
                                             <span className={styles.panelWeightBadge} style={{ color: weightColor, borderColor: weightColor }}>
@@ -1958,7 +1782,7 @@ ${escHtml(result.report || '')}
                                     <>
                                         <div className={styles.panelSection}>
                                             <div className={styles.panelSectionTitle}>
-                                                Yêu cầu tiêu chuẩn
+                                                {t('assessment.standardRequirement')}
                                             </div>
                                             <p className={styles.panelText}>{desc.requirement}</p>
                                         </div>
@@ -1966,7 +1790,7 @@ ${escHtml(result.report || '')}
 
                                         <div className={styles.panelSection}>
                                             <div className={styles.panelSectionTitle}>
-                                                Tiêu chí đánh giá
+                                                {t('assessment.assessmentCriteria')}
                                             </div>
                                             <p className={styles.panelText}>{desc.criteria}</p>
                                         </div>
@@ -1974,12 +1798,12 @@ ${escHtml(result.report || '')}
 
                                         <div className={styles.panelSection}>
                                             <div className={styles.panelSectionTitle}>
-                                                Hướng dẫn triển khai
+                                                {t('assessment.implementationGuide')}
                                             </div>
                                             <p className={styles.panelHint}>{desc.hint ||
                                                 (isImplemented
-                                                    ? 'Biện pháp này đã được đánh dấu triển khai. Đảm bảo tài liệu bằng chứng được cập nhật và lưu trữ đúng nơi.'
-                                                    : 'Biện pháp chưa triển khai. Tham khảo tiêu chí đánh giá và danh sách bằng chứng yêu cầu để lên kế hoạch thực hiện.')
+                                                    ? t('assessment.implementedHint')
+                                                    : t('assessment.notImplementedHint'))
                                             }</p>
                                         </div>
                                         <div className={styles.panelDivider} />
@@ -1987,8 +1811,8 @@ ${escHtml(result.report || '')}
                                         {desc.evidence && desc.evidence.length > 0 && (
                                             <div className={styles.panelSection}>
                                                 <div className={styles.panelSectionTitle}>
-                                                    Bằng chứng yêu cầu
-                                                    <span className={styles.panelEvidenceCount}>{desc.evidence.length} loại tài liệu</span>
+                                                    {t('assessment.requiredEvidence')}
+                                                    <span className={styles.panelEvidenceCount}>{desc.evidence.length} {t('assessment.documentTypes')}</span>
                                                 </div>
                                                 <ul className={styles.panelEvidenceList}>
                                                     {desc.evidence.map((ev, i) => (
@@ -2004,22 +1828,21 @@ ${escHtml(result.report || '')}
                                 ) : (
                                     <div className={styles.panelSection}>
                                         <p className={styles.panelHint}>
-                                            Chưa có thông tin chi tiết cho control này. Bạn có thể đính kèm bằng chứng triển khai bên dưới.
-                                        </p>
+                                           {t('assessment.noControlDetail')}
+                                       </p>
                                     </div>
                                 )}
 
                                 <div className={styles.panelDivider} />
                                 <div className={styles.panelSection}>
                                     <div className={styles.panelSectionTitle}>
-                                        Upload bằng chứng triển khai
+                                        {t('assessment.uploadEvidence')}
                                         {ctrlEvidence.length > 0 && (
-                                            <span className={styles.panelEvidenceCount}>{ctrlEvidence.length} file đã tải</span>
+                                            <span className={styles.panelEvidenceCount}>{ctrlEvidence.length} {t('assessment.filesUploaded')}</span>
                                         )}
                                     </div>
                                     <p className={styles.evidenceHelpText}>
-                                        Đính kèm file minh chứng (PDF, ảnh, config, log...) cho <strong>{ctrlId}</strong>.
-                                        Hỗ trợ kéo-thả nhiều file cùng lúc. Nội dung file sẽ được AI phân tích khi gửi đánh giá.
+                                        {t('assessment.evidenceHelpText', { controlId: ctrlId })}
                                     </p>
                                     <div
                                         className={`${styles.dropZone} ${isDragging ? styles.dropZoneActive : ''}`}
@@ -2029,14 +1852,14 @@ ${escHtml(result.report || '')}
                                     >
                                         <div className={styles.dropZoneInner}>
                                             {evidenceUploading === ctrlId ? (
-                                                <><span className={styles.spinner} /> Đang tải lên...</>
+                                                <><span className={styles.spinner} /> {t('assessment.uploading')}</>
                                             ) : (
                                                 <>
                                                     <span className={styles.dropZoneIcon}>📂</span>
-                                                    <span className={styles.dropZoneText}>Kéo & thả file vào đây</span>
-                                                    <span className={styles.dropZoneOr}>hoặc</span>
+                                                    <span className={styles.dropZoneText}>{t('assessment.dragDropFiles')}</span>
+                                                    <span className={styles.dropZoneOr}>{t('assessment.or')}</span>
                                                     <label className={styles.panelUploadBtn}>
-                                                        📎 Chọn file đính kèm
+                                                        📎 {t('assessment.selectFiles')}
                                                         <input
                                                             type="file"
                                                             multiple
@@ -2074,7 +1897,7 @@ ${escHtml(result.report || '')}
                                                             <button
                                                                 className={styles.evidencePreviewBtn}
                                                                 onClick={() => fetchPreview(ctrlId, ef.filename)}
-                                                                title="Xem nội dung"
+                                                                title={t('assessment.viewContent')}
                                                                 disabled={previewLoading === previewKey}
                                                             >
                                                                 {previewLoading === previewKey ? '⏳' : isPreviewOpen ? '👁️' : '👁️'}
@@ -2082,7 +1905,7 @@ ${escHtml(result.report || '')}
                                                             <button
                                                                 className={styles.evidenceDeleteBtn}
                                                                 onClick={() => deleteEvidence(ctrlId, ef.filename)}
-                                                                title="Xóa file"
+                                                                title={t('assessment.deleteFile')}
                                                             >✕</button>
                                                         </div>
                                                         {isPreviewOpen && (
@@ -2090,7 +1913,7 @@ ${escHtml(result.report || '')}
                                                                 {preview.content_type === 'image' ? (
                                                                     <div className={styles.evidencePreviewImage}>
                                                                         <a href={preview.download_url} target="_blank" rel="noopener noreferrer">
-                                                                            🖼️ Xem ảnh gốc ({Math.round(preview.size_bytes/1024)}KB)
+                                                                            🖼️ {t('assessment.viewOriginal')} ({Math.round(preview.size_bytes/1024)}KB)
                                                                         </a>
                                                                         <p className={styles.evidencePreviewNote}>{preview.content}</p>
                                                                     </div>
@@ -2111,13 +1934,158 @@ ${escHtml(result.report || '')}
                                     className={`${styles.panelToggleBtn} ${isImplemented ? styles.panelToggleBtnRemove : ''}`}
                                     onClick={() => { toggleControl(ctrlId); setActiveTooltip(null) }}
                                 >
-                                    {isImplemented ? '✖ Bỏ đánh dấu triển khai' : '✔ Đánh dấu đã triển khai'}
+                                    {isImplemented ? t('assessment.unmarkImplemented') : t('assessment.markImplemented')}
                                 </button>
                             </div>
                         </div>
                     </>
                 )
             })()}
+            {/* ── Right-side guide tooltip panel ── */}
+            {['scope_guide', 'topology_guide', 'notes_guide', 'model_info'].includes(activeTooltip) && (
+                <div className={styles.tooltipPanel}>
+                    <div className={styles.tooltipPanelHeader}>
+                        <strong>
+                            {activeTooltip === 'scope_guide' && t('assessment.scopeGuideTitle')}
+                            {activeTooltip === 'topology_guide' && t('assessment.topologyGuideTitle')}
+                            {activeTooltip === 'notes_guide' && t('assessment.notesGuideTitle')}
+                            {activeTooltip === 'model_info' && t('assessment.aiModeFlowTitle')}
+                        </strong>
+                        <button type="button" className={styles.tooltipPanelClose} onClick={() => setActiveTooltip(null)} aria-label="Close">✕</button>
+                    </div>
+                    <div className={styles.tooltipPanelBody}>
+                        {activeTooltip === 'scope_guide' && (
+                            <>
+                                <div className={styles.tooltipSection}>
+                                    <span className={styles.tooltipTag}>🏢 {t('assessment.scopeFull')}</span>
+                                    <ul className={styles.tooltipList}>
+                                        <li>{t('assessment.scopeFullTip1')}</li>
+                                        <li>{t('assessment.scopeFullTip2')}</li>
+                                        <li>{t('assessment.scopeFullTip3')}</li>
+                                    </ul>
+                                </div>
+                                <div className={styles.tooltipSection}>
+                                    <span className={styles.tooltipTag}>👥 {t('assessment.scopeDepartment')}</span>
+                                    <ul className={styles.tooltipList}>
+                                        <li>{t('assessment.scopeDeptTip1')}</li>
+                                        <li>{t('assessment.scopeDeptTip2')}</li>
+                                        <li>{t('assessment.scopeDeptTip3')}</li>
+                                    </ul>
+                                </div>
+                                <div className={styles.tooltipSection}>
+                                    <span className={styles.tooltipTag}>🖥️ {t('assessment.scopeSystem')}</span>
+                                    <ul className={styles.tooltipList}>
+                                        <li>{t('assessment.scopeSysTip1')}</li>
+                                        <li>{t('assessment.scopeSysTip2')}</li>
+                                        <li>{t('assessment.scopeSysTip3')}</li>
+                                    </ul>
+                                </div>
+                            </>
+                        )}
+                        {activeTooltip === 'topology_guide' && (
+                            <>
+                                <p className={styles.tooltipNote}>{t('assessment.topologyGuideNote')}</p>
+                                <div className={styles.tooltipSection}>
+                                    <span className={styles.tooltipTag}>{t('assessment.topologyNetworkTag')}</span>
+                                    <ul className={styles.tooltipList}>
+                                        <li dangerouslySetInnerHTML={{ __html: t('assessment.topologyNetwork1') }} />
+                                        <li dangerouslySetInnerHTML={{ __html: t('assessment.topologyNetwork2') }} />
+                                        <li dangerouslySetInnerHTML={{ __html: t('assessment.topologyNetwork3') }} />
+                                        <li dangerouslySetInnerHTML={{ __html: t('assessment.topologyNetwork4') }} />
+                                    </ul>
+                                </div>
+                                <div className={styles.tooltipSection}>
+                                    <span className={styles.tooltipTag}>{t('assessment.topologyServerTag')}</span>
+                                    <ul className={styles.tooltipList}>
+                                        <li dangerouslySetInnerHTML={{ __html: t('assessment.topologyServer1') }} />
+                                        <li dangerouslySetInnerHTML={{ __html: t('assessment.topologyServer2') }} />
+                                        <li dangerouslySetInnerHTML={{ __html: t('assessment.topologyServer3') }} />
+                                        <li dangerouslySetInnerHTML={{ __html: t('assessment.topologyServer4') }} />
+                                    </ul>
+                                </div>
+                                <div className={styles.tooltipSection}>
+                                    <span className={styles.tooltipTag}>{t('assessment.topologySecurityTag')}</span>
+                                    <ul className={styles.tooltipList}>
+                                        <li dangerouslySetInnerHTML={{ __html: t('assessment.topologySecurity1') }} />
+                                        <li dangerouslySetInnerHTML={{ __html: t('assessment.topologySecurity2') }} />
+                                        <li dangerouslySetInnerHTML={{ __html: t('assessment.topologySecurity3') }} />
+                                        <li dangerouslySetInnerHTML={{ __html: t('assessment.topologySecurity4') }} />
+                                        <li dangerouslySetInnerHTML={{ __html: t('assessment.topologySecurity5') }} />
+                                    </ul>
+                                </div>
+                                <div className={styles.tooltipSection}>
+                                    <span className={styles.tooltipTag}>{t('assessment.topologyExampleTag')}</span>
+                                    <p className={styles.tooltipExample}>{t('assessment.topologyExample')}</p>
+                                </div>
+                            </>
+                        )}
+                        {activeTooltip === 'notes_guide' && (
+                            <div className={styles.tooltipSection}>
+                                <ul className={styles.tooltipList}>
+                                    <li dangerouslySetInnerHTML={{ __html: t('assessment.notesGuide1') }} />
+                                    <li>{t('assessment.notesGuide2')}</li>
+                                    <li dangerouslySetInnerHTML={{ __html: t('assessment.notesGuide3') }} />
+                                    <li>{t('assessment.notesGuide4')}</li>
+                                    <li>{t('assessment.notesGuide5')}</li>
+                                </ul>
+                            </div>
+                        )}
+                        {activeTooltip === 'model_info' && (
+                            <div className={styles.modelDetailBody}>
+                                <div className={styles.modelDetailItem}>
+                                    <div className={styles.modelDetailHead}>
+                                        <span>🔒</span> <strong>Local Only</strong> <span className={styles.modelDetailTag}>SecurityLM</span>
+                                    </div>
+                                    <div className={styles.modelDetailFlow}>
+                                        <span className={styles.flowStep}>📋 Form Data</span>
+                                        <span className={styles.flowArrow}>→</span>
+                                        <span className={`${styles.flowStep} ${styles.flowLocal}`}>🖥️ SecurityLM (Local)</span>
+                                        <span className={styles.flowArrow}>→</span>
+                                        <span className={`${styles.flowStep} ${styles.flowLocal}`}>🖥️ SecurityLM (Local)</span>
+                                        <span className={styles.flowArrow}>→</span>
+                                        <span className={styles.flowStep}>📄 Report</span>
+                                    </div>
+                                    <p className={styles.modelDetailDesc} dangerouslySetInnerHTML={{ __html: t('assessment.aiModeLocalDesc') }} />
+                                </div>
+                                <div className={styles.modelDetailDivider} />
+                                <div className={styles.modelDetailItem}>
+                                    <div className={styles.modelDetailHead}>
+                                        <span>⚡</span> <strong>Hybrid</strong> <span className={styles.modelDetailTag}>SecurityLM → OpenClaude</span>
+                                    </div>
+                                    <div className={styles.modelDetailFlow}>
+                                        <span className={styles.flowStep}>📋 Form Data</span>
+                                        <span className={styles.flowArrow}>→</span>
+                                        <span className={`${styles.flowStep} ${styles.flowLocal}`}>🖥️ SecurityLM (Local)</span>
+                                        <span className={styles.flowArrow}>→</span>
+                                        <span className={styles.flowStep}>📊 Raw GAP ({t('assessment.aiModeAnonymized')})</span>
+                                        <span className={styles.flowArrow}>→</span>
+                                        <span className={`${styles.flowStep} ${styles.flowCloud}`}>☁️ OpenClaude</span>
+                                        <span className={styles.flowArrow}>→</span>
+                                        <span className={styles.flowStep}>📄 Report</span>
+                                    </div>
+                                    <p className={styles.modelDetailDesc} dangerouslySetInnerHTML={{ __html: t('assessment.aiModeHybridDesc') }} />
+                                </div>
+                                <div className={styles.modelDetailDivider} />
+                                <div className={styles.modelDetailItem}>
+                                    <div className={styles.modelDetailHead}>
+                                        <span>☁️</span> <strong>Cloud Only</strong> <span className={styles.modelDetailTag}>OpenClaude</span>
+                                    </div>
+                                    <div className={styles.modelDetailFlow}>
+                                        <span className={styles.flowStep}>📋 Form Data</span>
+                                        <span className={styles.flowArrow}>→</span>
+                                        <span className={`${styles.flowStep} ${styles.flowCloud}`}>☁️ OpenClaude (Phase 1)</span>
+                                        <span className={styles.flowArrow}>→</span>
+                                        <span className={`${styles.flowStep} ${styles.flowCloud}`}>☁️ OpenClaude (Phase 2)</span>
+                                        <span className={styles.flowArrow}>→</span>
+                                        <span className={styles.flowStep}>📄 Report</span>
+                                    </div>
+                                    <p className={styles.modelDetailDesc} dangerouslySetInnerHTML={{ __html: t('assessment.aiModeCloudDesc') }} />
+                                </div>
+                            </div>
+                        )}
+                    </div>
+                </div>
+            )}
         </div>
     )
 }

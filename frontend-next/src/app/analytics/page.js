@@ -41,7 +41,7 @@ const ANNEX_A_DOMAINS = [
     { id: 'A.8',  label: 'Tech. Controls',    controls: ['A.8.1','A.8.2','A.8.3','A.8.4','A.8.5','A.8.6','A.8.7','A.8.8','A.8.9','A.8.10','A.8.11','A.8.12','A.8.13','A.8.14','A.8.15','A.8.16','A.8.17','A.8.18','A.8.19','A.8.20','A.8.21','A.8.22','A.8.23','A.8.24','A.8.25','A.8.26','A.8.27','A.8.28','A.8.29','A.8.30','A.8.31','A.8.32','A.8.33','A.8.34'] },
 ]
 
-function ComplianceHeatmap({ assessments }) {
+function ComplianceHeatmap({ assessments, t, locale }) {
     // Guard: ensure assessments is always an array before calling .filter
     const list = Array.isArray(assessments) ? assessments : []
     if (list.length === 0) return null
@@ -58,10 +58,10 @@ function ComplianceHeatmap({ assessments }) {
         <div>
             <div className={styles.heatmapLegend}>
                 {[
-                    { color: '#34d399', label: '≥ 80% Compliant' },
-                    { color: '#fbbf24', label: '50–79% Partial' },
-                    { color: '#f87171', label: '< 50% Gap' },
-                    { color: 'var(--bg-muted)', label: 'Not assessed' },
+                    { color: '#34d399', label: t('analytics.heatmapCompliant') },
+                    { color: '#fbbf24', label: t('analytics.heatmapPartial') },
+                    { color: '#f87171', label: t('analytics.heatmapGap') },
+                    { color: 'var(--bg-muted)', label: t('analytics.heatmapNotAssessed') },
                 ].map(l => (
                     <span key={l.label} className={styles.heatmapLegendItem}>
                         <span className={styles.heatmapLegendDot} style={{ background: l.color }} />
@@ -70,7 +70,7 @@ function ComplianceHeatmap({ assessments }) {
                 ))}
                 {recent && (
                     <span className={styles.heatmapLegendOrg}>
-                        {recent.org_name} · {new Date(recent.created_at).toLocaleDateString('vi-VN')}
+                        {recent.org_name} · {new Date(recent.created_at).toLocaleDateString(locale === 'vi' ? 'vi-VN' : 'en-US')}
                     </span>
                 )}
             </div>
@@ -391,11 +391,11 @@ export default function AnalyticsPage() {
                 <div>
                     <div className={styles.stdSection}>
                         <div className={styles.stdSectionHeader}>
-                            <h2 className={styles.stdSectionTitle}>Upload New Standard</h2>
+                            <h2 className={styles.stdSectionTitle}>{t('analytics.uploadNewStandard')}</h2>
                             <div className={styles.stdHeaderActions}>
-                                <button className={styles.stdBtnOutline} onClick={downloadSample}>Download sample JSON</button>
+                                <button className={styles.stdBtnOutline} onClick={downloadSample}>{t('analytics.downloadSampleJson')}</button>
                                 <button className={styles.stdBtnOutline} onClick={() => setShowSchemaGuide(!showSchemaGuide)}>
-                                    {showSchemaGuide ? 'Close guide' : 'Format guide'}
+                                    {showSchemaGuide ? t('analytics.closeGuide') : t('analytics.formatGuide')}
                                 </button>
                             </div>
                         </div>
@@ -434,23 +434,23 @@ export default function AnalyticsPage() {
                             {stdUploading ? (
                                 <div className={styles.stdDropContent}>
                                     <span className={styles.stdDropSpinner} />
-                                    <p>Uploading and processing...</p>
+                                    <p>{t('analytics.uploadingProcessing')}</p>
                                 </div>
                             ) : (
                                 <div className={styles.stdDropContent}>
-                                    <p className={styles.stdDropText}>Drop JSON / YAML file here</p>
+                                    <p className={styles.stdDropText}>{t('analytics.dropFileHere')}</p>
                                     <label className={styles.stdBtnPrimary}>
-                                        Select file
+                                        {t('analytics.selectFile')}
                                         <input type="file" accept=".json,.yaml,.yml" onChange={(e) => { const f = e.target.files?.[0]; if (f) handleStdUpload(f) }} hidden />
                                     </label>
-                                    <p className={styles.stdDropHint}>.json, .yaml, .yml · Max 2MB</p>
+                                    <p className={styles.stdDropHint}>{t('analytics.fileTypes')}</p>
                                 </div>
                             )}
                         </div>
 
                         {stdUploadResult && (
                             <div className={`${styles.stdResultBox} ${stdUploadResult.success ? styles.stdResultSuccess : styles.stdResultError}`}>
-                                <div className={styles.stdResultHeader}>{stdUploadResult.success ? 'Upload successful' : 'Upload failed'}</div>
+                                <div className={styles.stdResultHeader}>{stdUploadResult.success ? t('analytics.uploadSuccessful') : t('analytics.uploadFailed')}</div>
                                 {stdUploadResult.success && stdUploadResult.data?.standard && (
                                     <div className={styles.stdResultMeta}>
                                         <span>ID: <strong>{stdUploadResult.data.standard.id}</strong></span>
@@ -469,15 +469,15 @@ export default function AnalyticsPage() {
 
                     <div className={styles.stdSection}>
                         <div className={styles.stdSectionHeader}>
-                            <h2 className={styles.stdSectionTitle}><BookOpen size={15} style={{ marginRight: '6px', verticalAlign: 'middle' }} />Standards Library</h2>
-                            <button className={styles.stdBtnOutline} onClick={fetchStandards} disabled={stdLoading}><RefreshCw size={13} style={{ marginRight: '4px', verticalAlign: 'middle' }} />Refresh</button>
+                            <h2 className={styles.stdSectionTitle}><BookOpen size={15} style={{ marginRight: '6px', verticalAlign: 'middle' }} />{t('analytics.standardsLibrary')}</h2>
+                            <button className={styles.stdBtnOutline} onClick={fetchStandards} disabled={stdLoading}><RefreshCw size={13} style={{ marginRight: '4px', verticalAlign: 'middle' }} />{t('common.refresh')}</button>
                         </div>
 
                         {stdLoading ? (
                             <SkeletonTable rows={5} cols={3} />
                         ) : (
                             <>
-                                <p className={styles.stdGroupLabel}>Built-in Standards</p>
+                                <p className={styles.stdGroupLabel}>{t('analytics.builtInStandards')}</p>
                                 <div className={styles.stdGrid}>
                                     {standards.builtin.map(std => (
                                         <div key={std.id} className={styles.stdCard}>
@@ -492,17 +492,17 @@ export default function AnalyticsPage() {
                                                 <span>{std.categories} categories</span>
                                             </div>
                                             <div className={styles.stdCardActions}>
-                                                <Link href="/form-iso" className={styles.stdBtnSmall}>Use in Assessment</Link>
+                                                <Link href="/form-iso" className={styles.stdBtnSmall}>{t('analytics.useInAssessment')}</Link>
                                             </div>
                                         </div>
                                     ))}
                                 </div>
 
-                                <p className={styles.stdGroupLabel} style={{ marginTop: '1.25rem' }}>Custom Standards (Uploaded)</p>
+                                <p className={styles.stdGroupLabel} style={{ marginTop: '1.25rem' }}>{t('analytics.customStandards')}</p>
                                 {standards.custom.length === 0 ? (
                                     <div className={styles.stdEmpty}>
-                                        <p>No custom standards yet.</p>
-                                        <p className={styles.stdEmptyHint}>Upload a JSON/YAML file above to add one.</p>
+                                        <p>{t('analytics.noCustomStandards')}</p>
+                                        <p className={styles.stdEmptyHint}>{t('analytics.noCustomStandardsHint')}</p>
                                     </div>
                                 ) : (
                                     <div className={styles.stdGrid}>
@@ -528,12 +528,12 @@ export default function AnalyticsPage() {
                                                     </div>
                                                 )}
                                                 <div className={styles.stdCardActions}>
-                                                    <button className={styles.stdBtnSmall} onClick={() => handleStdDetail(std.id)}>Detail</button>
-                                                    <button className={styles.stdBtnSmall} onClick={() => handleStdReindex(std.id)}><RefreshCw size={11} style={{ marginRight: '3px', verticalAlign: 'middle' }} />Re-index</button>
-                                                    <button className={`${styles.stdBtnSmall} ${styles.stdBtnDanger}`} onClick={() => handleStdDelete(std.id)}><Trash2 size={11} style={{ marginRight: '3px', verticalAlign: 'middle' }} />Delete</button>
+                                                    <button className={styles.stdBtnSmall} onClick={() => handleStdDetail(std.id)}>{t('analytics.detail')}</button>
+                                                    <button className={styles.stdBtnSmall} onClick={() => handleStdReindex(std.id)}><RefreshCw size={11} style={{ marginRight: '3px', verticalAlign: 'middle' }} />{t('analytics.reindexBtn')}</button>
+                                                    <button className={`${styles.stdBtnSmall} ${styles.stdBtnDanger}`} onClick={() => handleStdDelete(std.id)}><Trash2 size={11} style={{ marginRight: '3px', verticalAlign: 'middle' }} />{t('common.delete')}</button>
                                                 </div>
                                                 <div className={styles.stdCardDate}>
-                                                    {std.created_at ? new Date(std.created_at).toLocaleDateString('vi-VN') : '—'}
+                                                    {std.created_at ? new Date(std.created_at).toLocaleDateString(locale === 'vi' ? 'vi-VN' : 'en-US') : '—'}
                                                 </div>
                                             </div>
                                         ))}
@@ -574,8 +574,8 @@ export default function AnalyticsPage() {
                                     )}
                                 </div>
                                 <div className={styles.modalFooter}>
-                                    <Link href="/form-iso" className={styles.btnPrimary}>Use in Assessment</Link>
-                                    <button className={styles.btnSecondary} onClick={() => setSelectedStandard(null)}>Close</button>
+                                    <Link href="/form-iso" className={styles.btnPrimary}>{t('analytics.useInAssessment')}</Link>
+                                    <button className={styles.btnSecondary} onClick={() => setSelectedStandard(null)}>{t('common.close')}</button>
                                 </div>
                             </div>
                         </>
@@ -675,7 +675,7 @@ export default function AnalyticsPage() {
 
                     <section className={styles.section}>
                         <p className="section-title">{t('analytics.complianceHeatmap')}</p>
-                        <ComplianceHeatmap assessments={assessments} />
+                        <ComplianceHeatmap assessments={assessments} t={t} locale={locale} />
                     </section>
 
                     <section className={styles.section}>
@@ -685,9 +685,9 @@ export default function AnalyticsPage() {
                                 <div className={styles.chromaHeaderLeft}>
                                     <div className={styles.chromaGrid}>
                                         {[
-                                            { val: chromaStats?.total_chunks ?? '--', label: 'Chunks' },
-                                            { val: chromaStats?.total_files ?? '--', label: 'Files' },
-                                            { val: chromaStats?.metric ?? '--', label: 'Metric' },
+                                            { val: chromaStats?.total_chunks ?? '--', label: t('analytics.chunks') },
+                                            { val: chromaStats?.total_files ?? '--', label: t('analytics.files') },
+                                            { val: chromaStats?.metric ?? '--', label: t('analytics.metric') },
                                         ].map(s => (
                                             <div key={s.label} className={styles.chromaStat}>
                                                 <span className={styles.chromaStatValue}>{s.val}</span>
@@ -701,7 +701,7 @@ export default function AnalyticsPage() {
                                     <div className={styles.searchBox}>
                                         <input
                                             type="text"
-                                            placeholder="Search documents..."
+                                            placeholder={t('analytics.searchDocuments')}
                                             value={searchQuery}
                                             onChange={e => setSearchQuery(e.target.value)}
                                             className={styles.searchInput}
@@ -734,7 +734,7 @@ export default function AnalyticsPage() {
                                                     if (res.ok) setSearchResults(await res.json())
                                                 } catch { } finally { setSearching(false) }
                                             }}
-                                        >{searching ? '...' : 'Search'}</button>
+                                        >{searching ? '...' : t('common.search')}</button>
                                     </div>
                                     {searchResults?.results?.length > 0 && (
                                         <div className={styles.searchResultsPanel}>
@@ -751,7 +751,7 @@ export default function AnalyticsPage() {
                                     )}
                                     <div className={styles.chromaStatusRow}>
                                         <span className={`${styles.chromaStatusDot} ${chromaStats?.status === 'ok' ? styles.dotOk : styles.dotErr}`} />
-                                        <span className={styles.chromaStatusText}>{chromaStats?.status === 'ok' ? 'Database ready' : 'Checking...'}</span>
+                                        <span className={styles.chromaStatusText}>{chromaStats?.status === 'ok' ? t('analytics.databaseReady') : t('analytics.checking')}</span>
                                         <button
                                             className={styles.btnReindex}
                                             disabled={reindexing}
@@ -769,7 +769,7 @@ export default function AnalyticsPage() {
                                                     showToast('Error: ' + e.message, 'error')
                                                 } finally { setReindexing(false) }
                                             }}
-                                        >{reindexing ? 'Reindexing...' : <><RefreshCw size={13} style={{ marginRight: '4px', verticalAlign: 'middle' }} />Reindex</>}</button>
+                                        >{reindexing ? t('analytics.reindexing') : <><RefreshCw size={13} style={{ marginRight: '4px', verticalAlign: 'middle' }} />{t('analytics.reindex')}</>}</button>
                                     </div>
                                 </div>
                             </div>
@@ -777,7 +777,7 @@ export default function AnalyticsPage() {
                             {chromaStats?.files?.length > 0 && (
                                 <div className={styles.chromaFiles}>
                                     <div className={styles.fileToggle} onClick={() => setShowFiles(!showFiles)}>
-                                        <span>{showFiles ? '▼' : '▶'} Documents ({chromaStats.files.length} files)</span>
+                                        <span>{showFiles ? '▼' : '▶'} {t('analytics.documents')} ({chromaStats.files.length} {t('analytics.files').toLowerCase()})</span>
                                         <span className={styles.fileTotalSize}>
                                             {(chromaStats.files.reduce((s, f) => s + f.size_bytes, 0) / 1024).toFixed(1)} KB
                                         </span>
@@ -805,7 +805,7 @@ export default function AnalyticsPage() {
                                         <h3 className={styles.modalTitle}>{t('analytics.assessmentDetail')}</h3>
                                         <p className={styles.modalSubtitle}>
                                             ID: <code className={styles.codeId}>{selectedAssessment.id?.split('-')[0]}</code>
-                                            {selectedAssessment.created_at && <> · {new Date(selectedAssessment.created_at).toLocaleString('vi-VN')}</>}
+                                            {selectedAssessment.created_at && <> · {new Date(selectedAssessment.created_at).toLocaleString(locale === 'vi' ? 'vi-VN' : 'en-US')}</>}
                                         </p>
                                     </div>
                                     <button className={styles.closeBtn} onClick={() => setSelectedAssessment(null)}>✕</button>
@@ -833,11 +833,11 @@ export default function AnalyticsPage() {
                                                     pct >= 50 ? styles.modalBadgeMostly :
                                                     pct >= 25 ? styles.modalBadgePartial :
                                                     styles.modalBadgeLow
-                                                const badgeLabel = pct == null ? 'Processing' :
-                                                    pct >= 80 ? 'Compliant' :
-                                                    pct >= 50 ? 'Mostly Compliant' :
-                                                    pct >= 25 ? 'Partially Compliant' :
-                                                    'Non-compliant'
+                                                const badgeLabel = pct == null ? t('analytics.modalProcessing') :
+                                                    pct >= 80 ? t('analytics.modalCompliant') :
+                                                    pct >= 50 ? t('analytics.modalMostlyCompliant') :
+                                                    pct >= 25 ? t('analytics.modalPartiallyCompliant') :
+                                                    t('analytics.modalNonCompliant')
                                                 return (
                                                     <div className={styles.modalScoreHero}>
                                                         <div className={styles.modalGaugeWrap}>
@@ -846,7 +846,7 @@ export default function AnalyticsPage() {
                                                                     <SvgGauge percent={pct} size={96} color={gaugeColor} />
                                                                     <div className={styles.modalGaugeOverlay}>
                                                                         <span className={styles.modalGaugePct} style={{ color: gaugeColor }}>{pct}%</span>
-                                                                        <span className={styles.modalGaugeLabel}>Compliance</span>
+                                                                        <span className={styles.modalGaugeLabel}>{t('analytics.complianceLabel')}</span>
                                                                     </div>
                                                                 </>
                                                             ) : (
@@ -854,12 +854,12 @@ export default function AnalyticsPage() {
                                                             )}
                                                         </div>
                                                         <div className={styles.modalScoreInfo}>
-                                                            <div className={styles.modalOrgName}>{org?.name || 'Organization'}</div>
+                                                            <div className={styles.modalOrgName}>{org?.name || t('analytics.organizationLabel')}</div>
                                                             <div className={styles.modalStdName}>{stdName}</div>
                                                             <span className={`${styles.modalBadge} ${badgeClass}`}>{badgeLabel}</span>
                                                             <div className={styles.modalMetaRow}>
-                                                                {org?.employees ? <span>{org.employees} employees</span> : null}
-                                                                {infra?.servers ? <span>{infra.servers} servers</span> : null}
+                                                                {org?.employees ? <span>{t('assessment.preSubmitEmployees', { count: org.employees })}</span> : null}
+                                                                {infra?.servers ? <span>{t('assessment.preSubmitServers', { count: infra.servers })}</span> : null}
                                                                 {comp?.iso_status ? <span>{comp.iso_status}</span> : null}
                                                             </div>
                                                         </div>
@@ -913,7 +913,7 @@ export default function AnalyticsPage() {
 
                                             {selectedAssessment.status === 'failed' && (
                                                 <div className={styles.failedNote}>
-                                                    <strong>Note:</strong> This report failed in an older session. Use &quot;Reuse Form&quot; to re-run on the current system.
+                                                    {t('analytics.failedNote')}
                                                 </div>
                                             )}
                                             <div className={styles.md}>
@@ -927,8 +927,8 @@ export default function AnalyticsPage() {
                                     )}
                                 </div>
                                 <div className={styles.modalFooter}>
-                                    <button className={styles.btnSecondary} onClick={() => setSelectedAssessment(null)}>Close</button>
-                                    <button className={styles.btnPrimary} onClick={handleReuse}>Reuse this Form</button>
+                                    <button className={styles.btnSecondary} onClick={() => setSelectedAssessment(null)}>{t('common.close')}</button>
+                                    <button className={styles.btnPrimary} onClick={handleReuse}>{t('analytics.reuseThisForm')}</button>
                                 </div>
                             </div>
                         </div>
@@ -955,7 +955,7 @@ export default function AnalyticsPage() {
                                     </label>
                                 </div>
                                 <div className={styles.modalFooter}>
-                                    <button className={styles.btnSecondary} onClick={() => setDeleteWarning(null)}>Cancel</button>
+                                    <button className={styles.btnSecondary} onClick={() => setDeleteWarning(null)}>{t('common.cancel')}</button>
                                     <button className={styles.btnDanger} onClick={confirmDelete}>{t('analytics.deletePermanently')}</button>
                                 </div>
                             </div>
@@ -968,10 +968,8 @@ export default function AnalyticsPage() {
                 <div className={styles.benchmarkWrap}>
                     <div className={styles.benchmarkHeader}>
                         <div>
-                            <h2 className={styles.sectionTitle}>AI Auditor Benchmark</h2>
-                            <p className={styles.helperText}>
-                                Compare analysis quality between: <strong>SecurityLM (LocalAI)</strong> vs <strong>Meta-Llama (LocalAI)</strong> vs <strong>Cloud</strong>.
-                            </p>
+                            <h2 className={styles.sectionTitle}>{t('analytics.benchmarkTitle')}</h2>
+                            <p className={styles.helperText} dangerouslySetInnerHTML={{ __html: t('analytics.benchmarkDesc') }} />
                         </div>
                     </div>
 
@@ -993,7 +991,7 @@ export default function AnalyticsPage() {
 
                     <div className={styles.benchmarkControls}>
                         <div className={styles.benchmarkModeRow}>
-                            <label className={styles.benchmarkModeLabel}>Run mode:</label>
+                            <label className={styles.benchmarkModeLabel}>{t('analytics.benchmarkRunMode')}</label>
                             {[
                                 { id: 'local', label: 'Local Only', desc: 'SecurityLM 7B' },
                                 { id: 'hybrid', label: 'Hybrid', desc: 'SecurityLM + Cloud' },
@@ -1017,7 +1015,7 @@ export default function AnalyticsPage() {
                                 onChange={e => setBenchmarkCompare(e.target.checked)}
                                 disabled={benchmarkRunning}
                             />
-                            <span>Compare Local vs Cloud (run twice per test case)</span>
+                            <span>{t('analytics.benchmarkCompare')}</span>
                         </label>
                         <button
                             className={styles.benchmarkRunBtn}
@@ -1040,13 +1038,13 @@ export default function AnalyticsPage() {
                                 finally { setBenchmarkRunning(false) }
                             }}
                         >
-                            {benchmarkRunning ? 'Running...' : `Run Benchmark (${benchmarkCases?.total_cases || '?'} test cases)`}
+                            {benchmarkRunning ? t('analytics.benchmarkRunning') : t('analytics.benchmarkRun', { count: benchmarkCases?.total_cases || '?' })}
                         </button>
                     </div>
 
                     {benchmarkCases && (
                         <div className={styles.benchmarkCaseList}>
-                            <h4 className={styles.benchmarkSectionTitle}>Test Cases ({benchmarkCases.total_cases})</h4>
+                            <h4 className={styles.benchmarkSectionTitle}>{t('analytics.benchmarkTestCases')} ({benchmarkCases.total_cases})</h4>
                             {benchmarkCases.test_cases?.map(tc => (
                                 <div key={tc.id} className={styles.benchmarkCaseItem}>
                                     <span className={styles.benchmarkCaseId}>{tc.id}</span>
@@ -1060,7 +1058,7 @@ export default function AnalyticsPage() {
 
                     {benchmarkResult && (
                         <div className={styles.benchmarkResults}>
-                            <h4 className={styles.benchmarkSectionTitle}>Benchmark Results</h4>
+                            <h4 className={styles.benchmarkSectionTitle}>{t('analytics.benchmarkResults')}</h4>
                             <div className={styles.benchmarkSummary}>
                                 {Object.entries(benchmarkResult.summary?.per_mode_avg_score || {}).map(([mode, score]) => (
                                     <div key={mode} className={styles.benchmarkSummaryCard}>
@@ -1107,32 +1105,30 @@ export default function AnalyticsPage() {
                     )}
 
                     <div className={styles.benchmarkAuditNote}>
-                        <h4>This Tool vs Official IT Audit</h4>
+                        <h4>{t('analytics.benchmarkVsAudit')}</h4>
                         <div className={styles.benchmarkAuditGrid}>
                             <div className={styles.benchmarkAuditCol}>
-                                <div className={styles.benchmarkAuditColTitle}>CyberAI Assessment Tool</div>
+                                <div className={styles.benchmarkAuditColTitle}>{t('analytics.benchmarkToolTitle')}</div>
                                 <ul>
-                                    <li>IT staff self-declares implemented controls</li>
-                                    <li>AI auto-generates GAP analysis and Risk Register</li>
-                                    <li>Completes in 2–5 minutes</li>
-                                    <li>LocalAI: data never leaves the server (air-gap)</li>
-                                    <li>Best for: pre-audit self-assessment, training, internal benchmarking</li>
+                                    <li>{t('analytics.benchmarkToolPoint1')}</li>
+                                    <li>{t('analytics.benchmarkToolPoint2')}</li>
+                                    <li>{t('analytics.benchmarkToolPoint3')}</li>
+                                    <li>{t('analytics.benchmarkToolPoint4')}</li>
+                                    <li>{t('analytics.benchmarkToolPoint5')}</li>
                                 </ul>
                             </div>
                             <div className={styles.benchmarkAuditCol}>
-                                <div className={styles.benchmarkAuditColTitle}>Official IT Audit</div>
+                                <div className={styles.benchmarkAuditColTitle}>{t('analytics.benchmarkAuditTitle')}</div>
                                 <ul>
-                                    <li>Third-party auditor performs on-site inspection</li>
-                                    <li>Staff interviews and real evidence verification</li>
-                                    <li>Takes 2–6 weeks for a medium-sized organization</li>
-                                    <li>Results are legally binding certification reports</li>
-                                    <li>Best for: ISO certification, legal compliance, client reporting</li>
+                                    <li>{t('analytics.benchmarkAuditPoint1')}</li>
+                                    <li>{t('analytics.benchmarkAuditPoint2')}</li>
+                                    <li>{t('analytics.benchmarkAuditPoint3')}</li>
+                                    <li>{t('analytics.benchmarkAuditPoint4')}</li>
+                                    <li>{t('analytics.benchmarkAuditPoint5')}</li>
                                 </ul>
                             </div>
                         </div>
-                        <p className={styles.benchmarkAuditNote2}>
-                            <strong>Conclusion:</strong> This tool does <em>not replace</em> a formal IT Audit — it is a <strong>support tool</strong> that helps any IT staff (without deep security expertise) perform a preliminary self-assessment, identify weaknesses, and prepare for a formal audit.
-                        </p>
+                        <p className={styles.benchmarkAuditNote2} dangerouslySetInnerHTML={{ __html: t('analytics.benchmarkConclusion') }} />
                     </div>
                 </div>
             )}

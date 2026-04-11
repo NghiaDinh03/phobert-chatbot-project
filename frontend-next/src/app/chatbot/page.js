@@ -4,13 +4,14 @@ import { useState, useEffect, useRef, useCallback, useMemo, memo } from 'react'
 import ReactMarkdown from 'react-markdown'
 import remarkGfm from 'remark-gfm'
 import {
-    Send, Copy, Plus, Trash2, ChevronDown, Bot, User, Loader2
+    Send, Copy, Plus, Trash2, ChevronDown, Bot, User, Loader2, ArrowDown, Check
 } from 'lucide-react'
 import { useTranslation } from '@/components/LanguageProvider'
 import styles from './page.module.css'
 
-const MAX_INPUT = 2000
-const WARN_THRESHOLD = 1800
+const MAX_INPUT_LOCAL = 5000
+const MAX_INPUT_CLOUD = 15000
+const WARN_OFFSET = 200
 
 const CLOUD_MODELS = [
     { id: 'gemini-3-flash-preview', label: 'Gemini 3 Flash', provider: 'google',    badge: 'Fast' },
@@ -32,7 +33,6 @@ const CLOUD_MODELS = [
     { id: 'SecurityLLM-7B-Q4_K_M.gguf',             label: 'SecurityLLM 7B', provider: 'local', badge: '4.2GB' },
 ]
 
-// Map frontend IDs to Ollama model names for availability checking
 const OLLAMA_ID_MAP = {
     'gemma4:latest': 'gemma4:latest',
     'gemma3n:e4b':   'gemma3n:e4b',
@@ -58,8 +58,6 @@ const PROVIDER_LABEL = {
     local: 'LocalAI',
     ollama: 'Ollama',
 }
-
-// Suggested prompts are resolved at render time via t() hook
 
 const SESSIONS_KEY = 'phobert_chat_sessions'
 const ACTIVE_KEY = 'phobert_active_session'
@@ -97,6 +95,8 @@ function directSaveSession(sessionId, messages) {
 const MessageBubble = memo(function MessageBubble({ m, msgKey, isLastStreaming, copiedMsgId, onCopy }) {
     const isBot = m.role === 'assistant'
     const isStreaming = !!m._streaming
+    const isCopied = copiedMsgId === msgKey
+    const content = typeof m.content === 'string' ? m.content : (m.content ? JSON.stringify(m.content) : '')
 
     return (
         <div className={`${styles.msg} ${isBot ? styles.msgBot : styles.msgUser}`}>
@@ -109,7 +109,7 @@ const MessageBubble = memo(function MessageBubble({ m, msgKey, isLastStreaming, 
             )}
             <div className={`${styles.bubble} ${isBot ? styles.bubbleBot : styles.bubbleUser}`}>
                 {isBot ? (
-                    isStreaming && m.content === '' ? (
+                    isStreaming && content === '' ? (
                         <div className={styles.skeletonWrap}>
                             <div className={`${styles.skeletonLine} ${styles.skeletonLong}`} />
                             <div className={`${styles.skeletonLine} ${styles.skeletonMed}`} />
@@ -117,22 +117,22 @@ const MessageBubble = memo(function MessageBubble({ m, msgKey, isLastStreaming, 
                         </div>
                     ) : (
                         <div className={styles.md}>
-                            <ReactMarkdown remarkPlugins={[remarkGfm]}>{m.content || ' '}</ReactMarkdown>
+                            <ReactMarkdown remarkPlugins={[remarkGfm]}>{content || ' '}</ReactMarkdown>
                             {isLastStreaming && <span className={styles.blinkCursor}>|</span>}
                         </div>
                     )
-                ) : m.content}
+                ) : content}
 
                 {isBot && !isStreaming && (
                     <button
-                        className={styles.copyBtn}
-                        onClick={() => onCopy(msgKey, m.content)}
+                        className={`${styles.copyBtn} ${isCopied ? styles.copyBtnVisible : ''}`}
+                        onClick={() => onCopy(msgKey, content)}
                         title="Copy message"
                         aria-label="Copy message to clipboard"
                     >
-                        {copiedMsgId === msgKey
-                            ? <><Copy size={12} /> Copied!</>
-                            : <><Copy size={12} /> Copy</>}
+                        {isCopied
+                            ? <><Check size={11} /> Copied!</>
+                            : <><Copy size={11} /> Copy</>}
                     </button>
                 )}
 
@@ -170,12 +170,10 @@ const MessageBubble = memo(function MessageBubble({ m, msgKey, isLastStreaming, 
 })
 
 function isOllamaModelAvailable(modelId, ollamaAvailable) {
-    if (!ollamaAvailable || ollamaAvailable.length === 0) return null // unknown
+    if (!ollamaAvailable || ollamaAvailable.length === 0) return null
     const mapped = OLLAMA_ID_MAP[modelId]
     if (!mapped) return null
-    // Direct match
     if (ollamaAvailable.includes(mapped)) return true
-    // Partial match (e.g. "gemma3:4b" matches "gemma3:4b-instruct")
     const prefix = mapped.split(':')[0] + ':'
     if (ollamaAvailable.some(a => a.startsWith(prefix))) return true
     return false
@@ -333,6 +331,17 @@ const SessionList = memo(function SessionList({ sessions, activeId, onOpen, onRe
     )
 })
 
+function useAutoResizeTextarea(ref, value) {
+    useEffect(() => {
+        const el = ref.current
+        if (!el) return
+        el.style.height = 'auto'
+        const maxH = Math.floor(window.innerHeight * 0.5)
+        const newH = Math.min(el.scrollHeight, maxH)
+        el.style.height = Math.max(newH, 42) + 'px'
+    }, [ref, value])
+}
+
 export default function ChatbotPage() {
     const { t, locale } = useTranslation()
     const [sessions, setSessions] = useState([])
@@ -348,15 +357,40 @@ export default function ChatbotPage() {
     const [focusedModelIdx, setFocusedModelIdx] = useState(-1)
     const [aiStatus, setAiStatus] = useState(null)
     const [copiedMsgId, setCopiedMsgId] = useState(null)
+    const [showScrollBtn, setShowScrollBtn] = useState(false)
     const isSubmitting = useRef(false)
     const mountedRef = useRef(true)
     const endRef = useRef(null)
     const inputRef = useRef(null)
+    const chatAreaRef = useRef(null)
     const modelBtnRef = useRef(null)
     const dropdownRef = useRef(null)
     const prevMsgLenRef = useRef(0)
 
     const [ollamaAvailable, setOllamaAvailable] = useState([])
+
+    const maxInput = useMemo(() => {
+        const model = CLOUD_MODELS.find(m => m.id === selectedModel)
+        return (model?.provider === 'local' || model?.provider === 'ollama') ? MAX_INPUT_LOCAL : MAX_INPUT_CLOUD
+    }, [selectedModel])
+    const warnThreshold = maxInput - WARN_OFFSET
+
+    useAutoResizeTextarea(inputRef, input)
+
+    useEffect(() => {
+        const area = chatAreaRef.current
+        if (!area) return
+        const handleScroll = () => {
+            const distanceFromBottom = area.scrollHeight - area.scrollTop - area.clientHeight
+            setShowScrollBtn(distanceFromBottom > 120)
+        }
+        area.addEventListener('scroll', handleScroll, { passive: true })
+        return () => area.removeEventListener('scroll', handleScroll)
+    }, [])
+
+    const scrollToBottom = useCallback(() => {
+        endRef.current?.scrollIntoView({ behavior: 'smooth' })
+    }, [])
 
     useEffect(() => {
         let cancelled = false
@@ -404,7 +438,6 @@ export default function ChatbotPage() {
                 lsSet(ACTIVE_KEY, pending.sessionId)
             }
         } else if (pending && !pending.done) {
-            // Pending recovery: re-submit message via SSE stream
             setSessions(saved)
             setActiveId(pending.sessionId)
             setMsgs(pending.currentMessages || [])
@@ -414,8 +447,6 @@ export default function ChatbotPage() {
             setSessions(lsGet(SESSIONS_KEY, []))
             setSending(false)
             isSubmitting.current = false
-            // Don't re-submit on reload — just clear the pending state to avoid duplicate requests
-            // The user will need to resend if the model was processing
         } else {
             setSessions(saved)
             if (id) {
@@ -477,13 +508,10 @@ export default function ChatbotPage() {
     }, [modelDropdown, focusedModelIdx, handleModelChange, openDropdown])
 
     const copyMessage = useCallback((id, text) => {
-        navigator.clipboard.writeText(text).then(() => {
-            setCopiedMsgId(id)
-            setTimeout(() => setCopiedMsgId(null), 2000)
-        }).catch(() => {
+        const fallbackCopy = () => {
             try {
                 const ta = document.createElement('textarea')
-                ta.value = text
+                ta.value = typeof text === 'string' ? text : JSON.stringify(text)
                 ta.style.position = 'fixed'
                 ta.style.opacity = '0'
                 document.body.appendChild(ta)
@@ -493,7 +521,15 @@ export default function ChatbotPage() {
                 setCopiedMsgId(id)
                 setTimeout(() => setCopiedMsgId(null), 2000)
             } catch { }
-        })
+        }
+        if (navigator.clipboard?.writeText) {
+            navigator.clipboard.writeText(typeof text === 'string' ? text : JSON.stringify(text)).then(() => {
+                setCopiedMsgId(id)
+                setTimeout(() => setCopiedMsgId(null), 2000)
+            }).catch(fallbackCopy)
+        } else {
+            fallbackCopy()
+        }
     }, [])
 
     const updateSessions = useCallback((messages, id) => {
@@ -537,7 +573,6 @@ export default function ChatbotPage() {
             const contentType = res.headers.get('content-type') || ''
 
             if (!res.ok) {
-                // Try parsing as JSON first, then as SSE error event
                 if (contentType.includes('text/event-stream')) {
                     const text = await res.text().catch(() => '')
                     const match = text.match(/data:\s*(\{.*\})/)
@@ -568,7 +603,6 @@ export default function ChatbotPage() {
                 }
 
                 const parseLine = (line) => {
-                    // SSE heartbeat comment — update status with elapsed time
                     if (line.startsWith(': ')) {
                         heartbeatCount++
                         const elapsed = Math.round((Date.now() - startTs) / 1000)
@@ -603,7 +637,6 @@ export default function ChatbotPage() {
                     for (const line of lines) parseLine(line)
                 }
 
-                // Flush remaining buffer (last chunk may not end with \n)
                 if (buffer.trim()) parseLine(buffer.trim())
 
                 if (finalData) {
@@ -632,7 +665,6 @@ export default function ChatbotPage() {
                         lsDel(PENDING_KEY)
                     }
                 } else {
-                    // Stream ended without a done/error event — use any accumulated content
                     if (mountedRef.current) {
                         setMsgs(prev => {
                             const pending = prev.find(m => m._id === pendingMsgId)
@@ -675,7 +707,6 @@ export default function ChatbotPage() {
                 } else {
                     content = t('chatbot.errorPrefix', { message: err.message || t('common.unknown') })
                 }
-                // Replace any pending streaming message with the error, or append error
                 setMsgs(prev => {
                     const hasPending = prev.some(m => m._streaming)
                     const errorMsg = { role: 'assistant', content, time: now() }
@@ -712,17 +743,19 @@ export default function ChatbotPage() {
         lsDel(SESSIONS_KEY); lsDel(ACTIVE_KEY); lsDel(PENDING_KEY)
     }, [])
 
-    const activeModelInfo = useMemo(() =>
-        CLOUD_MODELS.find(m => m.id === selectedModel) || CLOUD_MODELS[0],
-        [selectedModel]
-    )
-
     const lastStreamingIdx = useMemo(() => {
         for (let i = msgs.length - 1; i >= 0; i--) {
             if (msgs[i]._streaming) return i
         }
         return -1
     }, [msgs])
+
+    const handleKeyDown = useCallback((e) => {
+        if (e.key === 'Enter' && !e.shiftKey) {
+            e.preventDefault()
+            send(input)
+        }
+    }, [input, send])
 
     return (
         <div className={styles.layout} onClick={() => modelDropdown && setModelDropdown(false)}>
@@ -762,11 +795,11 @@ export default function ChatbotPage() {
                     </div>
                 </div>
 
-                <div className={styles.chatArea}>
+                <div className={styles.chatArea} ref={chatAreaRef}>
                     {msgs.length === 0 && !sending ? (
                         <div className={styles.welcome}>
                             <div className={styles.welcomeHeading}>
-                                <div className={styles.emptyIcon}><Bot size={32} /></div>
+                                <div className={styles.emptyIcon}><Bot size={28} /></div>
                                 <h2 className={styles.welcomeTitle}>{t('chatbot.startConversation')}</h2>
                                 <p className={styles.welcomeSub}>{t('chatbot.startConversationSub')}</p>
                             </div>
@@ -807,6 +840,16 @@ export default function ChatbotPage() {
                             <div ref={endRef} />
                         </div>
                     )}
+
+                    {showScrollBtn && (
+                        <button
+                            className={styles.scrollBottom}
+                            onClick={scrollToBottom}
+                            aria-label="Scroll to bottom"
+                        >
+                            <ArrowDown size={16} />
+                        </button>
+                    )}
                 </div>
 
                 <div className={styles.inputFooter}>
@@ -826,18 +869,19 @@ export default function ChatbotPage() {
                     </div>
                     <form className={styles.inputBar} onSubmit={e => { e.preventDefault(); send(input) }}>
                         <div className={styles.inputWrap}>
-                            <input
+                            <textarea
                                 ref={inputRef}
                                 value={input}
-                                onChange={e => setInput(e.target.value.slice(0, MAX_INPUT))}
-                                onKeyDown={e => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); send(input) } }}
+                                onChange={e => setInput(e.target.value.slice(0, maxInput))}
+                                onKeyDown={handleKeyDown}
                                 placeholder={t('chatbot.inputPlaceholder')}
                                 disabled={sending}
-                                maxLength={MAX_INPUT}
+                                maxLength={maxInput}
+                                rows={1}
                                 autoFocus
                             />
-                            <span className={`${styles.charCounter} ${input.length >= WARN_THRESHOLD ? styles.charCounterWarn : ''}`}>
-                                {input.length}/{MAX_INPUT}
+                            <span className={`${styles.charCounter} ${input.length >= warnThreshold ? styles.charCounterWarn : ''}`}>
+                                {input.length}/{maxInput}
                             </span>
                         </div>
                         <button type="submit" disabled={!input.trim() || sending}>

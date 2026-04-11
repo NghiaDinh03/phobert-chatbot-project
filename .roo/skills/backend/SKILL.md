@@ -86,7 +86,17 @@ Reference direction:
 - File I/O operations should use absolute paths from config (`DATA_PATH`, `ISO_DOCS_PATH`, `VECTOR_STORE_PATH`).
 - Rate limit annotation required on all public-facing endpoints.
 
-Code quality policy:
-- No verbose comments or tutorial-style explanations.
-- No banner decorations.
-- Only comment non-obvious architectural constraints or performance-sensitive logic.
+## Comment policy
+
+Allowed:
+- Docstrings on public functions/classes (concise, one-line preferred).
+- Cross-reference notes (e.g. "must match frontend WEIGHT_SCORE").
+- Non-obvious architectural constraints or performance notes.
+- Test comments explaining edge-case rationale.
+
+Forbidden:
+- Tutorial-style explanations ("This function does X because Y").
+- Banner decorations or ASCII art.
+- Obvious comments ("# return result", "# import os").
+- Commented-out dead code (delete it).
+- Inline type annotations in comments when type hints exist.

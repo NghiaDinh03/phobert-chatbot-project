@@ -76,8 +76,9 @@ class Settings:
     RATE_LIMIT_ASSESS: str = os.getenv("RATE_LIMIT_ASSESS", "3/minute")
     RATE_LIMIT_BENCHMARK: str = os.getenv("RATE_LIMIT_BENCHMARK", "5/minute")
 
-    INFERENCE_TIMEOUT: int = int(os.getenv("INFERENCE_TIMEOUT", "120"))
-    CLOUD_TIMEOUT: int = int(os.getenv("CLOUD_TIMEOUT", "60"))
+    # Local model inference on CPU can take 10-30 minutes for complex prompts
+    INFERENCE_TIMEOUT: int = int(os.getenv("INFERENCE_TIMEOUT", "1800"))
+    CLOUD_TIMEOUT: int = int(os.getenv("CLOUD_TIMEOUT", "120"))
     MAX_CONCURRENT_REQUESTS: int = int(os.getenv("MAX_CONCURRENT_REQUESTS", "3"))
 
     @property
