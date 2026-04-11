@@ -79,8 +79,8 @@ flowchart LR
     style LocalAI fill:#8b5cf6,stroke:#7c3aed,color:#fff
     style Ollama fill:#ef4444,stroke:#dc2626,color:#fff
     style Cloud fill:#6366f1,stroke:#4f46e5,color:#fff
-    style PROD fill:#fef3c7,stroke:#f59e0b
-    style DOCKER fill:#dbeafe,stroke:#93c5fd
+    style PROD fill:#78350f,stroke:#f59e0b,color:#fff
+    style DOCKER fill:#1e3a5f,stroke:#60a5fa,color:#fff
 ```
 
 ### Bảng cấu hình Container (Vùng chứa)
@@ -134,9 +134,9 @@ flowchart TB
     BE -. "Fallback khi lỗi" .-> CLOUD
 
     style BE fill:#10b981,stroke:#059669,color:#fff
-    style LOCAL_AI fill:#ede9fe,stroke:#8b5cf6
-    style OLLAMA fill:#fee2e2,stroke:#ef4444
-    style CLOUD fill:#e0f2fe,stroke:#0ea5e9
+    style LOCAL_AI fill:#3b1f4e,stroke:#a78bfa,color:#fff
+    style OLLAMA fill:#4a1a1a,stroke:#f87171,color:#fff
+    style CLOUD fill:#0c4a6e,stroke:#38bdf8,color:#fff
 ```
 
 ### LocalAI (port 8080)
@@ -210,11 +210,11 @@ flowchart TD
     Search["🌐 Route: search\nuse_search=true · General LLM"]
     General["💬 Route: general\nGeneral LLM (fallback)"]
 
-    style Input fill:#fbbf24,stroke:#f59e0b,color:#000
-    style STEP1 fill:#f0fdf4,stroke:#86efac
-    style STEP2 fill:#fefce8,stroke:#fde047
-    style Security fill:#ef4444,stroke:#dc2626,color:#fff
-    style Search fill:#3b82f6,stroke:#2563eb,color:#fff
+    style Input fill:#92400e,stroke:#fbbf24,color:#fff
+    style STEP1 fill:#064e3b,stroke:#6ee7b7,color:#fff
+    style STEP2 fill:#713f12,stroke:#fde047,color:#fff
+    style Security fill:#991b1b,stroke:#f87171,color:#fff
+    style Search fill:#1e3a8a,stroke:#60a5fa,color:#fff
     style General fill:#10b981,stroke:#059669,color:#fff
 ```
 
@@ -365,9 +365,9 @@ flowchart TD
     style FE fill:#3b82f6,stroke:#2563eb,color:#fff
     style BE fill:#10b981,stroke:#059669,color:#fff
     style Router fill:#8b5cf6,stroke:#7c3aed,color:#fff
-    style CONTEXT fill:#f0fdf4,stroke:#86efac
-    style LLM fill:#dbeafe,stroke:#93c5fd
-    style CLD fill:#6366f1,stroke:#4f46e5,color:#fff
+    style CONTEXT fill:#064e3b,stroke:#6ee7b7,color:#fff
+    style LLM fill:#1e3a5f,stroke:#60a5fa,color:#fff
+    style CLD fill:#312e81,stroke:#818cf8,color:#fff
 ```
 
 <details>
@@ -445,11 +445,11 @@ flowchart TD
     O1["📄 /data/assessments\n{uuid}.json"]
     O2["📦 /data/exports\nPDF / HTML"]
 
-    style Submit fill:#fbbf24,stroke:#f59e0b,color:#000
-    style Phase1 fill:#fee2e2,stroke:#fca5a5
-    style Phase2 fill:#dbeafe,stroke:#93c5fd
-    style O1 fill:#d1fae5,stroke:#6ee7b7
-    style O2 fill:#d1fae5,stroke:#6ee7b7
+    style Submit fill:#92400e,stroke:#fbbf24,color:#fff
+    style Phase1 fill:#4a1a1a,stroke:#f87171,color:#fff
+    style Phase2 fill:#1e3a5f,stroke:#60a5fa,color:#fff
+    style O1 fill:#064e3b,stroke:#6ee7b7,color:#fff
+    style O2 fill:#064e3b,stroke:#6ee7b7,color:#fff
 ```
 
 <details>
