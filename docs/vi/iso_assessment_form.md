@@ -70,11 +70,11 @@ flowchart TB
     S1 --> S2 --> S3 --> S4
     S4 -->|Submit| AI["🤖 AI Pipeline<br>2-Phase Analysis"]
 
-    style S1 fill:#4CAF50,color:#fff
-    style S2 fill:#2196F3,color:#fff
-    style S3 fill:#FF9800,color:#fff
-    style S4 fill:#9C27B0,color:#fff
-    style AI fill:#f44336,color:#fff
+    style S1 fill:#064e3b,stroke:#6ee7b7,color:#fff
+    style S2 fill:#1e3a8a,stroke:#60a5fa,color:#fff
+    style S3 fill:#78350f,stroke:#fbbf24,color:#fff
+    style S4 fill:#4c1d95,stroke:#a78bfa,color:#fff
+    style AI fill:#7f1d1d,stroke:#fca5a5,color:#fff
 ```
 
 ### 🏢 Bước 1 — Organization & Scope (Tổ chức & Phạm vi)
@@ -148,8 +148,8 @@ flowchart TB
 
     Phase1 --> Phase2
 
-    style Phase1 fill:#e3f2fd,stroke:#1565C0
-    style Phase2 fill:#fce4ec,stroke:#c62828
+    style Phase1 fill:#1e3a8a,stroke:#60a5fa,color:#fff
+    style Phase2 fill:#7f1d1d,stroke:#fca5a5,color:#fff
 ```
 
 ### ⚡ Phase 1 — GAP Analysis (Phân Tích Khoảng Cách)

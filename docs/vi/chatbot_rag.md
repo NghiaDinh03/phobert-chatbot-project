@@ -129,11 +129,11 @@ flowchart TD
     D --> E["Route được chọn"]
     C --> E
 
-    style A fill:#4fc3f7,stroke:#0288d1,color:#000
-    style B fill:#fff9c4,stroke:#f9a825,color:#000
-    style C fill:#a5d6a7,stroke:#388e3c,color:#000
-    style D fill:#ffcc80,stroke:#ef6c00,color:#000
-    style E fill:#ce93d8,stroke:#7b1fa2,color:#000
+    style A fill:#0c4a6e,stroke:#38bdf8,color:#fff
+    style B fill:#78350f,stroke:#fbbf24,color:#fff
+    style C fill:#064e3b,stroke:#6ee7b7,color:#fff
+    style D fill:#7c2d12,stroke:#f97316,color:#fff
+    style E fill:#4c1d95,stroke:#a78bfa,color:#fff
 ```
 
 <details>
@@ -229,11 +229,11 @@ flowchart LR
     C --> D["📦 Context Prefix\n[Context: # > ## > ###]"]
     D --> E["🗄️ ChromaDB\nPersistentClient"]
 
-    style A fill:#bbdefb,stroke:#1565c0,color:#000
-    style B fill:#c8e6c9,stroke:#2e7d32,color:#000
-    style C fill:#fff9c4,stroke:#f9a825,color:#000
-    style D fill:#ffe0b2,stroke:#e65100,color:#000
-    style E fill:#e1bee7,stroke:#6a1b9a,color:#000
+    style A fill:#0c4a6e,stroke:#38bdf8,color:#fff
+    style B fill:#064e3b,stroke:#6ee7b7,color:#fff
+    style C fill:#78350f,stroke:#fbbf24,color:#fff
+    style D fill:#7c2d12,stroke:#f97316,color:#fff
+    style E fill:#4c1d95,stroke:#a78bfa,color:#fff
 ```
 
 ### Bộ Sưu Tập Theo Phạm Vi (Domain-Scoped Collections)
@@ -268,9 +268,9 @@ flowchart TD
     G --> I
     H --> I
 
-    style A fill:#4fc3f7,stroke:#0288d1,color:#000
-    style E fill:#fff9c4,stroke:#f9a825,color:#000
-    style I fill:#a5d6a7,stroke:#388e3c,color:#000
+    style A fill:#0c4a6e,stroke:#38bdf8,color:#fff
+    style E fill:#78350f,stroke:#fbbf24,color:#fff
+    style I fill:#064e3b,stroke:#6ee7b7,color:#fff
 ```
 
 > 📌 Triển khai trong [`RAGService`](../../backend/services/rag_service.py) và [`VectorStore`](../../backend/repositories/vector_store.py).
@@ -395,14 +395,14 @@ flowchart TD
     Q --> S["model_used, source,\nrag_used, search_used"]
     Q --> T["processing_time"]
 
-    style A fill:#4fc3f7,stroke:#0288d1,color:#000
-    style B fill:#fff9c4,stroke:#f9a825,color:#000
-    style C fill:#a5d6a7,stroke:#388e3c,color:#000
-    style D fill:#90caf9,stroke:#1565c0,color:#000
-    style E fill:#e0e0e0,stroke:#616161,color:#000
-    style I fill:#ffe0b2,stroke:#e65100,color:#000
-    style M fill:#ce93d8,stroke:#6a1b9a,color:#000
-    style Q fill:#80cbc4,stroke:#00695c,color:#000
+    style A fill:#0c4a6e,stroke:#38bdf8,color:#fff
+    style B fill:#78350f,stroke:#fbbf24,color:#fff
+    style C fill:#064e3b,stroke:#6ee7b7,color:#fff
+    style D fill:#1e3a8a,stroke:#60a5fa,color:#fff
+    style E fill:#374151,stroke:#9ca3af,color:#fff
+    style I fill:#7c2d12,stroke:#f97316,color:#fff
+    style M fill:#4c1d95,stroke:#a78bfa,color:#fff
+    style Q fill:#065f46,stroke:#34d399,color:#fff
 ```
 
 <details>
@@ -464,10 +464,10 @@ graph TB
     CS -->|"LLM call"| LOCAL
     CS -->|"LLM call"| CLOUD
 
-    style Frontend fill:#bbdefb,stroke:#1565c0,color:#000
-    style Backend fill:#c8e6c9,stroke:#2e7d32,color:#000
-    style AI fill:#fff9c4,stroke:#f9a825,color:#000
-    style Storage fill:#e1bee7,stroke:#6a1b9a,color:#000
+    style Frontend fill:#0c4a6e,stroke:#38bdf8,color:#fff
+    style Backend fill:#064e3b,stroke:#6ee7b7,color:#fff
+    style AI fill:#78350f,stroke:#fbbf24,color:#fff
+    style Storage fill:#4c1d95,stroke:#a78bfa,color:#fff
 ```
 
 ---

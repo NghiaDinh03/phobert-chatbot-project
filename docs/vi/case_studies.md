@@ -98,7 +98,7 @@ graph TB
     style NHNN fill:#047857,color:#fff
     style BYT fill:#b91c1c,color:#fff
     style BCA fill:#7c3aed,color:#fff
-    style BANK fill:#f59e0b,color:#000
+    style BANK fill:#78350f,stroke:#fbbf24,color:#fff
     style HEALTH fill:#ef4444,color:#fff
     style GOV fill:#3b82f6,color:#fff
     style TECH fill:#10b981,color:#fff
@@ -298,13 +298,13 @@ graph TD
     F["🏥 Vinmec<br/>JCI + ISO (hạn chế)"| ] -.->|"Hiện tại"| B
     G["🏥 Mục tiêu<br/>2025-2030"] -.->|"Hướng tới"| C
 
-    style A fill:#ef4444,color:#fff
-    style B fill:#f59e0b,color:#000
-    style C fill:#22c55e,color:#fff
-    style D fill:#3b82f6,color:#fff
-    style E fill:#fca5a5,color:#000
-    style F fill:#fde68a,color:#000
-    style G fill:#86efac,color:#000
+    style A fill:#7f1d1d,stroke:#fca5a5,color:#fff
+    style B fill:#78350f,stroke:#fbbf24,color:#fff
+    style C fill:#064e3b,stroke:#6ee7b7,color:#fff
+    style D fill:#1e3a8a,stroke:#60a5fa,color:#fff
+    style E fill:#7f1d1d,stroke:#fca5a5,color:#fff
+    style F fill:#78350f,stroke:#fbbf24,color:#fff
+    style G fill:#064e3b,stroke:#6ee7b7,color:#fff
 ```
 
 ---

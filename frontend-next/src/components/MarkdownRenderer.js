@@ -185,12 +185,20 @@ function MermaidBlock({ content }) {
     const handleExport = useCallback(() => {
         const svg = ref.current?.querySelector('svg')
         if (!svg) return
+        
+        // Đảm bảo có thuộc tính xmlns
+        if (!svg.getAttribute('xmlns')) {
+            svg.setAttribute('xmlns', 'http://www.w3.org/2000/svg')
+        }
+        
         const svgData = new XMLSerializer().serializeToString(svg)
         const canvas = document.createElement('canvas')
         const ctx = canvas.getContext('2d')
         const img = new Image()
-        const svgBlob = new Blob([svgData], { type: 'image/svg+xml;charset=utf-8' })
-        const url = URL.createObjectURL(svgBlob)
+        img.crossOrigin = 'anonymous'
+        
+        const url = 'data:image/svg+xml;base64,' + btoa(unescape(encodeURIComponent(svgData)))
+        
         img.onload = () => {
             const scale = 2
             canvas.width = img.naturalWidth * scale
@@ -198,12 +206,16 @@ function MermaidBlock({ content }) {
             ctx.fillStyle = '#0f172a'
             ctx.fillRect(0, 0, canvas.width, canvas.height)
             ctx.drawImage(img, 0, 0, canvas.width, canvas.height)
-            const pngUrl = canvas.toDataURL('image/png')
-            const a = document.createElement('a')
-            a.href = pngUrl
-            a.download = `diagram_${Date.now()}.png`
-            a.click()
-            URL.revokeObjectURL(url)
+            try {
+                const pngUrl = canvas.toDataURL('image/png')
+                const a = document.createElement('a')
+                a.href = pngUrl
+                a.download = `diagram_${Date.now()}.png`
+                a.click()
+            } catch (err) {
+                console.error('Export failed due to tainted canvas:', err)
+                alert('Không thể xuất ảnh (Tainted Canvas). Vui lòng thử trình duyệt khác hoặc copy nội dung Memaid.')
+            }
         }
         img.src = url
     }, [])
