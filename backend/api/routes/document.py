@@ -1,6 +1,5 @@
-from fastapi import APIRouter, UploadFile, File, Request
+from fastapi import APIRouter, UploadFile, File
 from services.document_service import DocumentService
-from core.config import settings
 
 router = APIRouter()
 doc_service = DocumentService()

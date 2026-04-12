@@ -2,7 +2,6 @@
 
 import json
 import threading
-import time
 from typing import Optional
 
 from fastapi import APIRouter, BackgroundTasks, HTTPException, Request

@@ -2,13 +2,11 @@
 
 from fastapi import APIRouter, UploadFile, File, HTTPException
 from fastapi.responses import JSONResponse
-from typing import Optional
 import logging
 
 from services.standard_service import (
     parse_uploaded_standard,
     save_standard,
-    load_standard,
     list_custom_standards,
     delete_standard,
     index_standard_to_chromadb,

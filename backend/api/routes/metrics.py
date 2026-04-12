@@ -9,7 +9,6 @@ Usage in main.py:
     app.include_router(metrics_router, prefix="")
 """
 
-import time
 import logging
 
 from fastapi import APIRouter

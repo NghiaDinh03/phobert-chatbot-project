@@ -634,9 +634,9 @@ class ChatService:
             org_size = system_data.get("organization", {}).get("size", "")
             employees = system_data.get("organization", {}).get("employees", 0)
             mode_label = {
-                "local": f"LocalAI: SecurityLM (Phase 1) + Meta-Llama (Phase 2)",
+                "local": "LocalAI: SecurityLM (Phase 1) + Meta-Llama (Phase 2)",
                 "cloud": "Cloud only (OpenClaude)",
-                "hybrid": f"Hybrid: SecurityLM local (Phase 1) + OpenClaude (Phase 2)"
+                "hybrid": "Hybrid: SecurityLM local (Phase 1) + OpenClaude (Phase 2)"
             }
 
             weight_summary = f"\n\nDữ liệu trọng số:\n{weight_breakdown_txt}" if weight_breakdown_txt else ""

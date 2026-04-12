@@ -8,7 +8,6 @@ import os
 import logging
 from datetime import datetime, timezone
 from typing import List, Dict, Optional
-from pathlib import Path
 
 logger = logging.getLogger(__name__)
 

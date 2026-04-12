@@ -2,8 +2,6 @@
 
 import asyncio
 import chromadb
-import os
-import re
 import logging
 from pathlib import Path
 from core.config import settings
@@ -82,7 +80,7 @@ class VectorStore:
 
         if not docs_path.exists():
             return {"status": "error", "message": f"Directory not found: {docs_dir}"}
-        
+
         collection = self.get_collection(domain)
 
         md_files = list(docs_path.glob("*.md"))
@@ -130,7 +128,7 @@ class VectorStore:
     def search(self, query: str, top_k: int = 5, domain: str = "iso_documents") -> list:
         self.ensure_indexed(domain)
         collection = self.get_collection(domain)
-        
+
         if collection.count() == 0:
             return []
 

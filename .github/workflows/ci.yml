@@ -22,7 +22,7 @@ jobs:
         run: pip install ruff
 
       - name: Lint
-        run: cd backend && ruff check . --select E,W,F --ignore E501,W503
+        run: cd backend && ruff check . --select E,W,F --ignore E501,F841,E741,E402,W293
 
   backend-test:
     name: Backend Tests

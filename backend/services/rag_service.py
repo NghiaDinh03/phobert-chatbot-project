@@ -1,7 +1,7 @@
 ﻿"""RAG Service — Retrieval-Augmented Generation with CloudLLM and source attribution."""
 
 import logging
-from typing import Dict, List
+from typing import Dict
 from repositories.vector_store import VectorStore
 from services.cloud_llm_service import CloudLLMService
 

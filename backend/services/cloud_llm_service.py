@@ -436,7 +436,7 @@ class CloudLLMService:
                         result = cls._call_open_claude(messages, temperature, max_tokens,
                                                        model=cloud_model, task_type="iso_analysis")
                         if result["content"]:
-                            result["provider"] = f"cloud-fallback(localai-failed)"
+                            result["provider"] = "cloud-fallback(localai-failed)"
                             return result
                     except Exception as ce:
                         errors.append(f"Cloud fallback: {ce}")

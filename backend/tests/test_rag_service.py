@@ -10,12 +10,10 @@ All external dependencies (VectorStore, CloudLLMService, Prometheus counters)
 are fully mocked so tests run without Docker, ChromaDB, or network access.
 """
 
-import pytest
-from unittest.mock import MagicMock, patch, call
+from unittest.mock import MagicMock, patch
 
 
 # ── Module-level import (avoids partial import issues) ────────────────────────
-import services.rag_service as rag_module
 from services.rag_service import RAGService, RAG_CONFIDENCE_THRESHOLD, _filter_by_confidence
 
 
