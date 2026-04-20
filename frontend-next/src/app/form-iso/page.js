@@ -7,13 +7,24 @@ import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import styles from './page.module.css'
 import { ASSESSMENT_STANDARDS, calcWeightedScore, calcCategoryBreakdown, WEIGHT_SCORE, mergeCustomStandard } from '../../data/standards'
-import { CONTROL_DESCRIPTIONS } from '../../data/controlDescriptions'
-import { ASSESSMENT_TEMPLATES } from '../../data/templates'
+import { useControlDescriptions, useAssessmentTemplates } from '../../data'
 import StepProgress from '@/components/StepProgress'
 import { useTranslation } from '@/components/LanguageProvider'
 import { Shield, ChevronRight, ChevronLeft } from 'lucide-react'
+import ControlRow from './_components/ControlRow'
+import DetailDrawer from './_components/DetailDrawer'
+import EvidencePreviewModal from './_components/EvidencePreviewModal'
 
 const POLL_INTERVAL = 8000
+const ASSESSMENT_MODE_KEY = 'cyberai.assessmentMode'
+const ASSESSMENT_MODE_EVENT = 'cyberai:assessment-mode-change'
+const readStoredAssessmentMode = () => {
+    if (typeof window === 'undefined') return 'hybrid'
+    try {
+        const v = window.localStorage.getItem(ASSESSMENT_MODE_KEY)
+        return v === 'cloud' || v === 'local' || v === 'hybrid' ? v : 'hybrid'
+    } catch (_) { return 'hybrid' }
+}
 
 // Map standard id → display label for all supported standards
 const STANDARD_LABEL_MAP = {
@@ -72,6 +83,8 @@ const EMPTY_FORM = {
 export default function FormISOPage() {
     const router = useRouter()
     const { t, locale } = useTranslation()
+    const CONTROL_DESCRIPTIONS = useControlDescriptions()
+    const ASSESSMENT_TEMPLATES = useAssessmentTemplates()
     const [step, setStep] = useState(1)
     const [form, setForm] = useState(EMPTY_FORM)
     // result: { id, status, report, model_used, json_data, progress, compliance_percent, standard, org_name, error }
@@ -90,6 +103,15 @@ export default function FormISOPage() {
     const [previewLoading, setPreviewLoading] = useState(null)
     const [isDragging, setIsDragging] = useState(false)
     const [deletingId, setDeletingId] = useState(null)
+
+    // ── Drawer state (Step 4 refactor) ─────────────────────────────────────
+    const [drawerControlId, setDrawerControlId] = useState(null)
+    const [controlNotes, setControlNotes] = useState({})
+    const drawerReturnFocusRef = useRef(null)
+
+    // ── Step 5: evidence preview modal ─────────────────────────────────────
+    const [previewFile, setPreviewFile] = useState(null)
+    const previewReturnFocusRef = useRef(null)
 
     const [tplFilter, setTplFilter] = useState('all')
     const [showTplInfo, setShowTplInfo] = useState(false)
@@ -211,7 +233,7 @@ export default function FormISOPage() {
 
     const allDescriptions = useMemo(() => {
         return { ...CONTROL_DESCRIPTIONS, ...customDescriptions }
-    }, [customDescriptions])
+    }, [CONTROL_DESCRIPTIONS, customDescriptions])
 
     const currentStandard = useMemo(() => {
         return availableStandards.find(s => s.id === form.assessment_standard) || availableStandards[0]
@@ -296,6 +318,20 @@ export default function FormISOPage() {
 
         fetchHistory()
     }, []) // eslint-disable-line react-hooks/exhaustive-deps
+
+    // Step 6: sync model_mode from Settings-page preference (localStorage + event)
+    useEffect(() => {
+        const initial = readStoredAssessmentMode()
+        setForm(prev => (prev.model_mode === initial ? prev : { ...prev, model_mode: initial }))
+        const onChange = (e) => {
+            const mode = e?.detail
+            if (mode === 'cloud' || mode === 'local' || mode === 'hybrid') {
+                setForm(prev => ({ ...prev, model_mode: mode }))
+            }
+        }
+        window.addEventListener(ASSESSMENT_MODE_EVENT, onChange)
+        return () => window.removeEventListener(ASSESSMENT_MODE_EVENT, onChange)
+    }, [])
 
     // ── fetchHistory: handles paginated envelope {items,...} OR flat array ─────
     const fetchHistory = useCallback(async () => {
@@ -831,35 +867,25 @@ export default function FormISOPage() {
                                                 </div>
                                                 <div className={styles.controlGrid}>
                                                     {category.controls.map(ctrl => {
-                                                        const desc = allDescriptions[ctrl.id]
-                                                        const w = ctrl.weight || 'medium'
+                                                        const implemented = form.implemented_controls.includes(ctrl.id)
+                                                        const evCount = (evidenceMap[ctrl.id] || []).length
                                                         return (
-                                                            <div key={ctrl.id} className={`${styles.controlItem} ${form.implemented_controls.includes(ctrl.id) ? styles.controlActive : ''}`}>
-                                                                <label className={styles.controlLabel}>
-                                                                    <input
-                                                                        type="checkbox"
-                                                                        checked={form.implemented_controls.includes(ctrl.id)}
-                                                                        onChange={() => toggleControl(ctrl.id)}
-                                                                    />
-                                                                    <div className={styles.ctrlText}>
-                                                                        <div className={styles.ctrlTopRow}>
-                                                                            <span className={styles.ctrlId}>{ctrl.id}</span>
-                                                                            <span
-                                                                                className={styles.weightBadge}
-                                                                                style={{ borderColor: WEIGHT_COLOR[w], color: WEIGHT_COLOR[w] }}
-                                                                                title={`${t('assessment.weightImportance')}: ${WEIGHT_LABEL[w]} (${WEIGHT_SCORE[w]} ${t('assessment.points')})`}
-                                                                            >{w}</span>
-                                                                        </div>
-                                                                        <span className={styles.ctrlLabel}>{ctrl.label}</span>
-                                                                    </div>
-                                                                </label>
-                                                                <button
-                                                                    type="button"
-                                                                    className={`${styles.infoIcon} ${activeTooltip === ctrl.id ? styles.infoIconActive : ''}`}
-                                                                    onClick={(e) => { e.stopPropagation(); const newId = activeTooltip === ctrl.id ? null : ctrl.id; setActiveTooltip(newId); if (newId) fetchEvidenceForControl(newId) }}
-                                                                    title={t('assessment.controlDetailEvidence')}
-                                                                >ⓘ</button>
-                                                            </div>
+                                                            <ControlRow
+                                                                key={ctrl.id}
+                                                                control={ctrl}
+                                                                state={{ implemented }}
+                                                                onToggleImplemented={toggleControl}
+                                                                onOpenDrawer={(id) => {
+                                                                    drawerReturnFocusRef.current =
+                                                                        document.activeElement instanceof HTMLElement
+                                                                            ? document.activeElement
+                                                                            : null
+                                                                    setDrawerControlId(id)
+                                                                    fetchEvidenceForControl(id)
+                                                                }}
+                                                                evidenceCount={evCount}
+                                                                verdict={undefined}
+                                                            />
                                                         )
                                                     })}
                                                 </div>
@@ -979,7 +1005,7 @@ export default function FormISOPage() {
     const filteredTemplates = useMemo(() => {
         if (tplFilter === 'all') return ASSESSMENT_TEMPLATES
         return ASSESSMENT_TEMPLATES.filter(t => t.standard === tplFilter)
-    }, [tplFilter])
+    }, [tplFilter, ASSESSMENT_TEMPLATES])
 
     const selectTemplate = (tpl) => {
         const newForm = applyTemplateData(tpl.data, false, form.model_mode)
@@ -2086,6 +2112,56 @@ ${escHtml(result.report || '')}
                     </div>
                 </div>
             )}
+
+            {/* ── Step 4: Overlay DetailDrawer ─────────────────────────────── */}
+            {(() => {
+                const allControls = currentStandard.controls.flatMap(c => c.controls)
+                const ctrl = allControls.find(c => c.id === drawerControlId) || null
+                const desc = drawerControlId ? allDescriptions[drawerControlId] : null
+                const files = drawerControlId ? (evidenceMap[drawerControlId] || []) : []
+                const implemented = drawerControlId
+                    ? form.implemented_controls.includes(drawerControlId)
+                    : false
+                const state = ctrl ? {
+                    implemented,
+                    description: desc,
+                    evidenceFiles: files,
+                    notes: controlNotes[drawerControlId] || '',
+                    // Step 5 AI verdict fields (not yet populated)
+                    evidence_verdict: undefined,
+                    missing_items: undefined,
+                    confidence: undefined,
+                    ai_notes: undefined,
+                } : null
+                return (
+                    <DetailDrawer
+                        open={!!ctrl}
+                        control={ctrl}
+                        state={state}
+                        onClose={() => setDrawerControlId(null)}
+                        onToggleImplemented={(id) => toggleControl(id)}
+                        onUploadFiles={(id, filelist) => uploadEvidence(id, filelist)}
+                        onDeleteFile={(id, filename) => deleteEvidence(id, filename)}
+                        onChangeNotes={(id, text) => setControlNotes(prev => ({ ...prev, [id]: text }))}
+                        onExpandFile={(file) => {
+                            previewReturnFocusRef.current =
+                                document.activeElement instanceof HTMLElement
+                                    ? document.activeElement
+                                    : null
+                            setPreviewFile({ ...file, control_id: drawerControlId })
+                        }}
+                        returnFocusRef={drawerReturnFocusRef}
+                    />
+                )
+            })()}
+
+            {/* ── Step 5: Evidence preview modal ─────────────────────────── */}
+            <EvidencePreviewModal
+                open={!!previewFile}
+                file={previewFile}
+                onClose={() => setPreviewFile(null)}
+                returnFocusRef={previewReturnFocusRef}
+            />
         </div>
     )
 }

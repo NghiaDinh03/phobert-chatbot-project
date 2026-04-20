@@ -14,8 +14,11 @@ services:
       - MAX_TOKENS=-1
       - PREFER_LOCAL=${PREFER_LOCAL:-false}
       - CLOUD_LLM_API_URL=${CLOUD_LLM_API_URL:-https://open-claude.com/v1}
-      - CLOUD_MODEL_NAME=${CLOUD_MODEL_NAME:-gpt-5.2}
+      - CLOUD_MODEL_NAME=${CLOUD_MODEL_NAME:-gemini-3.1-pro-preview}
       - CLOUD_API_KEYS=${CLOUD_API_KEYS}
+      - GOOGLE_AI_STUDIO_API_KEY=${GOOGLE_AI_STUDIO_API_KEY:-}
+      - GOOGLE_AI_STUDIO_MODEL=${GOOGLE_AI_STUDIO_MODEL:-gemini-2.0-flash}
+      - GOOGLE_AI_STUDIO_URL=${GOOGLE_AI_STUDIO_URL:-https://generativelanguage.googleapis.com/v1beta}
       - ISO_DOCS_PATH=/data/iso_documents
       - VECTOR_STORE_PATH=/data/vector_store
       - DATA_PATH=/data
@@ -49,6 +52,8 @@ services:
       ollama:
         condition: service_started
     restart: unless-stopped
+    mem_limit: 6g
+    mem_reservation: 2g
     deploy:
       resources:
         limits:
@@ -65,21 +70,15 @@ services:
   frontend:
     build:
       context: ./frontend-next
-      dockerfile: Dockerfile.dev
+      dockerfile: Dockerfile
     container_name: phobert-frontend
     ports:
       - "3000:3000"
     environment:
       - NEXT_PUBLIC_API_URL=http://backend:8000
       - API_URL=http://backend:8000
-      - WATCHPACK_POLLING=true
+      - NODE_ENV=production
     volumes:
-      - ./frontend-next/src:/app/src
-      - ./frontend-next/public:/app/public
-      - ./frontend-next/next.config.js:/app/next.config.js
-      - ./frontend-next/jsconfig.json:/app/jsconfig.json
-      - ./frontend-next/package.json:/app/package.json
-      - ./frontend-next/package-lock.json:/app/package-lock.json
       - ./docs:/app/docs:ro
     networks:
       - phobert-network
@@ -87,10 +86,14 @@ services:
       backend:
         condition: service_started
     restart: unless-stopped
+    mem_limit: 2g
+    mem_reservation: 256m
     deploy:
       resources:
         limits:
           memory: 2G
+        reservations:
+          memory: 256M
 
   localai:
     image: localai/localai:v2.24.2
@@ -99,7 +102,7 @@ services:
       - "8080:8080"
     environment:
       - DEBUG=true
-      - THREADS=${THREADS:-6}
+      - THREADS=${THREADS:-10}
       - CONTEXT_SIZE=${CONTEXT_SIZE:-8192}
       - PARALLEL_REQUESTS=false
       - MLOCK=false
@@ -111,10 +114,13 @@ services:
     networks:
       - phobert-network
     restart: unless-stopped
+    mem_limit: 14g
+    mem_reservation: 4g
     deploy:
       resources:
         limits:
-          memory: 12G
+          cpus: "10"
+          memory: 14G
         reservations:
           memory: 4G
     healthcheck:
@@ -127,32 +133,33 @@ services:
   ollama:
     image: ollama/ollama:latest
     container_name: phobert-ollama
-    # Auto-pull 3 Gemma models on first start (idempotent — skips if already pulled)
-    entrypoint: ["/bin/sh", "-c", "ollama serve & sleep 5 && ollama pull gemma3n:e2b && ollama pull gemma3n:e4b && ollama pull gemma4:latest; wait"]
+    entrypoint: ["/bin/sh", "-c", "ollama serve & sleep 5 && ollama pull gemma3n:e2b && ollama pull gemma3n:e4b && ollama pull gemma4:latest && ollama pull gemma3:27b; wait"]
     ports:
       - "11434:11434"
     environment:
       - OLLAMA_HOST=0.0.0.0:11434
-      - OLLAMA_NUM_PARALLEL=1
-      - OLLAMA_MAX_LOADED_MODELS=1   # Gemma 4 (9.4 GB) needs all 14 GB RAM
+      - OLLAMA_NUM_PARALLEL=2
+      - OLLAMA_MAX_LOADED_MODELS=1
       - OLLAMA_KEEP_ALIVE=24h
-      - OLLAMA_LOAD_TIMEOUT=20m       # Gemma 4 takes 5-15 min to load on CPU
+      - OLLAMA_LOAD_TIMEOUT=20m
       - OLLAMA_MAX_QUEUE=10
-      - OLLAMA_FLASH_ATTENTION=true   # halves KV cache (224 → 112 MB)
-      - OLLAMA_CONTEXT_LENGTH=2048    # saves ~112 MB vs 4096
+      - OLLAMA_FLASH_ATTENTION=true
+      - OLLAMA_CONTEXT_LENGTH=4096
       - OLLAMA_DEBUG=INFO
     volumes:
       - ollama_data:/root/.ollama
     networks:
       - phobert-network
     restart: unless-stopped
+    mem_limit: 18g
+    mem_reservation: 6g
     deploy:
       resources:
         limits:
-          cpus: "2"
-          memory: 14G
+          cpus: "10"
+          memory: 18G
         reservations:
-          memory: 4G
+          memory: 6G
     healthcheck:
       test: [ "CMD-SHELL", "ollama list >/dev/null 2>&1 || exit 1" ]
       interval: 30s

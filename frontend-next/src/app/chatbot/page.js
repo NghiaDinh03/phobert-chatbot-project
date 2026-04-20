@@ -1,10 +1,12 @@
 'use client'
 
+export const dynamic = 'force-dynamic'
+
 import { useState, useEffect, useRef, useCallback, useMemo, memo } from 'react'
 import ReactMarkdown from 'react-markdown'
 import remarkGfm from 'remark-gfm'
 import {
-    Send, Copy, Plus, Trash2, ChevronDown, Bot, User, Loader2, ArrowDown, Check, GripHorizontal
+    Send, Copy, Plus, Trash2, ChevronDown, Bot, User, Loader2, ArrowDown, Check, GripHorizontal, Download, X, Pencil
 } from 'lucide-react'
 import { useTranslation } from '@/components/LanguageProvider'
 import styles from './page.module.css'
@@ -14,30 +16,19 @@ const MAX_INPUT_CLOUD = 15000
 const WARN_OFFSET = 200
 
 const CLOUD_MODELS = [
-    { id: 'gemini-3-flash-preview', label: 'Gemini 3 Flash', provider: 'google',    badge: 'Fast' },
-    { id: 'gemini-3-pro-preview',   label: 'Gemini 3 Pro',   provider: 'google',    badge: '' },
-    { id: 'gpt-5',                  label: 'GPT-5',           provider: 'openai',    badge: 'Pro' },
-    { id: 'gpt-5-mini',             label: 'GPT-5 Mini',      provider: 'openai',    badge: 'Fast' },
-    { id: 'gpt-5.2',                label: 'GPT-5.2',         provider: 'openai',    badge: '' },
-    { id: 'gpt-5.2-codex',          label: 'GPT-5.2 Codex',   provider: 'openai',    badge: 'Code' },
-    { id: 'gpt-5.4',                label: 'GPT-5.4',         provider: 'openai',    badge: 'Fast' },
-    { id: 'gpt-4.1',                label: 'GPT-4.1',         provider: 'openai',    badge: '' },
-    { id: 'gpt-4.1-mini',           label: 'GPT-4.1 Mini',    provider: 'openai',    badge: 'Fast' },
-    { id: 'claude-opus-4.5',        label: 'Claude Opus 4.5', provider: 'anthropic', badge: 'Pro' },
-    { id: 'claude-opus-4.6',        label: 'Claude Opus 4.6', provider: 'anthropic', badge: 'New' },
-    { id: 'claude-sonnet-4',        label: 'Claude Sonnet 4', provider: 'anthropic', badge: 'Fast' },
-    { id: 'gemma3n:e2b',            label: 'Gemma 3n E2B',    provider: 'ollama',    badge: '5.6GB · Fastest local' },
-    { id: 'gemma3n:e4b',            label: 'Gemma 3n E4B',    provider: 'ollama',    badge: '7.5GB · Balanced' },
-    { id: 'gemma4:latest',          label: 'Gemma 4',         provider: 'ollama',    badge: '9.6GB · SLOW on 2-CPU' },
-    { id: 'Meta-Llama-3.1-8B-Instruct-Q4_K_M.gguf', label: 'Llama 3.1 8B',  provider: 'local', badge: '4.7GB' },
-    { id: 'SecurityLLM-7B-Q4_K_M.gguf',             label: 'SecurityLLM 7B', provider: 'local', badge: '4.2GB' },
+    { id: 'gemini-2.0-flash-free',   label: 'Gemini 2.0 Flash (Free)', provider: 'google',    badge: 'Free · Fallback' },
+    { id: 'gemini-3.1-pro-preview',  label: 'Gemini 3.1 Pro',          provider: 'google',    badge: 'Preview' },
+    { id: 'gpt-5.4',                 label: 'GPT-5.4',                  provider: 'openai',    badge: 'Flagship' },
+    { id: 'claude-opus-4.7',         label: 'Claude Opus 4.7',          provider: 'anthropic', badge: 'Flagship' },
+    { id: 'claude-opus-4.6',         label: 'Claude Opus 4.6',          provider: 'anthropic', badge: '' },
+    { id: 'claude-sonnet-4-6',       label: 'Claude Sonnet 4.6',        provider: 'anthropic', badge: 'Balanced' },
+    { id: 'claude-haiku-4-5',        label: 'Claude Haiku 4.5',         provider: 'anthropic', badge: 'Fast' },
+    { id: 'Meta-Llama-3.1-8B-Instruct-Q4_K_M.gguf', label: 'Llama 3.1 8B',  provider: 'local', badge: '8B · 4.7GB' },
+    { id: 'SecurityLLM-7B-Q4_K_M.gguf',             label: 'SecurityLLM 7B', provider: 'local', badge: '7B · 4.2GB' },
 ]
 
-const OLLAMA_ID_MAP = {
-    'gemma4:latest': 'gemma4:latest',
-    'gemma3n:e4b':   'gemma3n:e4b',
-    'gemma3n:e2b':   'gemma3n:e2b',
-}
+// Ollama models populated dynamically from backend catalog
+const OLLAMA_ID_MAP = {}
 
 const LOCAL_MODEL_IDS = new Set(
     CLOUD_MODELS.filter(m => m.provider === 'local' || m.provider === 'ollama').map(m => m.id)
@@ -99,11 +90,16 @@ function directSaveSession(sessionId, messages) {
     } catch { }
 }
 
-const MessageBubble = memo(function MessageBubble({ m, msgKey, isLastStreaming, copiedMsgId, onCopy }) {
+const MessageBubble = memo(function MessageBubble({ m, msgKey, isLastStreaming, copiedMsgId, onCopy, onEdit, t }) {
     const isBot = m.role === 'assistant'
     const isStreaming = !!m._streaming
     const isCopied = copiedMsgId === msgKey
     const content = typeof m.content === 'string' ? m.content : (m.content ? JSON.stringify(m.content) : '')
+    const charCount = content.length
+    const modelKey = m.model || m.requestedModel || ''
+    const providerColor = m.provider && PROVIDER_COLORS[m.provider]
+        ? PROVIDER_COLORS[m.provider]
+        : (modelKey.includes('gemma') || modelKey.endsWith('.gguf') ? PROVIDER_COLORS.ollama : PROVIDER_COLORS.openai)
 
     return (
         <div className={`${styles.msg} ${isBot ? styles.msgBot : styles.msgUser}`}>
@@ -143,21 +139,34 @@ const MessageBubble = memo(function MessageBubble({ m, msgKey, isLastStreaming, 
                     </button>
                 )}
 
+                {isStreaming && charCount > 0 && (
+                    <div className={styles.streamMeta}>
+                        <span className={styles.streamDot} />
+                        <span>{charCount} chars · streaming…</span>
+                    </div>
+                )}
+
                 {!isStreaming && (
                     <div className={styles.msgMeta}>
-                        {m.ragUsed && <span className={styles.badge}>RAG</span>}
-                        {m.searchUsed && <span className={styles.badge}>Web</span>}
-                        {(m.model || m.requestedModel) && (
+                        {typeof m.elapsedSec === 'number' && m.elapsedSec >= 0 && (
+                            <span className={styles.elapsedBadge} title="Thời gian model xử lý / Generation time">
+                                ⏱ {m.elapsedSec}s
+                            </span>
+                        )}
+                        {modelKey && (
                             <span
-                                className={styles.badge}
+                                className={styles.modelBadge}
+                                style={{ '--badge-accent': providerColor }}
                                 title={m.requestedModel && m.model && m.requestedModel !== m.model
-                                    ? `Yêu cầu: ${getModelLabel(m.requestedModel)} → Phản hồi: ${getModelLabel(m.model)}`
-                                    : (m.model || m.requestedModel)}
+                                    ? `${getModelLabel(m.requestedModel)} → ${getModelLabel(m.model)}`
+                                    : modelKey}
                             >
-                                {getModelLabel(m.model || m.requestedModel)}
+                                {getModelLabel(modelKey)}
                                 {m.requestedModel && m.model && m.requestedModel !== m.model ? ' ↩' : ''}
                             </span>
                         )}
+                        {m.ragUsed && <span className={styles.badge} title="Trả lời có sử dụng tài liệu RAG nội bộ">📚 RAG</span>}
+                        {m.searchUsed && <span className={styles.badge} title="Trả lời có sử dụng kết quả tìm kiếm web">🌐 Web Search</span>}
                         <span className={styles.time}>{m.time}</span>
                     </div>
                 )}
@@ -169,6 +178,28 @@ const MessageBubble = memo(function MessageBubble({ m, msgKey, isLastStreaming, 
                                 {src}
                             </a>
                         ))}
+                    </div>
+                )}
+                {!isBot && (
+                    <div className={styles.userActions}>
+                        <button
+                            type="button"
+                            className={styles.userActionBtn}
+                            onClick={() => onEdit?.(content)}
+                            title={t ? t('chatbot.editAndResend') : 'Edit & resend'}
+                            aria-label={t ? t('chatbot.editAndResend') : 'Edit & resend'}
+                        >
+                            <Pencil size={12} />
+                        </button>
+                        <button
+                            type="button"
+                            className={`${styles.userActionBtn} ${isCopied ? styles.userActionBtnActive : ''}`}
+                            onClick={() => onCopy(msgKey, content)}
+                            title={t ? t(isCopied ? 'common.copied' : 'common.copy') : (isCopied ? 'Copied!' : 'Copy')}
+                            aria-label={t ? t('common.copy') : 'Copy'}
+                        >
+                            {isCopied ? <Check size={12} /> : <Copy size={12} />}
+                        </button>
                     </div>
                 )}
             </div>
@@ -190,9 +221,9 @@ function isOllamaModelAvailable(modelId, ollamaAvailable) {
 const ModelDropdown = memo(function ModelDropdown({
     selectedModel, modelDropdown, focusedModelIdx,
     onToggle, onSelect, onKeyDown, modelBtnRef, dropdownRef,
-    ollamaAvailable
+    models, pullingModels, onPull, onDelete
 }) {
-    const activeModelInfo = CLOUD_MODELS.find(m => m.id === selectedModel) || CLOUD_MODELS[0]
+    const activeModelInfo = models.find(m => m.id === selectedModel) || models[0]
     return (
         <div className={styles.modelPicker}>
             <button
@@ -201,13 +232,13 @@ const ModelDropdown = memo(function ModelDropdown({
                 className={styles.modelBtn}
                 onClick={onToggle}
                 onKeyDown={onKeyDown}
-                style={{ '--provider-color': PROVIDER_COLORS[activeModelInfo.provider] }}
+                style={{ '--provider-color': PROVIDER_COLORS[activeModelInfo?.provider] }}
                 aria-haspopup="listbox"
                 aria-expanded={modelDropdown}
-                aria-label={`Selected model: ${activeModelInfo.label}`}
+                aria-label={`Selected model: ${activeModelInfo?.label}`}
             >
-                <span className={styles.modelDot} style={{ background: PROVIDER_COLORS[activeModelInfo.provider] }} />
-                <span className={styles.modelBtnLabel}>{activeModelInfo.label}</span>
+                <span className={styles.modelDot} style={{ background: PROVIDER_COLORS[activeModelInfo?.provider] }} />
+                <span className={styles.modelBtnLabel}>{activeModelInfo?.label || selectedModel}</span>
                 <ChevronDown size={14} className={`${styles.modelChevron} ${modelDropdown ? styles.modelChevronOpen : ''}`} />
             </button>
             {modelDropdown && (
@@ -216,20 +247,22 @@ const ModelDropdown = memo(function ModelDropdown({
                     className={styles.modelDropdown}
                     role="listbox"
                     aria-label="Select AI Model"
-                    aria-activedescendant={focusedModelIdx >= 0 ? `model-opt-${CLOUD_MODELS[focusedModelIdx].id}` : undefined}
+                    aria-activedescendant={focusedModelIdx >= 0 && models[focusedModelIdx] ? `model-opt-${models[focusedModelIdx].id}` : undefined}
                     onKeyDown={onKeyDown}
                 >
                     <div className={styles.modelDropdownTitle}>Select AI Model</div>
-                    {CLOUD_MODELS.map((m, idx) => {
-                        const prevProvider = idx > 0 ? CLOUD_MODELS[idx - 1].provider : null
+                    {models.map((m, idx) => {
+                        const prevProvider = idx > 0 ? models[idx - 1].provider : null
                         const showOllamaDivider = m.provider === 'ollama' && prevProvider !== 'ollama'
                         const showLocalDivider  = m.provider === 'local'  && prevProvider !== 'local'
-                        const ollamaStatus = m.provider === 'ollama' ? isOllamaModelAvailable(m.id, ollamaAvailable) : null
+                        const isInstalled = m.provider === 'ollama' ? m.installed !== false : true
+                        const pulling = pullingModels?.[m.id]
+                        const isPulling = !!pulling
                         return (
                             <div key={m.id}>
                                 {showOllamaDivider && (
                                     <div className={styles.modelDropdownDivider} style={{ color: PROVIDER_COLORS.ollama }}>
-                                        <span>🦙 Ollama (Gemma 3n · 100% Local)</span>
+                                        <span>🦙 Ollama Models · 100% Local</span>
                                     </div>
                                 )}
                                 {showLocalDivider && (
@@ -237,30 +270,53 @@ const ModelDropdown = memo(function ModelDropdown({
                                         <span>🖥️ LocalAI (Llama · SecurityLLM)</span>
                                     </div>
                                 )}
-                                <button
+                                <div
                                     id={`model-opt-${m.id}`}
-                                    type="button"
                                     role="option"
                                     aria-selected={selectedModel === m.id}
                                     className={`${styles.modelOption} ${selectedModel === m.id ? styles.modelOptionActive : ''} ${focusedModelIdx === idx ? styles.modelOptionFocused : ''}`}
-                                    onClick={() => onSelect(m.id)}
-                                    title={ollamaStatus === false ? `Not installed — backend will auto-fallback to available Ollama model` : ''}
+                                    style={{ display: 'flex', alignItems: 'center', gap: 6, cursor: 'pointer' }}
                                 >
-                                    <span className={styles.modelDot} style={{
-                                        background: ollamaStatus === false
-                                            ? '#6b7280'
-                                            : PROVIDER_COLORS[m.provider]
-                                    }} />
-                                    <span className={styles.modelOptionName} style={ollamaStatus === false ? { opacity: 0.55 } : undefined}>
-                                        {m.label}
-                                    </span>
-                                    {ollamaStatus === true && <span className={styles.modelBadge} style={{ background: '#059669', color: '#fff' }}>Ready</span>}
-                                    {ollamaStatus === false && <span className={styles.modelBadge} style={{ background: '#6b7280', color: '#fff' }}>Not Pulled</span>}
-                                    {(ollamaStatus === null && m.badge) && <span className={styles.modelBadge}>{m.badge}</span>}
-                                    <span className={styles.modelProviderTag} style={{ color: PROVIDER_COLORS[m.provider] }}>
-                                        {PROVIDER_LABEL[m.provider] || m.provider}
-                                    </span>
-                                </button>
+                                    <button
+                                        type="button"
+                                        style={{ flex: 1, display: 'flex', alignItems: 'center', gap: 6, background: 'none', border: 'none', padding: 0, cursor: 'pointer', color: 'inherit', font: 'inherit', textAlign: 'left' }}
+                                        onClick={() => isInstalled ? onSelect(m.id) : null}
+                                        title={!isInstalled ? 'Not installed — click download to pull' : ''}
+                                    >
+                                        <span className={styles.modelDot} style={{
+                                            background: !isInstalled ? '#6b7280' : PROVIDER_COLORS[m.provider]
+                                        }} />
+                                        <span className={styles.modelOptionName} style={!isInstalled ? { opacity: 0.55 } : undefined}>
+                                            {m.label}
+                                        </span>
+                                        {m.provider === 'ollama' && isInstalled && (
+                                            <span className={styles.modelBadge} style={{ background: '#059669', color: '#fff', fontSize: '0.6rem' }}>✓ Ready</span>
+                                        )}
+                                        {m.provider === 'ollama' && !isInstalled && !isPulling && (
+                                            <span className={styles.modelBadge} style={{ background: '#6b7280', color: '#fff', fontSize: '0.6rem' }}>Not Installed</span>
+                                        )}
+                                        {isPulling && (
+                                            <span className={styles.modelBadge} style={{ background: '#2563eb', color: '#fff', fontSize: '0.6rem' }}>
+                                                <Loader2 size={10} style={{ animation: 'spin 1s linear infinite', marginRight: 3 }} />
+                                                {pulling.progress || 0}%
+                                            </span>
+                                        )}
+                                        {m.badge && <span className={styles.modelBadge} style={{ fontSize: '0.6rem' }}>{m.badge}</span>}
+                                        <span className={styles.modelProviderTag} style={{ color: PROVIDER_COLORS[m.provider] }}>
+                                            {PROVIDER_LABEL[m.provider] || m.provider}
+                                        </span>
+                                    </button>
+                                    {m.provider === 'ollama' && !isInstalled && !isPulling && onPull && (
+                                        <button
+                                            type="button"
+                                            onClick={(e) => { e.stopPropagation(); onPull(m.id) }}
+                                            title={`Download ${m.label}`}
+                                            style={{ background: 'rgba(37,99,235,0.12)', border: '1px solid rgba(37,99,235,0.3)', borderRadius: 6, padding: '3px 7px', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 3, color: '#2563eb', fontSize: '0.65rem', whiteSpace: 'nowrap' }}
+                                        >
+                                            <Download size={11} /> Pull
+                                        </button>
+                                    )}
+                                </div>
                             </div>
                         )
                     })}
@@ -432,12 +488,8 @@ export default function ChatbotPage() {
     const prevMsgLenRef = useRef(0)
 
     const [ollamaAvailable, setOllamaAvailable] = useState([])
-
-    const maxInput = useMemo(() => {
-        const model = CLOUD_MODELS.find(m => m.id === selectedModel)
-        return (model?.provider === 'local' || model?.provider === 'ollama') ? MAX_INPUT_LOCAL : MAX_INPUT_CLOUD
-    }, [selectedModel])
-    const warnThreshold = maxInput - WARN_OFFSET
+    const [ollamaCatalog, setOllamaCatalog] = useState([])
+    const [pullingModels, setPullingModels] = useState({})
 
     const { manualHeight, onPointerDown, resetManual } = useDragResize(inputRef)
 
@@ -466,12 +518,10 @@ export default function ChatbotPage() {
                 if (!res.ok || cancelled) return
                 const data = await res.json()
                 const missing = Object.entries(data?.model_guard || {}).filter(([, s]) => s !== 'present')
-                const modeLabel = { 'local-only': 'Local-only', 'local-first': 'Local-first' }[data?.mode_label] || 'Cloud-first'
-                let badgeTone = 'badgeHybrid'
-                if (modeLabel !== 'Cloud-first') badgeTone = 'badgeLocal'
-                if (missing.length > 0 || data?.localai?.status?.startsWith('unreachable')) badgeTone = 'badgeWarn'
                 if (!cancelled) {
-                    setAiStatus({ mode: modeLabel, badgeTone, missing, details: data })
+                    // Step 3: dropped misleading mode badge — keep raw status for any
+                    // future UI that needs it (ollama list still consumed below).
+                    setAiStatus({ missing, details: data })
                     if (Array.isArray(data?.ollama_models)) {
                         setOllamaAvailable(data.ollama_models)
                     }
@@ -479,18 +529,95 @@ export default function ChatbotPage() {
             } catch { }
         }
         fetchStatus()
-        // Poll every 60s instead of 15s — backend now caches for 30s, no need to spam
         const timer = setInterval(fetchStatus, 60000)
         return () => { cancelled = true; clearInterval(timer) }
     }, [])
+
+    // Fetch Ollama catalog (installed + available models)
+    const fetchOllamaCatalog = useCallback(async () => {
+        try {
+            const res = await fetch('/api/ollama/models')
+            if (!res.ok) return
+            const data = await res.json()
+            if (Array.isArray(data?.models)) {
+                setOllamaCatalog(data.models)
+                setOllamaAvailable(data.installed || [])
+            }
+        } catch { }
+    }, [])
+
+    useEffect(() => {
+        fetchOllamaCatalog()
+        const t = setInterval(fetchOllamaCatalog, 30000)
+        return () => clearInterval(t)
+    }, [fetchOllamaCatalog])
+
+    const handlePullModel = useCallback(async (modelId) => {
+        setPullingModels(prev => ({ ...prev, [modelId]: { status: 'pulling', progress: 0 } }))
+        try {
+            await fetch('/api/ollama/pull', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ model: modelId }),
+            })
+            // Poll progress
+            const poll = setInterval(async () => {
+                try {
+                    const res = await fetch(`/api/ollama/pull/status?model=${encodeURIComponent(modelId)}`)
+                    const data = await res.json()
+                    const st = data?.status
+                    if (st?.status === 'done' || st?.status === 'error') {
+                        clearInterval(poll)
+                        setPullingModels(prev => { const n = { ...prev }; delete n[modelId]; return n })
+                        fetchOllamaCatalog()
+                    } else if (st?.status === 'pulling') {
+                        setPullingModels(prev => ({ ...prev, [modelId]: st }))
+                    }
+                } catch { clearInterval(poll) }
+            }, 2000)
+        } catch {
+            setPullingModels(prev => { const n = { ...prev }; delete n[modelId]; return n })
+        }
+    }, [fetchOllamaCatalog])
+
+    const handleDeleteModel = useCallback(async (modelId) => {
+        try {
+            await fetch(`/api/ollama/models/${encodeURIComponent(modelId)}`, { method: 'DELETE' })
+            fetchOllamaCatalog()
+        } catch { }
+    }, [fetchOllamaCatalog])
+
+    const allModels = useMemo(() => {
+        const cloud = CLOUD_MODELS.filter(m => m.provider !== 'local')
+        const local = CLOUD_MODELS.filter(m => m.provider === 'local')
+        const ollamaModels = ollamaCatalog
+            .filter(m => m.installed === true)
+            .map(m => ({
+                id: m.id,
+                label: `${m.name} ${m.params}`,
+                provider: 'ollama',
+                badge: `${m.params} · ${m.size}`,
+                installed: m.installed,
+                pull_status: m.pull_status,
+            }))
+        return [...cloud, ...ollamaModels, ...local]
+    }, [ollamaCatalog])
+
+    const maxInput = useMemo(() => {
+        const model = allModels.find(m => m.id === selectedModel)
+        return (model?.provider === 'local' || model?.provider === 'ollama') ? MAX_INPUT_LOCAL : MAX_INPUT_CLOUD
+    }, [selectedModel, allModels])
+    const warnThreshold = maxInput - WARN_OFFSET
 
     useEffect(() => {
         mountedRef.current = true
         const saved = lsGet(SESSIONS_KEY, [])
         const id = lsGet(ACTIVE_KEY, null)
-        const savedModel = lsGet(MODEL_KEY, 'gemini-3-flash-preview')
-        const validIds = CLOUD_MODELS.map(m => m.id)
-        const resolvedModel = validIds.includes(savedModel) ? savedModel : 'gemini-3-flash-preview'
+        const savedModel = lsGet(MODEL_KEY, 'gemini-2.0-flash-free')
+        const validIds = new Set(CLOUD_MODELS.map(m => m.id))
+        const resolvedModel = (savedModel && (validIds.has(savedModel) || savedModel.includes(':') || savedModel.endsWith('.gguf')))
+            ? savedModel
+            : 'gemini-2.0-flash-free'
         setSelectedModel(resolvedModel)
 
         const pending = lsGet(PENDING_KEY, null)
@@ -544,10 +671,10 @@ export default function ChatbotPage() {
     }, [])
 
     const openDropdown = useCallback(() => {
-        const idx = CLOUD_MODELS.findIndex(m => m.id === selectedModel)
+        const idx = allModels.findIndex(m => m.id === selectedModel)
         setFocusedModelIdx(idx >= 0 ? idx : 0)
         setModelDropdown(true)
-    }, [selectedModel])
+    }, [selectedModel, allModels])
 
     const handleModelKeyDown = useCallback((e) => {
         if (!modelDropdown) {
@@ -559,20 +686,20 @@ export default function ChatbotPage() {
         }
         if (e.key === 'ArrowDown') {
             e.preventDefault()
-            setFocusedModelIdx(prev => (prev + 1) % CLOUD_MODELS.length)
+            setFocusedModelIdx(prev => (prev + 1) % allModels.length)
         } else if (e.key === 'ArrowUp') {
             e.preventDefault()
-            setFocusedModelIdx(prev => (prev - 1 + CLOUD_MODELS.length) % CLOUD_MODELS.length)
+            setFocusedModelIdx(prev => (prev - 1 + allModels.length) % allModels.length)
         } else if (e.key === 'Enter') {
             e.preventDefault()
-            if (focusedModelIdx >= 0) handleModelChange(CLOUD_MODELS[focusedModelIdx].id)
+            if (focusedModelIdx >= 0 && allModels[focusedModelIdx]) handleModelChange(allModels[focusedModelIdx].id)
         } else if (e.key === 'Escape' || e.key === 'Tab') {
             e.preventDefault()
             setModelDropdown(false)
             setFocusedModelIdx(-1)
             modelBtnRef.current?.focus()
         }
-    }, [modelDropdown, focusedModelIdx, handleModelChange, openDropdown])
+    }, [modelDropdown, focusedModelIdx, handleModelChange, openDropdown, allModels])
 
     const copyMessage = useCallback((id, text) => {
         const fallbackCopy = () => {
@@ -599,6 +726,20 @@ export default function ChatbotPage() {
         }
     }, [])
 
+    const editUserMessage = useCallback((text) => {
+        setInput(typeof text === 'string' ? text : String(text ?? ''))
+        setTimeout(() => {
+            const el = inputRef.current
+            if (el) {
+                el.focus()
+                try {
+                    const len = el.value.length
+                    el.setSelectionRange(len, len)
+                } catch { }
+            }
+        }, 0)
+    }, [])
+
     const updateSessions = useCallback((messages, id) => {
         const dateFmt = locale === 'vi' ? 'vi-VN' : 'en-US'
         setSessions(prev => {
@@ -622,7 +763,12 @@ export default function ChatbotPage() {
         setInput('')
         setSending(true)
         updateSessions(next, id)
+        // gemma4:latest etc. are loaded dynamically into models state, not in
+        // static CLOUD_MODELS, so LOCAL_MODEL_IDS misses them. Treat any id with
+        // ':' (Ollama tag) or '.gguf' (LocalAI) as local — bypass cloud routing.
         const isLocal = LOCAL_MODEL_IDS.has(selectedModel)
+            || selectedModel.includes(':')
+            || selectedModel.endsWith('.gguf')
         lsSet(PENDING_KEY, { sessionId: id, userMessage: text.trim(), currentMessages: next, done: false })
         setStatusText(t('chatbot.processing'))
         const controller = new AbortController()
@@ -689,8 +835,13 @@ export default function ChatbotPage() {
                                     ? { ...m, content: m.content + event.token }
                                     : m
                             ))
-                        } else if (event.message && mountedRef.current) {
-                            setStatusText(event.message)
+                        } else if (mountedRef.current) {
+                            if (event.i18n_key) {
+                                const translated = t(`chatbot.${event.i18n_key}`, event.i18n_params || {})
+                                setStatusText(translated && translated !== `chatbot.${event.i18n_key}` ? translated : (event.message || ''))
+                            } else if (event.message) {
+                                setStatusText(event.message)
+                            }
                         }
                     } catch { }
                 }
@@ -711,10 +862,12 @@ export default function ChatbotPage() {
                     const botContent = isError
                         ? (finalData.response || t('chatbot.modelUnavailable'))
                         : (finalData.response || t('chatbot.noResponse'))
+                    const elapsedSec = Math.round((Date.now() - startTs) / 1000)
                     const botMsg = {
                         role: 'assistant',
                         content: botContent,
                         time: now(),
+                        elapsedSec,
                         model: isError ? selectedModel : finalData.model,
                         requestedModel: selectedModel,
                         provider: finalData.provider,
@@ -734,11 +887,23 @@ export default function ChatbotPage() {
                         lsDel(PENDING_KEY)
                     }
                 } else {
+                    // Stream ended without a done/error event — use accumulated tokens if any
                     if (mountedRef.current) {
+                        const elapsedSec = Math.round((Date.now() - startTs) / 1000)
                         setMsgs(prev => {
                             const pending = prev.find(m => m._id === pendingMsgId)
-                            const content = pending?.content || t('chatbot.noResponseFromModel')
-                            const botMsg = { role: 'assistant', content, time: now(), model: selectedModel, provider: 'unknown' }
+                            const streamedContent = pending?.content?.trim()
+                            const content = streamedContent || t('chatbot.noResponseFromModel')
+                            const botMsg = {
+                                role: 'assistant',
+                                content,
+                                time: now(),
+                                elapsedSec,
+                                model: selectedModel,
+                                requestedModel: selectedModel,
+                                provider: 'unknown',
+                                isError: !streamedContent,
+                            }
                             const final = prev.map(m => m._id === pendingMsgId ? botMsg : m)
                             directSaveSession(id, final)
                             updateSessions(final, id)
@@ -780,7 +945,18 @@ export default function ChatbotPage() {
                 }
                 setMsgs(prev => {
                     const hasPending = prev.some(m => m._streaming)
-                    const errorMsg = { role: 'assistant', content, time: now() }
+                    const errProvider = selectedModel.includes(':')
+                        ? 'ollama'
+                        : (selectedModel.endsWith('.gguf') || LOCAL_MODEL_IDS.has(selectedModel) ? 'local' : 'cloud')
+                    const errorMsg = {
+                        role: 'assistant',
+                        content,
+                        time: now(),
+                        model: selectedModel,
+                        requestedModel: selectedModel,
+                        provider: errProvider,
+                        isError: true,
+                    }
                     const final = hasPending
                         ? prev.map(m => m._streaming ? errorMsg : m)
                         : [...next, errorMsg]
@@ -848,21 +1024,23 @@ export default function ChatbotPage() {
             <div className={styles.main}>
                 <div className={styles.topBar}>
                     <div className={styles.topLeft}>
-                        <button className={styles.menuBtn} onClick={() => setSidebar(true)} title={t('chatbot.chatHistory')}>
+                        <button className={styles.menuBtn} onClick={() => setSidebar(true)} title={t('chatbot.chatHistory')} aria-label={t('chatbot.chatHistory')}>
                             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M3 12h18M3 6h18M3 18h18" /></svg>
                         </button>
                         <h1 className={styles.pageTitle}>{t('chatbot.pageTitle')}</h1>
-                        {aiStatus && (
-                            <span className={`${styles.aiBadge} ${styles[aiStatus.badgeTone || 'badgeHybrid']}`}>
-                                {aiStatus.mode}
-                            </span>
-                        )}
+                        {/* Removed misleading "LOCAL-FIRST"/"Cloud-first" mode badge (Step 3).
+                            The actual routing depends on per-request task_type, not a global flag. */}
                     </div>
                     <div className={styles.topRight}>
-                        <button className={styles.topBtn} onClick={newChat}>
-                            <Plus size={13} style={{ marginRight: 3 }} />{t('chatbot.newChat')}
+                        <button className={styles.topBtn} onClick={newChat} title={t('chatbot.newChatFull')} aria-label={t('chatbot.newChatFull')}>
+                            <Plus size={14} />
+                            <span className={styles.topBtnLabel}>{t('chatbot.newChat')}</span>
                         </button>
-                        <button className={styles.topBtn} onClick={() => setSidebar(true)}>{t('chatbot.history')} ({sessions.length})</button>
+                        <button className={styles.topBtn} onClick={() => setSidebar(true)} title={t('chatbot.chatHistory')} aria-label={t('chatbot.chatHistory')}>
+                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M12 8v4l3 2" /><circle cx="12" cy="12" r="9" /></svg>
+                            <span className={styles.topBtnLabel}>{t('chatbot.history')}</span>
+                            {sessions.length > 0 && <span className={styles.topBtnCount}>{sessions.length}</span>}
+                        </button>
                     </div>
                 </div>
 
@@ -894,6 +1072,8 @@ export default function ChatbotPage() {
                                         isLastStreaming={i === lastStreamingIdx}
                                         copiedMsgId={copiedMsgId}
                                         onCopy={copyMessage}
+                                        onEdit={editUserMessage}
+                                        t={t}
                                     />
                                 )
                             })}
@@ -945,7 +1125,10 @@ export default function ChatbotPage() {
                             onKeyDown={handleModelKeyDown}
                             modelBtnRef={modelBtnRef}
                             dropdownRef={dropdownRef}
-                            ollamaAvailable={ollamaAvailable}
+                            models={allModels}
+                            pullingModels={pullingModels}
+                            onPull={handlePullModel}
+                            onDelete={handleDeleteModel}
                         />
                         <span className={styles.inputHint}>{t('chatbot.enterToSend')}</span>
                     </div>

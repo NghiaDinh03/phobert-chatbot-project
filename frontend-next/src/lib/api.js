@@ -48,3 +48,17 @@ export async function getSystemStatsClient() {
     if (!res.ok) throw new Error('Failed to fetch');
     return res.json();
 }
+
+// ── Evidence URL helpers (Step 5) ─────────────────────────────────────
+// Matches backend routes in backend/api/routes/iso27001.py:
+//   GET /api/iso27001/evidence/{control_id}/{filename}           → raw file
+//   GET /api/iso27001/evidence/{control_id}/{filename}/preview   → JSON preview
+export function getEvidenceDownloadUrl(controlId, filename) {
+    if (!controlId || !filename) return ''
+    return `/api/iso27001/evidence/${encodeURIComponent(controlId)}/${encodeURIComponent(filename)}`
+}
+
+export function getEvidencePreviewUrl(controlId, filename) {
+    if (!controlId || !filename) return ''
+    return `/api/iso27001/evidence/${encodeURIComponent(controlId)}/${encodeURIComponent(filename)}/preview`
+}

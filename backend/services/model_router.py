@@ -11,6 +11,43 @@ logger = logging.getLogger(__name__)
 SECURITY_MODEL = settings.SECURITY_MODEL_NAME
 GENERAL_MODEL = settings.MODEL_NAME
 
+
+def get_security_model() -> str:
+    """Return the configured SecurityLM model id.
+
+    Thin accessor so callers (e.g. ``summarize_evidence``, ``chat_service``)
+    don't reach into module-level constants. The constant ``SECURITY_MODEL``
+    is preserved for backward compatibility.
+    """
+    return SECURITY_MODEL
+
+
+def resolve_local_model(preferred: str, fallback: str | None = None) -> str:
+    """Return a local model id, honoring the RAM-guard heavy-local disable flag.
+
+    If the caller asked for the heavy 27B path (e.g. ``gemma3:27b``) and the
+    RAM guard tripped at startup, fall back to ``fallback`` (or ``GENERAL_MODEL``).
+
+    TODO: wire this into any future route that explicitly selects gemma3:27b.
+    Today the 27B model is pulled by the Ollama container entrypoint but is
+    not hard-coded in a router branch; this helper exists so heavy-model
+    callers can consult ``HEAVY_LOCAL_DISABLED`` without duplicating logic.
+    """
+    try:
+        from services.ram_guard import HEAVY_LOCAL_DISABLED
+    except Exception:
+        HEAVY_LOCAL_DISABLED = False  # type: ignore[assignment]
+
+    if HEAVY_LOCAL_DISABLED and "27b" in (preferred or "").lower():
+        chosen = fallback or GENERAL_MODEL
+        logger.warning(
+            "resolve_local_model: heavy local disabled by RAM guard — "
+            "falling back from %s to %s",
+            preferred, chosen,
+        )
+        return chosen
+    return preferred
+
 INTENT_TEMPLATES = {
     "security": [
         # Vietnamese

@@ -12,6 +12,22 @@ const LANGUAGES = [
     { code: 'vi', labelKey: 'settings.langVietnamese', subKey: 'settings.langVietnameseSub' },
 ]
 
+const ASSESSMENT_MODE_KEY = 'cyberai.assessmentMode'
+const ASSESSMENT_MODE_EVENT = 'cyberai:assessment-mode-change'
+const ASSESSMENT_MODES = [
+    { id: 'cloud', labelKey: 'settings.assessmentMode.cloud.label', descKey: 'settings.assessmentMode.cloud.desc' },
+    { id: 'local', labelKey: 'settings.assessmentMode.local.label', descKey: 'settings.assessmentMode.local.desc' },
+    { id: 'hybrid', labelKey: 'settings.assessmentMode.hybrid.label', descKey: 'settings.assessmentMode.hybrid.desc' },
+]
+
+const readStoredAssessmentMode = () => {
+    if (typeof window === 'undefined') return 'hybrid'
+    try {
+        const v = window.localStorage.getItem(ASSESSMENT_MODE_KEY)
+        return v === 'cloud' || v === 'local' || v === 'hybrid' ? v : 'hybrid'
+    } catch (_) { return 'hybrid' }
+}
+
 const DOCS_LIST = [
     { id: 'architecture', icon: Layers, titleKey: 'docs.architectureTitle', descKey: 'docs.architectureDesc', fileEn: 'architecture.md', fileVi: 'architecture.md' },
     { id: 'api', icon: FileCode, titleKey: 'docs.apiTitle', descKey: 'docs.apiDesc', fileEn: 'api.md', fileVi: 'api.md' },
@@ -32,6 +48,8 @@ export default function SettingsPage() {
     const router = useRouter()
     const { locale, setLocale, t } = useTranslation()
     const [saved, setSaved] = useState(false)
+    const [assessmentMode, setAssessmentMode] = useState('hybrid')
+    const [modeSaved, setModeSaved] = useState(false)
     const [docContent, setDocContent] = useState(null)
     const [docTitle, setDocTitle] = useState('')
     const [docLoading, setDocLoading] = useState(false)
@@ -45,6 +63,18 @@ export default function SettingsPage() {
         setSaved(true)
         const timer = setTimeout(() => setSaved(false), 2000)
         return () => clearTimeout(timer)
+    }
+
+    useEffect(() => {
+        setAssessmentMode(readStoredAssessmentMode())
+    }, [])
+
+    const handleSelectMode = (mode) => {
+        setAssessmentMode(mode)
+        try { window.localStorage.setItem(ASSESSMENT_MODE_KEY, mode) } catch (_) {}
+        try { window.dispatchEvent(new CustomEvent(ASSESSMENT_MODE_EVENT, { detail: mode })) } catch (_) {}
+        setModeSaved(true)
+        setTimeout(() => setModeSaved(false), 2000)
     }
 
     const openDoc = useCallback(async (doc) => {
@@ -148,6 +178,43 @@ export default function SettingsPage() {
                 </div>
             </div>
 
+            {/* Assessment Mode Section */}
+            <div className={styles.section} style={{ animationDelay: '0.04s' }}>
+                <h2 className={styles.sectionTitle}>
+                    <Brain size={16} />
+                    {t('settings.assessmentMode.title')}
+                </h2>
+                <div className={styles.card}>
+                    <p className={styles.note} style={{ marginTop: 0 }}>
+                        {t('settings.assessmentMode.description')}
+                    </p>
+                    <div className={styles.languageOptions}>
+                        {ASSESSMENT_MODES.map(opt => (
+                            <button
+                                key={opt.id}
+                                className={`${styles.languageOption} ${assessmentMode === opt.id ? styles.languageOptionActive : ''}`}
+                                onClick={() => handleSelectMode(opt.id)}
+                                aria-pressed={assessmentMode === opt.id}
+                            >
+                                <span className={`${styles.radioCircle} ${assessmentMode === opt.id ? styles.radioCircleActive : ''}`}>
+                                    <span className={`${styles.radioDot} ${assessmentMode === opt.id ? styles.radioDotActive : ''}`} />
+                                </span>
+                                <span className={styles.langInfo}>
+                                    <span className={styles.langLabel}>{t(opt.labelKey)}</span>
+                                    <span className={styles.langSub}>{t(opt.descKey)}</span>
+                                </span>
+                            </button>
+                        ))}
+                    </div>
+                    {modeSaved && (
+                        <div className={styles.savedIndicator}>
+                            <Check size={14} />
+                            {t('settings.assessmentMode.saved')}
+                        </div>
+                    )}
+                </div>
+            </div>
+
             {/* User Guides Section */}
             <div className={styles.section} style={{ animationDelay: '0.08s' }}>
                 <h2 className={styles.sectionTitle}>
@@ -169,6 +236,40 @@ export default function SettingsPage() {
                                 <span className={styles.guideCardBadge}>{t('settings.guideAssessmentBadge')}</span>
                             </div>
                             <p className={styles.guideCardDesc}>{t('settings.guideAssessmentDesc')}</p>
+                        </div>
+                        <ChevronRight size={18} className={styles.guideCardArrow} />
+                    </button>
+                    <button
+                        className={styles.guideCard}
+                        onClick={() => router.push('/settings/prompts/chat')}
+                        aria-label={t('settings.promptsChatTitle')}
+                    >
+                        <div className={styles.guideCardIcon}>
+                            <Brain size={22} />
+                        </div>
+                        <div className={styles.guideCardBody}>
+                            <div className={styles.guideCardTop}>
+                                <h3 className={styles.guideCardTitle}>{t('settings.promptsChatTitle')}</h3>
+                                <span className={styles.guideCardBadge}>{t('settings.promptsChatBadge')}</span>
+                            </div>
+                            <p className={styles.guideCardDesc}>{t('settings.promptsChatDesc')}</p>
+                        </div>
+                        <ChevronRight size={18} className={styles.guideCardArrow} />
+                    </button>
+                    <button
+                        className={styles.guideCard}
+                        onClick={() => router.push('/settings/prompts/assessment')}
+                        aria-label={t('settings.promptsAssessmentTitle')}
+                    >
+                        <div className={styles.guideCardIcon}>
+                            <ClipboardList size={22} />
+                        </div>
+                        <div className={styles.guideCardBody}>
+                            <div className={styles.guideCardTop}>
+                                <h3 className={styles.guideCardTitle}>{t('settings.promptsAssessmentTitle')}</h3>
+                                <span className={styles.guideCardBadge}>{t('settings.promptsAssessmentBadge')}</span>
+                            </div>
+                            <p className={styles.guideCardDesc}>{t('settings.promptsAssessmentDesc')}</p>
                         </div>
                         <ChevronRight size={18} className={styles.guideCardArrow} />
                     </button>

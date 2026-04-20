@@ -1,21 +1,37 @@
 /* ── MarkdownRenderer ─────────────────────────────────────────────────────── */
 
 .markdown {
-    font-size: 0.88rem;
-    line-height: 1.8;
+    font-size: 0.92rem;
+    line-height: 1.85;
     color: var(--text-secondary);
     word-wrap: break-word;
-    overflow-wrap: break-word;
+    overflow-wrap: anywhere;
+    word-break: break-word;
+    max-width: 100%;
+    min-width: 0;
+}
+
+.markdown * {
+    max-width: 100%;
+    min-width: 0;
+}
+
+.markdown > *:first-child {
+    margin-top: 0 !important;
+}
+
+.markdown > *:last-child {
+    margin-bottom: 0 !important;
 }
 
 /* ── Headings ────────────────────────────────────────────────────────────── */
 
 .h1 {
-    font-size: 1.55rem;
+    font-size: 1.6rem;
     font-weight: 800;
     color: var(--text-primary);
-    margin: 2rem 0 1rem;
-    padding-bottom: 0.65rem;
+    margin: 3rem 0 1.4rem;
+    padding-bottom: 0.7rem;
     border-bottom: 2px solid var(--border-light);
     letter-spacing: -0.5px;
     line-height: 1.3;
@@ -29,33 +45,38 @@
     font-size: 1.25rem;
     font-weight: 700;
     color: var(--text-primary);
-    margin: 1.75rem 0 0.75rem;
-    padding: 0.45rem 0 0.45rem 0.85rem;
-    border-left: 3px solid var(--accent-blue);
-    background: linear-gradient(90deg, var(--blue-subtle) 0%, transparent 100%);
+    margin: 2.8rem 0 1.2rem;
+    padding: 0.7rem 0.9rem 0.7rem 1.05rem;
+    border-left: 4px solid var(--accent-blue);
+    background: linear-gradient(90deg, var(--blue-subtle) 0%, transparent 90%);
     border-radius: 0 var(--radius) var(--radius) 0;
     letter-spacing: -0.3px;
-    line-height: 1.35;
+    line-height: 1.45;
+    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
+}
+
+.h2:first-child {
+    margin-top: 0.2rem;
 }
 
 .h3 {
-    font-size: 1.05rem;
+    font-size: 1.1rem;
     font-weight: 650;
     color: var(--text-primary);
-    margin: 1.4rem 0 0.55rem;
-    padding-left: 0.6rem;
+    margin: 2rem 0 0.85rem;
+    padding-left: 0.7rem;
     border-left: 2px solid var(--accent-purple);
     letter-spacing: -0.2px;
-    line-height: 1.4;
+    line-height: 1.45;
 }
 
 .h4 {
-    font-size: 0.95rem;
+    font-size: 1rem;
     font-weight: 600;
     color: var(--text-primary);
-    margin: 1.1rem 0 0.4rem;
+    margin: 1.6rem 0 0.6rem;
     letter-spacing: -0.1px;
-    line-height: 1.45;
+    line-height: 1.5;
 }
 
 .h5 {
@@ -71,12 +92,19 @@
 /* ── Paragraphs ──────────────────────────────────────────────────────────── */
 
 .p {
-    margin: 0.6rem 0;
-    line-height: 1.8;
+    margin: 0.75rem 0;
+    line-height: 1.85;
 }
 
 .pBlock {
-    margin: 0.6rem 0;
+    margin: 0.75rem 0;
+}
+
+.p + .h1,
+.p + .h2,
+.p + .h3,
+.p + .h4 {
+    margin-top: 2rem;
 }
 
 /* ── Links ───────────────────────────────────────────────────────────────── */
@@ -151,16 +179,21 @@
     font-size: 0.82em;
     font-family: 'SF Mono', 'Cascadia Code', 'Consolas', 'Monaco', monospace;
     color: var(--code-color, #93c5fd);
-    white-space: nowrap;
+    white-space: normal;
+    overflow-wrap: anywhere;
+    word-break: break-all;
+    max-width: 100%;
 }
 
 .codeBlock {
-    margin: 1rem 0;
+    margin: 1.15rem 0;
     border-radius: var(--radius);
     border: 1px solid var(--border);
     overflow: hidden;
     background: var(--pre-bg, #080c14);
-    box-shadow: var(--shadow-sm);
+    box-shadow: var(--shadow-md, var(--shadow-sm));
+    font-size: 0.85rem;
+    line-height: 1.65;
 }
 
 .codeHeader {
@@ -297,7 +330,7 @@
 }
 
 .li {
-    margin-bottom: 0.35rem;
+    margin-bottom: 0.7rem;
     line-height: 1.7;
 }
 
@@ -333,8 +366,15 @@
 .hr {
     border: none;
     height: 1px;
-    background: linear-gradient(90deg, transparent, var(--border-light), transparent);
-    margin: 1.75rem 0;
+    background: linear-gradient(90deg,
+        transparent 0%,
+        color-mix(in srgb, var(--accent-blue) 30%, transparent) 20%,
+        color-mix(in srgb, var(--accent-purple) 40%, transparent) 50%,
+        color-mix(in srgb, var(--accent-blue) 30%, transparent) 80%,
+        transparent 100%);
+    margin: 2rem auto;
+    max-width: 60%;
+    opacity: 0.55;
 }
 
 /* ── Text formatting ─────────────────────────────────────────────────────── */

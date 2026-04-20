@@ -1,5 +1,6 @@
 """Cloud LLM Service — routes to Cloud (Open Claude), LocalAI, or Ollama."""
 
+import json
 import time
 import logging
 import requests
@@ -14,26 +15,27 @@ logger = logging.getLogger(__name__)
 MIN_MAX_TOKENS = 10000
 
 TASK_MODEL_MAP: Dict[str, str] = {
-    "iso_analysis":   "gemini-3-flash-preview",
-    "complex":        "gemini-3-pro-preview",
-    "chat":           "gemini-3-flash-preview",
-    "default":        "gemini-3-flash-preview",
+    "iso_analysis":   "gemini-3.1-pro-preview",
+    "complex":        "claude-opus-4.7",
+    "chat":           "gemini-3.1-pro-preview",
+    "default":        "gemini-3.1-pro-preview",
 }
 
 FALLBACK_CHAIN: list = [
-    "gemini-3-flash-preview",
-    "gemini-3-pro-preview",
-    "gpt-5-mini",
-    "claude-sonnet-4",
-    "gpt-5",
+    "gemini-3.1-pro-preview",
+    "claude-haiku-4-5",
+    "claude-sonnet-4-6",
+    "gpt-5.4",
+    "gemini-2.0-flash-free",
 ]
+
+GOOGLE_FREE_TIER_MODEL_ID = "gemini-2.0-flash-free"
 
 LOCAL_ONLY_TASKS = {"iso_local"}
 
 _LOCALAI_TO_OLLAMA: Dict[str, str] = {
     "gemma-3-4b-it":  "gemma3:4b",
     "gemma-3-12b-it": "gemma3:12b",
-    "gemma-4-31b-it": "gemma4:31b",
     "gemma4:latest":  "gemma4:latest",
     "gemma3n:e4b":    "gemma3n:e4b",
     "gemma3n:e2b":    "gemma3n:e2b",
@@ -132,12 +134,97 @@ class CloudLLMService:
         return settings.CLOUD_MODEL_NAME or TASK_MODEL_MAP["default"]
 
     @classmethod
+    def _call_google_genai(cls, messages: List[Dict], temperature: float = 0.7,
+                           max_tokens: int = 8192,
+                           model: str = None) -> Dict[str, Any]:
+        api_key = (settings.GOOGLE_AI_STUDIO_API_KEY or "").strip()
+        if not api_key:
+            raise Exception("[GoogleGenAI] GOOGLE_AI_STUDIO_API_KEY not configured")
+
+        target_model = model or settings.GOOGLE_AI_STUDIO_MODEL or "gemini-2.0-flash"
+
+        system_instruction = None
+        contents = []
+        for m in messages:
+            role = m.get("role", "user")
+            text = m.get("content", "") or ""
+            if role == "system":
+                system_instruction = (system_instruction + "\n\n" + text) if system_instruction else text
+                continue
+            g_role = "user" if role == "user" else "model"
+            contents.append({"role": g_role, "parts": [{"text": text}]})
+
+        payload: Dict[str, Any] = {
+            "contents": contents,
+            "generationConfig": {
+                "temperature": temperature,
+                "maxOutputTokens": max(max_tokens, 1024),
+            },
+        }
+        if system_instruction:
+            payload["systemInstruction"] = {"parts": [{"text": system_instruction}]}
+
+        url = f"{settings.GOOGLE_AI_STUDIO_URL.rstrip('/')}/models/{target_model}:generateContent?key={api_key}"
+        logger.info(f"[GoogleGenAI] Requesting model={target_model}, messages={len(messages)}")
+
+        try:
+            response = httpx.post(
+                url,
+                json=payload,
+                headers={"Content-Type": "application/json"},
+                timeout=settings.CLOUD_TIMEOUT,
+            )
+        except httpx.TimeoutException:
+            raise Exception(f"[GoogleGenAI] Timeout after {settings.CLOUD_TIMEOUT}s")
+        except Exception as e:
+            raise Exception(f"[GoogleGenAI] Request failed: {e}")
+
+        if response.status_code != 200:
+            body = response.text[:300]
+            logger.error(f"[GoogleGenAI] HTTP {response.status_code}: {body}")
+            raise Exception(f"[GoogleGenAI] HTTP {response.status_code}: {body}")
+
+        data = response.json()
+        candidates = data.get("candidates") or []
+        content_text = ""
+        if candidates:
+            parts = (candidates[0].get("content") or {}).get("parts") or []
+            content_text = "".join(p.get("text", "") for p in parts).strip()
+
+        if not content_text:
+            raise Exception("[GoogleGenAI] Empty content in response")
+
+        usage = data.get("usageMetadata", {})
+        logger.info(
+            f"[GoogleGenAI] OK — model={target_model}, "
+            f"prompt_tokens={usage.get('promptTokenCount','?')}, "
+            f"completion_tokens={usage.get('candidatesTokenCount','?')}"
+        )
+        return {
+            "content": content_text,
+            "usage": {
+                "prompt_tokens": usage.get("promptTokenCount", 0),
+                "completion_tokens": usage.get("candidatesTokenCount", 0),
+                "total_tokens": usage.get("totalTokenCount", 0),
+            },
+            "model": target_model,
+            "provider": "google-genai-free",
+        }
+
+    @classmethod
     def _call_open_claude(cls, messages: List[Dict], temperature: float = 0.7,
                           max_tokens: int = 8192, model: str = None,
                           task_type: str = None) -> Dict[str, Any]:
         requested_model = model or cls._resolve_model(task_type)
+
+        if requested_model == GOOGLE_FREE_TIER_MODEL_ID:
+            return cls._call_google_genai(messages, temperature, max_tokens)
+
         keys = settings.cloud_api_key_list
         if not keys:
+            if settings.GOOGLE_AI_STUDIO_API_KEY:
+                logger.warning("[OpenClaude] No API key → falling back to Google AI Studio free tier")
+                return cls._call_google_genai(messages, temperature, max_tokens)
             raise Exception("[OpenClaude] No API key configured")
 
         effective_max_tokens = max(max_tokens, MIN_MAX_TOKENS)
@@ -149,6 +236,18 @@ class CloudLLMService:
 
         last_error = None
         for model_attempt, current_model in enumerate(fallback_models):
+            if current_model == GOOGLE_FREE_TIER_MODEL_ID:
+                if not settings.GOOGLE_AI_STUDIO_API_KEY:
+                    last_error = "Google free tier not configured"
+                    continue
+                try:
+                    logger.info("[OpenClaude] Trying Google AI Studio free tier as fallback")
+                    return cls._call_google_genai(messages, temperature, effective_max_tokens)
+                except Exception as e:
+                    last_error = f"GoogleGenAI: {e}"
+                    logger.warning(f"[OpenClaude] Google free tier fallback failed: {e}")
+                    continue
+
             logger.info(f"[OpenClaude] Requesting model={current_model}, task={task_type or 'auto'}, "
                         f"max_tokens={effective_max_tokens}, messages={len(messages)}"
                         + (f" [fallback #{model_attempt}]" if model_attempt > 0 else ""))
@@ -320,44 +419,50 @@ class CloudLLMService:
             "provider": "localai",
         }
 
-    @classmethod
-    def _call_ollama(cls, model: str, messages: List[Dict], temperature: float = 0.7,
-                     max_tokens: int = 1024) -> Dict[str, Any]:
-        ollama_url = settings.OLLAMA_URL
+    @staticmethod
+    def _prepare_ollama_payload(model: str, messages: List[Dict], temperature: float, max_tokens: int):
+        """Common prep for both streaming and non-streaming Ollama calls."""
         resolved = resolve_ollama_model(model)
         if resolved != model:
             logger.info(f"[Ollama] Model resolved: '{model}' → '{resolved}'")
 
         # Trim history to last 3 messages to keep context small for CPU inference.
-        # Ollama/Gemma3n on CPU: ~1 tok/s → large contexts take too long.
         trimmed = messages[:1] + messages[-3:] if len(messages) > 4 else messages
         if len(trimmed) < len(messages):
             logger.info(f"[Ollama] Trimmed messages {len(messages)} → {len(trimmed)} to reduce context")
 
-        # Truncate user message content if too long — rough 4 chars/token estimate.
-        # Gemma4 has 8K context, but on CPU we want to keep prompt ≤ 4K tokens so
-        # there's room for 1K output tokens.
-        MAX_PROMPT_CHARS = 12000  # ~3000 tokens
+        # Truncate over-long user message — rough 4 chars/token estimate.
+        # Context window is 8192 tokens; reserve 4096 for output → prompt ≤ 4096 tokens.
+        MAX_PROMPT_CHARS = 16000
         for i, msg in enumerate(trimmed):
             if msg.get("role") == "user" and len(msg.get("content", "")) > MAX_PROMPT_CHARS:
                 original_len = len(msg["content"])
-                trimmed[i] = {**msg, "content": msg["content"][:MAX_PROMPT_CHARS] + "\n\n[... nội dung đã rút gọn để phù hợp context model local ...]"}
+                trimmed[i] = {**msg, "content": msg["content"][:MAX_PROMPT_CHARS] + "\n\n[... content truncated to fit local model context ...]"}
                 logger.info(f"[Ollama] Truncated user message {original_len} → {MAX_PROMPT_CHARS} chars")
 
-        # Cap at 2048 tokens for CPU inference — log analysis needs structured output
-        effective_max_tokens = max(64, min(2048, max_tokens))
-        total_chars = sum(len(m.get("content", "")) for m in trimmed)
+        # Allow up to 4096 output tokens — covers structured ISO/security responses.
+        # Caller passes -1 for unlimited (use full remaining context).
+        if max_tokens <= 0:
+            effective_max_tokens = 4096
+        else:
+            effective_max_tokens = max(64, min(4096, max_tokens))
+        return resolved, trimmed, effective_max_tokens
 
-        # Use full INFERENCE_TIMEOUT (default 1200s = 20min) for Ollama.
-        # Large models like Gemma 4 (9.4GB) need 5-10min to load + generate on CPU.
+    @classmethod
+    def _call_ollama(cls, model: str, messages: List[Dict], temperature: float = 0.7,
+                     max_tokens: int = 4096) -> Dict[str, Any]:
+        ollama_url = settings.OLLAMA_URL
+        resolved, trimmed, effective_max_tokens = cls._prepare_ollama_payload(
+            model, messages, temperature, max_tokens
+        )
+        total_chars = sum(len(m.get("content", "")) for m in trimmed)
         ollama_timeout = settings.INFERENCE_TIMEOUT
         logger.info(f"[Ollama] Requesting model={resolved}, messages={len(trimmed)}, total_chars={total_chars}, max_tokens={effective_max_tokens}, timeout={ollama_timeout}s")
-        model = resolved
         try:
             response = requests.post(
                 f"{ollama_url}/v1/chat/completions",
                 json={
-                    "model": model,
+                    "model": resolved,
                     "messages": trimmed,
                     "temperature": temperature,
                     "max_tokens": effective_max_tokens,
@@ -366,7 +471,7 @@ class CloudLLMService:
                 timeout=ollama_timeout,
             )
         except requests.exceptions.Timeout:
-            raise Exception(f"[Ollama] Timeout sau {ollama_timeout}s — model '{resolved}' cần thêm thời gian hoặc server không đủ RAM ({resolved}).")
+            raise Exception(f"[Ollama] Timeout after {ollama_timeout}s — model '{resolved}' needs more time or insufficient RAM.")
         except Exception as e:
             raise Exception(f"[Ollama] Connection error: {e}")
 
@@ -394,6 +499,76 @@ class CloudLLMService:
         return {
             "content": content.strip() if content else "",
             "usage": data.get("usage", {}),
+            "model": resolved,
+            "provider": "ollama",
+        }
+
+    @classmethod
+    def call_ollama_stream(cls, model: str, messages: List[Dict], temperature: float = 0.7,
+                           max_tokens: int = 4096):
+        """Stream tokens from Ollama. Yields dicts:
+          {"type":"token","content":"..."}    — incremental token
+          {"type":"done","content":"...","usage":{...}} — final
+        """
+        ollama_url = settings.OLLAMA_URL
+        resolved, trimmed, effective_max_tokens = cls._prepare_ollama_payload(
+            model, messages, temperature, max_tokens
+        )
+        total_chars = sum(len(m.get("content", "")) for m in trimmed)
+        ollama_timeout = settings.INFERENCE_TIMEOUT
+        logger.info(f"[Ollama-stream] model={resolved}, messages={len(trimmed)}, "
+                    f"total_chars={total_chars}, max_tokens={effective_max_tokens}, timeout={ollama_timeout}s")
+
+        full_content = []
+        usage = {}
+        try:
+            with requests.post(
+                f"{ollama_url}/api/chat",
+                json={
+                    "model": resolved,
+                    "messages": trimmed,
+                    "options": {
+                        "temperature": temperature,
+                        "num_predict": effective_max_tokens,
+                    },
+                    "stream": True,
+                },
+                stream=True,
+                timeout=ollama_timeout,
+            ) as response:
+                if response.status_code != 200:
+                    err_text = response.text[:300] if hasattr(response, "text") else "unknown"
+                    raise Exception(f"[Ollama-stream] HTTP {response.status_code}: {err_text}")
+
+                for raw_line in response.iter_lines(decode_unicode=True):
+                    if not raw_line:
+                        continue
+                    try:
+                        chunk = json.loads(raw_line)
+                    except Exception:
+                        continue
+                    msg = chunk.get("message", {}) or {}
+                    token = msg.get("content", "") or msg.get("reasoning", "")
+                    if token:
+                        full_content.append(token)
+                        yield {"type": "token", "content": token}
+                    if chunk.get("done"):
+                        usage = {
+                            "prompt_tokens": chunk.get("prompt_eval_count", 0),
+                            "completion_tokens": chunk.get("eval_count", 0),
+                            "total_tokens": chunk.get("prompt_eval_count", 0) + chunk.get("eval_count", 0),
+                        }
+                        break
+        except requests.exceptions.Timeout:
+            raise Exception(f"[Ollama-stream] Timeout after {ollama_timeout}s")
+
+        final_content = "".join(full_content).strip()
+        logger.info(f"[Ollama-stream] OK — model={resolved}, output_len={len(final_content)}, "
+                    f"completion_tokens={usage.get('completion_tokens', 0)}")
+        yield {
+            "type": "done",
+            "content": final_content,
+            "usage": usage,
             "model": resolved,
             "provider": "ollama",
         }
@@ -511,7 +686,7 @@ class CloudLLMService:
                     f"⚠️ {provider_label} ({model_label}) không phản hồi: {err_msg}"
                 )
 
-            if settings.cloud_api_key_list:
+            if cls.is_cloud_available():
                 try:
                     result = cls._call_open_claude(messages, temperature, max_tokens,
                                                    model=model, task_type=task_type)
@@ -525,7 +700,7 @@ class CloudLLMService:
                     logger.warning(f"[ChatCompletion] Open Claude failed after LocalAI: {e}")
 
         else:
-            if settings.cloud_api_key_list:
+            if cls.is_cloud_available():
                 try:
                     result = cls._call_open_claude(messages, temperature, max_tokens,
                                                    model=model, task_type=task_type)
@@ -568,7 +743,7 @@ class CloudLLMService:
 
     @classmethod
     def is_cloud_available(cls) -> bool:
-        return bool(settings.cloud_api_key_list)
+        return bool(settings.cloud_api_key_list) or bool(settings.GOOGLE_AI_STUDIO_API_KEY)
 
     @classmethod
     def health_check(cls) -> Dict[str, Any]:

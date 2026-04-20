@@ -1,6 +1,6 @@
 import logging
 import os
-from typing import List
+from typing import List, Literal
 
 logger = logging.getLogger(__name__)
 
@@ -58,8 +58,16 @@ class Settings:
     )
 
     CLOUD_LLM_API_URL: str = os.getenv("CLOUD_LLM_API_URL", "https://open-claude.com/v1")
-    CLOUD_MODEL_NAME: str = os.getenv("CLOUD_MODEL_NAME", "gemini-3-flash-preview")
+    CLOUD_MODEL_NAME: str = os.getenv("CLOUD_MODEL_NAME", "gemini-3.1-pro-preview")
     CLOUD_API_KEYS: str = os.getenv("CLOUD_API_KEYS", "")
+
+    # Google AI Studio (Gemini free-tier) — used as last-resort cloud fallback
+    GOOGLE_AI_STUDIO_API_KEY: str = os.getenv("GOOGLE_AI_STUDIO_API_KEY", "")
+    GOOGLE_AI_STUDIO_MODEL: str = os.getenv("GOOGLE_AI_STUDIO_MODEL", "gemini-2.0-flash")
+    GOOGLE_AI_STUDIO_URL: str = os.getenv(
+        "GOOGLE_AI_STUDIO_URL",
+        "https://generativelanguage.googleapis.com/v1beta",
+    )
 
     ISO_DOCS_PATH: str = os.getenv("ISO_DOCS_PATH", "/data/iso_documents")
     VECTOR_STORE_PATH: str = os.getenv("VECTOR_STORE_PATH", "/data/vector_store")
@@ -80,6 +88,18 @@ class Settings:
     INFERENCE_TIMEOUT: int = int(os.getenv("INFERENCE_TIMEOUT", "1800"))
     CLOUD_TIMEOUT: int = int(os.getenv("CLOUD_TIMEOUT", "120"))
     MAX_CONCURRENT_REQUESTS: int = int(os.getenv("MAX_CONCURRENT_REQUESTS", "3"))
+
+    # Step 3 — hybrid assessment pipeline.
+    # ASSESSMENT_MODE: default mode for /iso27001/assess when the request body
+    # does not specify one. "hybrid" = SecurityLM summary → local mid-size draft
+    # → cloud narrative; "local" = no cloud calls; "cloud" = legacy cloud-only.
+    ASSESSMENT_MODE: Literal["cloud", "local", "hybrid"] = os.getenv(
+        "ASSESSMENT_MODE", "hybrid"
+    ).lower()  # type: ignore[assignment]
+    # Token cap for the SecurityLM evidence-summary step (Step 3).
+    EVIDENCE_SUMMARY_TOKENS: int = int(os.getenv("EVIDENCE_SUMMARY_TOKENS", "256"))
+    # Step 8 docker RAM guard threshold (GB). Defined here so Step 8 only reads.
+    LOCAL_RAM_GUARD_GB: float = float(os.getenv("LOCAL_RAM_GUARD_GB", "20.0"))
 
     @property
     def cors_origins_list(self) -> List[str]:

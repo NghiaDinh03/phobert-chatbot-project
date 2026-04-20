@@ -1,6 +1,7 @@
 ﻿"""Chat API Routes — Streaming, history, and session management."""
 
 import json
+import logging
 import threading
 from typing import Optional
 
@@ -10,6 +11,8 @@ from pydantic import BaseModel, Field
 
 from core.config import settings
 from services.chat_service import ChatService
+
+logger = logging.getLogger(__name__)
 
 router = APIRouter()
 
@@ -63,6 +66,11 @@ async def chat(http_request: Request, request: ChatRequest, background_tasks: Ba
 async def chat_stream(request: ChatRequest):
     if not request.message.strip():
         raise HTTPException(status_code=400, detail="Message cannot be empty")
+
+    logger.info(
+        "[chat/stream] received — model=%s msg_len=%d session=%s prefer_cloud=%s",
+        request.model, len(request.message), request.session_id, request.prefer_cloud,
+    )
 
     def event_generator():
         """Generator that streams SSE events with heartbeat to keep connection alive.

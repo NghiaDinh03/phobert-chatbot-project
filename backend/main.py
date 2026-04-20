@@ -56,6 +56,12 @@ async def lifespan(app: FastAPI):
     ModelGuard.refresh()
 
     try:
+        from services.ram_guard import log_ram_guard_status
+        log_ram_guard_status(logger)
+    except Exception as exc:
+        logger.warning(f"RAM guard startup check failed (non-fatal): {exc}")
+
+    try:
         from repositories.session_store import SessionStore
         cleaned = SessionStore().cleanup_expired()
         if cleaned:
@@ -249,7 +255,7 @@ async def not_found_handler(request: Request, exc):
     )
 
 
-from api.routes import chat, document, health, iso27001, system, standards, benchmark  # noqa: E402
+from api.routes import chat, document, health, iso27001, system, standards, benchmark, prompts, ollama  # noqa: E402
 from api.routes.metrics import router as metrics_router  # noqa: E402
 
 app.include_router(metrics_router, prefix="", tags=["Observability"])
@@ -261,6 +267,8 @@ app.include_router(iso27001.router,   prefix="/api/v1", tags=["ISO27001 v1"])
 app.include_router(standards.router,  prefix="/api/v1", tags=["Standards v1"])
 app.include_router(system.router,     prefix="/api/v1", tags=["System v1"])
 app.include_router(benchmark.router,  prefix="/api/v1", tags=["Benchmark v1"])
+app.include_router(prompts.router,    prefix="/api/v1", tags=["Prompts v1"])
+app.include_router(ollama.router,     prefix="/api/v1", tags=["Ollama v1"])
 
 app.include_router(health.router,     prefix="/api", tags=["Health"])
 app.include_router(chat.router,       prefix="/api", tags=["Chat"])
@@ -269,6 +277,8 @@ app.include_router(iso27001.router,   prefix="/api", tags=["ISO27001"])
 app.include_router(standards.router,  prefix="/api", tags=["Standards"])
 app.include_router(system.router,     prefix="/api", tags=["System"])
 app.include_router(benchmark.router,  prefix="/api", tags=["Benchmark"])
+app.include_router(prompts.router,    prefix="/api", tags=["Prompts"])
+app.include_router(ollama.router,     prefix="/api", tags=["Ollama"])
 
 
 from fastapi import BackgroundTasks as _BT  # noqa: E402

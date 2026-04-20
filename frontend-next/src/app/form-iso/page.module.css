@@ -3824,3 +3824,38 @@
     color: var(--text-dim) !important;
     font-size: 0.8rem !important;
 }
+
+/* ─────────────────────────────────────────────────────────────
+   Step 4 refactor: compact left rail + heading hierarchy guard.
+   Goal: keep ≤2 heading levels visible per viewport (only h1
+   page title + h2 section). Demote h3/h4 visual weight to be
+   sub-section labels. Consolidate accent palette to ≤3 hues:
+   --accent-blue (primary), --accent-green (success), and a
+   warn family (--accent-amber/--accent-red treated as one).
+   ───────────────────────────────────────────────────────────── */
+
+.stepBanner {
+    padding: 0.45rem 0.85rem;
+    font-size: 0.78rem;
+}
+
+.stepBannerTitle {
+    font-size: 0.85rem;
+    font-weight: 600;
+}
+
+/* Demote any nested h3/h4 inside step content so they read as
+   labels rather than additional heading levels. */
+.stepContent h3,
+.stepContent h4 {
+    font-size: 0.92rem;
+    font-weight: 600;
+    margin: 0.6rem 0 0.35rem;
+    color: var(--text-secondary);
+    letter-spacing: 0.01em;
+}
+
+/* Section title (h2) stays the only secondary heading. */
+.sectionTitle {
+    font-size: 1.05rem;
+}

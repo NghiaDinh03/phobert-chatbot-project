@@ -79,7 +79,57 @@
     "documentation": "Documentation",
     "guideAssessmentTitle": "System Assessment Guide",
     "guideAssessmentDesc": "Detailed guide on using the Assessment feature with 4-step process, AI modes, and report analysis.",
-    "guideAssessmentBadge": "Assessment Guide"
+    "guideAssessmentBadge": "Assessment Guide",
+    "promptsSection": "System Prompts",
+    "promptsChatTitle": "Chat AI Prompts",
+    "promptsChatDesc": "Customize system prompts for the chatbot (default, RAG, web search, log analysis). Isolated from the assessment module.",
+    "promptsChatBadge": "Chat",
+    "promptsAssessmentTitle": "Assessment Prompts",
+    "promptsAssessmentDesc": "Customize Phase 1 (chunk) and Phase 2 (report) prompt templates plus the evidence instruction block. Fully isolated from Chat AI.",
+    "promptsAssessmentBadge": "Assessment",
+    "assessmentMode": {
+      "title": "Assessment Mode",
+      "description": "Choose how AI models run during ISO assessment. Applies to new assessments started from this browser.",
+      "saved": "Assessment mode saved",
+      "cloud": {
+        "label": "Cloud",
+        "desc": "Use cloud LLMs for both phases — fastest, requires API key."
+      },
+      "local": {
+        "label": "Local",
+        "desc": "Run everything on local models — fully offline, slower."
+      },
+      "hybrid": {
+        "label": "Hybrid (Recommended)",
+        "desc": "Local model for analysis, cloud model for report formatting — balanced speed and privacy."
+      }
+    }
+  },
+  "prompts": {
+    "chatTitle": "Chat AI Prompts",
+    "chatDesc": "Edit the system prompts used by the chatbot. Each prompt keeps a default value and can be reset at any time.",
+    "assessmentTitle": "Assessment Prompts",
+    "assessmentDesc": "Edit the prompt templates used by the assessment pipeline. Keep required placeholders intact so the pipeline keeps working.",
+    "listLabel": "Prompt list",
+    "editorLabel": "Prompt content",
+    "pickOne": "Pick a prompt on the left to start editing.",
+    "save": "Save changes",
+    "saving": "Saving…",
+    "saved": "Prompt saved",
+    "reset": "Reset to default",
+    "resetTitle": "Remove override and restore default",
+    "resetDone": "Default restored",
+    "resetConfirm": "Reset this prompt to its default value?",
+    "default": "Default",
+    "overridden": "Overridden",
+    "requiredPlaceholders": "Required placeholders",
+    "missingPlaceholders": "Missing required placeholders: {list}",
+    "unsaved": "Unsaved changes",
+    "unsavedConfirm": "You have unsaved changes. Continue and discard them?",
+    "loadError": "Failed to load prompts",
+    "saveError": "Failed to save prompt",
+    "resetError": "Failed to reset prompt",
+    "charCount": "{count} characters"
   },
   "docs": {
     "sectionTitle": "📚 Documentation Library",
@@ -125,6 +175,7 @@
     "enterToSend": "Enter to send · Shift+Enter for newline",
     "inputPlaceholder": "Ask about ISO 27001, TCVN, cybersecurity...",
     "copyMessage": "Copy message",
+    "editAndResend": "Edit and resend",
     "processing": "Processing...",
     "localProcessing": "⏳ Local model processing... ({elapsed}s)",
     "modelUnavailable": "Model unavailable.",
@@ -138,7 +189,18 @@
     "msgs": "msgs",
     "suggestedPrompt1": "What is access control?",
     "suggestedPrompt2": "Explain Annex A ISO 27001",
-    "suggestedPrompt3": "How are ISO 27001 and SOC 2 different?"
+    "suggestedPrompt3": "How are ISO 27001 and SOC 2 different?",
+    "stream": {
+      "routing": "Analyzing question...",
+      "rag": "📚 Searching internal documents...",
+      "searching": "🔍 Searching the web...",
+      "searchDone": "✅ Found {count} results, analyzing...",
+      "thinking": "🤖 Generating response ({model})...",
+      "streamStart": "💭 Model is thinking — streaming live...",
+      "fallback": "⚠️ Stream failed, switching to standard mode...",
+      "noResponse": "Model returned no response.",
+      "errorPrefix": "Error: {message}"
+    }
   },
   "assessment": {
     "pageTitle": "Information Security Assessment",
@@ -392,7 +454,37 @@
     "viewOriginal": "View original image",
     "unmarkImplemented": "✖ Unmark as implemented",
     "markImplemented": "✔ Mark as implemented",
-    "deleteAssessment": "Delete this assessment"
+    "deleteAssessment": "Delete this assessment",
+    "verdict": {
+      "satisfied": "Satisfied",
+      "partial": "Partial",
+      "missing": "Missing",
+      "not_applicable": "N/A",
+      "neutral": "Pending"
+    }
+  },
+  "formIso": {
+    "drawerTabs": "Detail tabs",
+    "expandControl": "Open details",
+    "thumbExpand": "Preview file",
+    "tab": {
+      "criteria": "Criteria",
+      "evidence": "Evidence",
+      "ai": "AI"
+    },
+    "evidenceEmpty": "No evidence uploaded yet.",
+    "notesLabel": "Notes",
+    "notesPlaceholder": "Internal notes for this control…",
+    "aiVerdict": "AI verdict",
+    "aiConfidence": "Confidence",
+    "aiMissing": "Missing items",
+    "aiNotes": "AI notes",
+    "aiEmpty": "No AI assessment yet.",
+    "evidenceRequiredHint": "At least one evidence file is required.",
+    "previewTitle": "File preview",
+    "previewUnavailable": "Preview not available — download instead",
+    "previewDownload": "Download file",
+    "previewClose": "Close preview"
   },
   "analytics": {
     "pageTitle": "Analytics",

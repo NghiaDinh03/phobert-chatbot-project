@@ -3,7 +3,10 @@
 import json
 import re
 import logging
-from typing import List, Dict, Optional
+from typing import Any, Dict, List, Optional, Tuple, TypedDict
+
+from prompts import get_prompt
+from prompts import defaults as prompt_defaults
 
 logger = logging.getLogger(__name__)
 
@@ -11,36 +14,116 @@ WEIGHT_SCORE = {"critical": 4, "high": 3, "medium": 2, "low": 1}
 SEV_EMOJI = {"critical": "🔴", "high": "🟠", "medium": "🟡", "low": "⚪"}
 SEV_ORDER = {"critical": 0, "high": 1, "medium": 2, "low": 3}
 
+EVIDENCE_VERDICTS: Tuple[str, ...] = ("satisfied", "partial", "missing", "not_applicable")
+
+
+class ControlVerdict(TypedDict):
+    """Per-control evidence verdict produced by SecurityLM / mid-tier local model.
+
+    Stable shape shared between chunk outputs (Step 3) and the final report
+    consumer in the frontend (Step 5).
+    """
+
+    control_id: str
+    evidence_verdict: str  # one of EVIDENCE_VERDICTS
+    missing_items: List[str]
+    confidence: float
+
+
+def normalize_verdict(raw: dict) -> ControlVerdict:
+    """Coerce a raw dict into the canonical ControlVerdict shape.
+
+    - Unknown / missing verdict → "missing".
+    - confidence clamped to [0.0, 1.0]; non-numeric → 0.0.
+    - missing_items defaults to []; non-list values are wrapped/dropped.
+    - All strings are stripped; non-string entries in missing_items become str().
+    """
+    if not isinstance(raw, dict):
+        raw = {}
+    control_id = str(raw.get("control_id", "")).strip()
+    verdict_raw = str(raw.get("evidence_verdict", "")).strip().lower()
+    verdict = verdict_raw if verdict_raw in EVIDENCE_VERDICTS else "missing"
+    items_raw = raw.get("missing_items", [])
+    if not isinstance(items_raw, list):
+        items_raw = [items_raw] if items_raw else []
+    missing_items: List[str] = []
+    for it in items_raw:
+        if it is None:
+            continue
+        s = str(it).strip()
+        if s:
+            missing_items.append(s)
+    try:
+        conf = float(raw.get("confidence", 0.0))
+    except (TypeError, ValueError):
+        conf = 0.0
+    if conf < 0.0:
+        conf = 0.0
+    elif conf > 1.0:
+        conf = 1.0
+    return ControlVerdict(
+        control_id=control_id,
+        evidence_verdict=verdict,
+        missing_items=missing_items,
+        confidence=conf,
+    )
+
+
+def _load_prompt(key: str, fallback: str) -> str:
+    """Safe wrapper so unit tests without DATA_PATH still work."""
+    try:
+        return get_prompt(key)
+    except Exception as exc:  # pragma: no cover — defensive
+        logger.warning("assessment prompt lookup failed for %s: %s", key, exc)
+        return fallback
+
 
 def build_chunk_prompt(cat_name: str, cat_controls: list, implemented: list,
                        pct: float, sc: int, mx: int,
-                       sys_summary: str, std_name: str, rag_ctx: str = "") -> str:
+                       sys_summary: str, std_name: str, rag_ctx: str = "",
+                       evidence_summary: Optional[str] = None) -> str:
     missing = [c for c in cat_controls if c["id"] not in implemented]
     present = [c for c in cat_controls if c["id"] in implemented]
     missing_str = "\n".join(
         f"❌{c['id']}[{c.get('weight','m').upper()[0]}]{c.get('label','')[:40]}"
         for c in missing[:15]
-    )
-    present_str = ", ".join(c["id"] for c in present[:12])
+    ) or "all done"
+    present_str = ", ".join(c["id"] for c in present[:12]) or "none"
     rag_section = f"\nREF:{rag_ctx[:350]}\n" if rag_ctx else ""
+    if evidence_summary and evidence_summary.strip():
+        # Prepend the pre-computed SecurityLM evidence summary so the
+        # mid-size drafter can cite it without re-reading raw evidence.
+        rag_section = (
+            f"\nEVIDENCE SUMMARY:\n{evidence_summary.strip()[:600]}\n"
+            + rag_section
+        )
     # Few-shot examples embedded directly so SecurityLM 7B understands exact format
-    few_shot = (
-        'VÍ DỤ OUTPUT (chỉ trả về JSON, không text thêm):\n'
-        '[{"id":"A.5.1","severity":"critical","likelihood":4,"impact":5,"risk":20,'
-        '"gap":"Chính sách ATTT chưa được ban hành","recommendation":"Ban hành chính sách ATTT ngay trong 30 ngày"},\n'
-        ' {"id":"A.5.9","severity":"high","likelihood":3,"impact":3,"risk":9,'
-        '"gap":"Chưa có danh mục tài sản thông tin","recommendation":"Lập asset inventory cho phần cứng và dữ liệu"}]\n\n'
+    few_shot = _load_prompt(
+        "assessment.chunk_fewshot", prompt_defaults.ASSESSMENT_CHUNK_FEWSHOT,
     )
-    return (
-        f"ISO Auditor — {std_name} | {cat_name} | Tuân thủ:{pct}%({sc}/{mx})\n"
-        f"HỆ THỐNG:{sys_summary[:400]}\n"
-        f"{rag_section}"
-        f"ĐÃ ĐẠT:{present_str or 'none'}\n"
-        f"CHƯA ĐẠT:\n{missing_str or 'all done'}\n\n"
-        f"{few_shot}"
-        f"Trả về JSON array cho mỗi control CHƯA ĐẠT ở trên (CHÍNH XÁC format như ví dụ, chỉ JSON):\n"
-        f"[]\n nếu tất cả đạt."
+    template = _load_prompt(
+        "assessment.chunk_template", prompt_defaults.ASSESSMENT_CHUNK_TEMPLATE,
     )
+    try:
+        return template.format_map({
+            "std_name": std_name,
+            "cat_name": cat_name,
+            "pct": pct,
+            "sc": sc,
+            "mx": mx,
+            "sys_summary": sys_summary[:400],
+            "rag_section": rag_section,
+            "present_str": present_str,
+            "missing_str": missing_str,
+            "few_shot": few_shot,
+        })
+    except (KeyError, ValueError) as exc:
+        logger.error("chunk template format failed (%s) — using hard-coded default", exc)
+        return prompt_defaults.ASSESSMENT_CHUNK_TEMPLATE.format_map({
+            "std_name": std_name, "cat_name": cat_name, "pct": pct, "sc": sc, "mx": mx,
+            "sys_summary": sys_summary[:400], "rag_section": rag_section,
+            "present_str": present_str, "missing_str": missing_str, "few_shot": few_shot,
+        })
 
 
 def infer_gap_from_control(ctrl: dict, cat_name: str) -> dict:
@@ -95,7 +178,7 @@ def validate_chunk_output(content: str, cat_name: str,
             sev = item.get("severity", "medium")
             if sev not in ("critical", "high", "medium", "low"):
                 sev = "medium"
-            validated.append({
+            entry = {
                 "id": ctrl_id,
                 "category": cat_name,
                 "severity": sev,
@@ -104,7 +187,23 @@ def validate_chunk_output(content: str, cat_name: str,
                 "risk": max(1, min(25, int(item.get("risk", 9)))),
                 "gap": str(item.get("gap", ""))[:200],
                 "recommendation": str(item.get("recommendation", ""))[:200],
-            })
+            }
+            # Step 2: optionally normalize per-control verdict fields if present.
+            # Backward compatible — absence of these fields is not an error.
+            verdict_keys = ("control_id", "evidence_verdict", "missing_items", "confidence")
+            if any(k in item for k in verdict_keys):
+                raw_verdict = {
+                    "control_id": item.get("control_id", ctrl_id),
+                    "evidence_verdict": item.get("evidence_verdict"),
+                    "missing_items": item.get("missing_items", []),
+                    "confidence": item.get("confidence", 0.0),
+                }
+                entry.update(normalize_verdict(raw_verdict))
+            else:
+                logger.debug(
+                    "[Validate] No verdict fields on item %s — skipping normalize", ctrl_id
+                )
+            validated.append(entry)
         return validated
     except Exception:
         return None
@@ -167,21 +266,62 @@ def normalize_severity_distribution(gap_items: list) -> list:
 
 def build_full_prompt(std_name: str, pct: float, sc: int, mx: int,
                       sys_info: str, ctx: str) -> tuple:
-    sp = (
-        f"Bạn là chuyên gia Auditor về {std_name}. Tuân thủ: {pct}% ({sc}/{mx} Controls).\n\n"
-        f"NHIỆM VỤ:\n"
-        f"1. Phân loại GAP theo rủi ro: 🔴 Critical, 🟠 High, 🟡 Medium, ⚪ Low\n"
-        f"2. Đánh giá Likelihood + Impact cho mỗi GAP\n"
-        f"3. Risk Score = L × I; sắp xếp giảm dần\n"
-        f"4. RISK REGISTER dạng bảng: Control | GAP | Severity | L | I | Risk | Khuyến nghị\n\n"
-        f"## DANH SÁCH PHÁT HIỆN\n[GAP với severity]\n\n"
-        f"## RISK REGISTER\n"
-        f"| Control | GAP | Severity | L | I | Risk | Khuyến nghị |\n"
-        f"|---------|-----|----------|---|---|------|-------------|\n[data]\n\n"
-        f"## TÓM TẮT RỦI RO\n[Tổng: Critical/High/Medium/Low]"
+    template = _load_prompt(
+        "assessment.report_system", prompt_defaults.ASSESSMENT_REPORT_SYSTEM,
     )
+    try:
+        sp = template.format_map({
+            "std_name": std_name, "pct": pct, "sc": sc, "mx": mx,
+        })
+    except (KeyError, ValueError) as exc:
+        logger.error("report template format failed (%s) — using default", exc)
+        sp = prompt_defaults.ASSESSMENT_REPORT_SYSTEM.format_map({
+            "std_name": std_name, "pct": pct, "sc": sc, "mx": mx,
+        })
     um = f"Tài liệu {std_name}:\n{ctx}\n\nBiên bản khảo sát:\n{sys_info}"
     return sp, um
+
+
+def build_evidence_block(
+    evidence_text: str,
+    evidence_summary: Optional[str] = None,
+) -> str:
+    """Return the evidence instruction block (empty if no evidence).
+
+    The caller is responsible for trimming very large evidence bodies before
+    passing them here; this function only injects it into the configured
+    instruction template.
+
+    Args:
+        evidence_text: raw concatenated evidence body (already trimmed).
+        evidence_summary: optional pre-computed summary produced by
+            ``summarize_evidence`` (Step 2/3 hybrid pipeline). When provided
+            and non-empty it is prepended as a clearly delimited
+            "EVIDENCE SUMMARY" section ahead of the raw evidence block.
+            Default ``None`` preserves the previous behaviour exactly.
+    """
+    if not evidence_text and not evidence_summary:
+        return ""
+    base = ""
+    if evidence_text:
+        template = _load_prompt(
+            "assessment.evidence_instruction",
+            prompt_defaults.ASSESSMENT_EVIDENCE_INSTRUCTION,
+        )
+        try:
+            base = template.format_map({"evidence": evidence_text})
+        except (KeyError, ValueError):
+            base = prompt_defaults.ASSESSMENT_EVIDENCE_INSTRUCTION.format_map(
+                {"evidence": evidence_text}
+            )
+    if evidence_summary and evidence_summary.strip():
+        summary_block = (
+            "=== EVIDENCE SUMMARY (pre-computed by SecurityLM) ===\n"
+            f"{evidence_summary.strip()}\n"
+            "=== END EVIDENCE SUMMARY ===\n\n"
+        )
+        return summary_block + base
+    return base
 
 
 def build_weight_breakdown_txt(breakdown: dict, missing_by_weight: dict) -> str:
@@ -232,3 +372,100 @@ def build_sys_summary(system_data: dict) -> str:
         f"Sự cố 12T: {comp.get('incidents_12m', 0)}\n"
         f"Ghi chú: {(system_data.get('notes') or '')[:300]}"
     )
+
+
+_EVIDENCE_SUMMARY_SYSTEM_PROMPT = (
+    "You are SecurityLM, a compliance analyst. Read the raw evidence text and "
+    "produce a concise plain-text bullet list (no JSON, no markdown headers) "
+    "covering THREE sections in this order:\n"
+    "1) Controls referenced — ISO/NIST/TCVN control IDs or clauses explicitly or "
+    "implicitly mentioned.\n"
+    "2) Concrete artifacts — policies, procedures, logs, screenshots, tool names, "
+    "config files, dates, owners.\n"
+    "3) Gaps / ambiguities — missing items, unclear scope, or evidence that does "
+    "not demonstrate implementation.\n"
+    "Be terse. Use '- ' bullets. Do NOT invent facts not present in the input."
+)
+
+
+def summarize_evidence(
+    evidence_text: str,
+    *,
+    max_tokens: int = 256,
+    model_router=None,
+    logger=None,
+) -> str:
+    """Summarize raw evidence text using the smallest local model (SecurityLM).
+
+    Safe helper for the Step 3 hybrid pipeline: SecurityLM compresses evidence
+    before the mid-tier model drafts per-control verdicts. On any failure this
+    returns an empty string — callers must treat a missing summary as a soft
+    degradation and fall back to the raw evidence block.
+
+    Args:
+        evidence_text: raw concatenated evidence body. Truncated to the last
+            ~8 KB if longer (tail bias: later evidence chunks tend to be the
+            most specific).
+        max_tokens: upper bound on the summary output length. Step 3 will pass
+            ``settings.EVIDENCE_SUMMARY_TOKENS`` here.
+        model_router: optional override (module or object exposing the routing
+            helpers) — primarily to keep this function unit-test friendly.
+            When ``None``, the real :mod:`services.model_router` is imported
+            lazily to avoid import-time cycles.
+        logger: optional logger override; falls back to the module logger.
+
+    Returns:
+        Plain-text bullet list summary, or ``""`` on any failure.
+    """
+    log = logger if logger is not None else globals()["logger"]
+    if not evidence_text or not evidence_text.strip():
+        return ""
+
+    # Truncate safely — keep the tail (most recent / most specific evidence).
+    _MAX_INPUT_BYTES = 8 * 1024
+    text = evidence_text
+    if len(text.encode("utf-8", errors="ignore")) > _MAX_INPUT_BYTES:
+        text = text[-_MAX_INPUT_BYTES:]
+
+    # Lazy import to avoid import cycles and keep tests lightweight.
+    if model_router is None:
+        try:
+            from services import model_router as _mr  # noqa: WPS433
+            model_router = _mr
+        except Exception as exc:  # pragma: no cover — defensive
+            log.warning("summarize_evidence: model_router import failed: %s", exc)
+            return ""
+
+    try:
+        get_fn = getattr(model_router, "get_security_model", None)
+        if callable(get_fn):
+            security_model = get_fn()
+        else:
+            security_model = getattr(model_router, "SECURITY_MODEL", None)
+    except Exception:
+        security_model = None
+
+    try:
+        from services.cloud_llm_service import CloudLLMService  # noqa: WPS433
+    except Exception as exc:  # pragma: no cover — defensive
+        log.warning("summarize_evidence: CloudLLMService import failed: %s", exc)
+        return ""
+
+    messages = [
+        {"role": "system", "content": _EVIDENCE_SUMMARY_SYSTEM_PROMPT},
+        {"role": "user", "content": f"RAW EVIDENCE:\n{text}"},
+    ]
+    try:
+        result = CloudLLMService.chat_completion(
+            messages=messages,
+            temperature=0.1,
+            max_tokens=max(32, int(max_tokens)),
+            prefer_cloud=False,
+            local_model=security_model,
+            task_type="iso_local",
+        )
+        content = (result or {}).get("content", "") or ""
+        return content.strip()
+    except Exception as exc:
+        log.warning("summarize_evidence: inference failed: %s", exc)
+        return ""

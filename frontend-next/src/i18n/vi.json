@@ -79,7 +79,57 @@
     "documentation": "Tài liệu",
     "guideAssessmentTitle": "Hướng dẫn đánh giá hệ thống",
     "guideAssessmentDesc": "Hướng dẫn chi tiết cách sử dụng tính năng đánh giá ATTT với quy trình 4 bước, chế độ AI, và phân tích báo cáo.",
-    "guideAssessmentBadge": "Hướng dẫn"
+    "guideAssessmentBadge": "Hướng dẫn",
+    "promptsSection": "System Prompts",
+    "promptsChatTitle": "Prompt Chat AI",
+    "promptsChatDesc": "Tùy chỉnh system prompt cho chatbot (mặc định, RAG, web search, log analysis). Không ảnh hưởng tới module đánh giá hệ thống.",
+    "promptsChatBadge": "Chat",
+    "promptsAssessmentTitle": "Prompt Đánh giá hệ thống",
+    "promptsAssessmentDesc": "Tùy chỉnh template prompt cho Phase 1 (chunk) và Phase 2 (báo cáo) cùng khối hướng dẫn bằng chứng. Độc lập hoàn toàn với Chat AI.",
+    "promptsAssessmentBadge": "Assessment",
+    "assessmentMode": {
+      "title": "Chế độ đánh giá",
+      "description": "Chọn cách mô hình AI hoạt động khi chạy đánh giá ISO. Áp dụng cho các lần đánh giá mới khởi tạo từ trình duyệt này.",
+      "saved": "Đã lưu chế độ đánh giá",
+      "cloud": {
+        "label": "Cloud",
+        "desc": "Dùng mô hình cloud cho cả hai giai đoạn — nhanh nhất, yêu cầu API key."
+      },
+      "local": {
+        "label": "Local",
+        "desc": "Chạy hoàn toàn bằng mô hình cục bộ — bảo mật offline, chậm hơn."
+      },
+      "hybrid": {
+        "label": "Hybrid (Khuyến nghị)",
+        "desc": "Mô hình cục bộ phân tích, mô hình cloud định dạng báo cáo — cân bằng tốc độ và quyền riêng tư."
+      }
+    }
+  },
+  "prompts": {
+    "chatTitle": "Prompt Chat AI",
+    "chatDesc": "Chỉnh sửa các system prompt dùng cho tính năng chatbot. Mỗi prompt có giá trị mặc định và có thể khôi phục bất kỳ lúc nào.",
+    "assessmentTitle": "Prompt Đánh giá hệ thống",
+    "assessmentDesc": "Chỉnh sửa template prompt cho pipeline đánh giá hệ thống. Hãy giữ nguyên các placeholder bắt buộc để pipeline hoạt động đúng.",
+    "listLabel": "Danh sách prompt",
+    "editorLabel": "Nội dung prompt",
+    "pickOne": "Chọn một prompt ở bên trái để chỉnh sửa.",
+    "save": "Lưu thay đổi",
+    "saving": "Đang lưu…",
+    "saved": "Đã lưu prompt",
+    "reset": "Khôi phục mặc định",
+    "resetTitle": "Xóa ghi đè và quay về mặc định",
+    "resetDone": "Đã khôi phục mặc định",
+    "resetConfirm": "Khôi phục prompt về giá trị mặc định?",
+    "default": "Mặc định",
+    "overridden": "Đã tùy chỉnh",
+    "requiredPlaceholders": "Placeholder bắt buộc",
+    "missingPlaceholders": "Thiếu placeholder bắt buộc: {list}",
+    "unsaved": "Có thay đổi chưa lưu",
+    "unsavedConfirm": "Bạn có thay đổi chưa lưu. Tiếp tục sẽ mất thay đổi?",
+    "loadError": "Không tải được danh sách prompt",
+    "saveError": "Lưu prompt thất bại",
+    "resetError": "Khôi phục mặc định thất bại",
+    "charCount": "{count} ký tự"
   },
   "docs": {
     "sectionTitle": "📚 Thư viện tài liệu",
@@ -125,6 +175,7 @@
     "enterToSend": "Enter để gửi · Shift+Enter xuống dòng",
     "inputPlaceholder": "Hỏi về ISO 27001, TCVN, an ninh mạng...",
     "copyMessage": "Sao chép tin nhắn",
+    "editAndResend": "Sửa và gửi lại",
     "processing": "Đang xử lý...",
     "localProcessing": "⏳ Model cục bộ đang xử lý... ({elapsed}s)",
     "modelUnavailable": "Model không khả dụng.",
@@ -138,7 +189,18 @@
     "msgs": "tin nhắn",
     "suggestedPrompt1": "Kiểm soát truy cập là gì?",
     "suggestedPrompt2": "Giải thích Annex A ISO 27001",
-    "suggestedPrompt3": "ISO 27001 vs SOC 2 khác nhau thế nào?"
+    "suggestedPrompt3": "ISO 27001 vs SOC 2 khác nhau thế nào?",
+    "stream": {
+      "routing": "Đang phân tích câu hỏi...",
+      "rag": "📚 Đang tra cứu tài liệu nội bộ...",
+      "searching": "🔍 Đang tìm kiếm trên web...",
+      "searchDone": "✅ Tìm thấy {count} kết quả, đang phân tích...",
+      "thinking": "🤖 Đang tạo phản hồi ({model})...",
+      "streamStart": "💭 Model đang suy nghĩ — phát trực tiếp...",
+      "fallback": "⚠️ Streaming lỗi, chuyển sang chế độ thường...",
+      "noResponse": "Model không trả về phản hồi.",
+      "errorPrefix": "Lỗi: {message}"
+    }
   },
   "assessment": {
     "pageTitle": "Đánh giá An toàn Thông tin",
@@ -392,7 +454,37 @@
     "viewOriginal": "Xem ảnh gốc",
     "unmarkImplemented": "✖ Bỏ đánh dấu triển khai",
     "markImplemented": "✔ Đánh dấu đã triển khai",
-    "deleteAssessment": "Xóa đánh giá này"
+    "deleteAssessment": "Xóa đánh giá này",
+    "verdict": {
+      "satisfied": "Đạt yêu cầu",
+      "partial": "Một phần",
+      "missing": "Thiếu",
+      "not_applicable": "Không áp dụng",
+      "neutral": "Chờ đánh giá"
+    }
+  },
+  "formIso": {
+    "drawerTabs": "Tab chi tiết",
+    "expandControl": "Mở chi tiết",
+    "thumbExpand": "Xem tập tin",
+    "tab": {
+      "criteria": "Tiêu chí",
+      "evidence": "Bằng chứng",
+      "ai": "AI"
+    },
+    "evidenceEmpty": "Chưa có bằng chứng nào.",
+    "notesLabel": "Ghi chú",
+    "notesPlaceholder": "Ghi chú nội bộ cho control này…",
+    "aiVerdict": "Kết luận AI",
+    "aiConfidence": "Độ tin cậy",
+    "aiMissing": "Mục còn thiếu",
+    "aiNotes": "Ghi chú AI",
+    "aiEmpty": "Chưa có đánh giá AI.",
+    "evidenceRequiredHint": "Cần tải lên ít nhất 1 tệp bằng chứng.",
+    "previewTitle": "Xem trước tệp",
+    "previewUnavailable": "Không thể xem trước — vui lòng tải xuống",
+    "previewDownload": "Tải tệp xuống",
+    "previewClose": "Đóng xem trước"
   },
   "analytics": {
     "pageTitle": "Phân tích",

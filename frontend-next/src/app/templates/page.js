@@ -5,7 +5,7 @@ import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import { useTranslation } from '@/components/LanguageProvider'
 import styles from './page.module.css'
-import { ASSESSMENT_TEMPLATES } from '../../data/templates'
+import { useAssessmentTemplates } from '../../data'
 import { ASSESSMENT_STANDARDS } from '../../data/standards'
 import { Filter, Zap, ExternalLink, Info } from 'lucide-react'
 
@@ -13,11 +13,12 @@ export default function TemplatesMonitorPage() {
     const { t } = useTranslation()
     const router = useRouter()
     const [filter, setFilter] = useState('all')
+    const ASSESSMENT_TEMPLATES = useAssessmentTemplates()
 
     const filteredTemplates = useMemo(() => {
         if (filter === 'all') return ASSESSMENT_TEMPLATES
         return ASSESSMENT_TEMPLATES.filter(t => t.standard === filter)
-    }, [filter])
+    }, [filter, ASSESSMENT_TEMPLATES])
 
     const getControlCount = (template) => {
         const std = ASSESSMENT_STANDARDS.find(s => s.id === template.standard)

@@ -16,6 +16,7 @@ from services.model_router import route_model
 from services.web_search import WebSearch
 from repositories.vector_store import VectorStore
 from repositories.session_store import SessionStore
+from prompts import get_prompt
 
 logger = logging.getLogger(__name__)
 
@@ -99,6 +100,13 @@ class ChatService:
             return True
         return False
 
+    @classmethod
+    def _is_ollama_model(cls, model_name: str) -> bool:
+        """True only for Ollama-served models (excludes LocalAI GGUF files)."""
+        if not model_name:
+            return False
+        return any(model_name.startswith(p) for p in cls._OLLAMA_PREFIXES)
+
     @staticmethod
     def clean_response(text: str) -> str:
         return SPECIAL_TOKENS.sub('', text).strip()
@@ -136,52 +144,66 @@ class ChatService:
                 return True
         return False
 
-    # Structured output template for log/event analysis
-    _LOG_ANALYSIS_PROMPT = (
-        "Bạn là SOC Analyst Level 3 chuyên phân tích log/event an ninh.\n"
-        "NHIỆM VỤ DUY NHẤT: phân tích log, trích xuất TẤT CẢ field quan trọng theo "
-        "định dạng `**Field**: Value`, đưa ra nhận định True Positive / False Positive.\n\n"
-        "## FORMAT OUTPUT BẮT BUỘC (tuân thủ CHÍNH XÁC):\n\n"
-        "### 1. Thông tin sự kiện\n"
-        "Trích xuất TẤT CẢ field có trong log, mỗi field một dòng:\n"
-        "- **Event ID**: `<giá trị>` — <giải thích ngắn ý nghĩa>\n"
-        "- **Source**: `<giá trị>` — <giải thích>\n"
-        "- **TimeCreated**: `<giá trị>`\n"
-        "- **Computer**: `<giá trị>`\n"
-        "- **Account Name**: `<giá trị>`\n"
-        "- **Account Domain**: `<giá trị>`\n"
-        "- **Process ID**: `<giá trị>`\n"
-        "- **Process Name**: `<giá trị>` — <giải thích process này là gì>\n"
-        "- **Command Line**: `<giá trị>` — <giải thích lệnh làm gì>\n"
-        "- **Parent Process**: `<giá trị>` — <giải thích>\n"
-        "- **Token Elevation Type**: `<giá trị>` — <Type 1/2/3 nghĩa là gì>\n"
-        "- (liệt kê TẤT CẢ field khác có trong log gốc, KHÔNG bỏ sót)\n\n"
-        "### 2. Nhận định\n"
-        "- **Nhận định**: `True Positive` HOẶC `False Positive` HOẶC `Cần điều tra thêm`\n"
-        "  - `False Positive` → Khi đây là tiến trình hệ thống/user bình thường, "
-        "không có dấu hiệu bất thường.\n"
-        "  - `True Positive` → Khi có dấu hiệu độc hại rõ ràng và CẦN điều tra mở rộng.\n"
-        "  - `Cần điều tra thêm` → Khi chưa đủ context để kết luận.\n"
+    # ── Structured output template for log/event analysis ────────────────
+    # Source of truth lives in :mod:`prompts.defaults` (key ``chat.log_analysis``).
+    # The literal below is kept ONLY as a fallback when the prompt registry
+    # cannot be loaded (e.g. test environments without DATA_PATH).
+    _LOG_ANALYSIS_PROMPT_FALLBACK = (
+        "Bạn là SOC Analyst Level 3. Phân tích log an ninh theo TEMPLATE CỐ ĐỊNH dưới đây.\n"
+        "**KHÔNG được tự ý đổi tên section hoặc thứ tự**. Copy nguyên văn các heading `## 1.` ... `## 4.`\n\n"
+        "═══════════════════════════════════════════════════════════\n"
+        "## 1. 📋 Thông tin sự kiện\n"
+        "Liệt kê các field CÓ GIÁ TRỊ THỰC trong log, mỗi field một dòng theo format:\n"
+        "`- **<Field>**: \\`<value>\\` — <giải thích 1 câu>`\n\n"
+        "**QUY TẮC**:\n"
+        "- BỎ HẲN field rỗng / `-` / `N/A` / `null` / không xuất hiện trong log gốc.\n"
+        "- Field hash dài (MD5/SHA256/IMPHASH): mỗi hash một dòng riêng.\n"
+        "- KHÔNG paste lại nguyên block log gốc.\n\n"
+        "## 2. 🎯 Nhận định\n"
+        "**BẮT BUỘC phải có section này, không được bỏ.** Format:\n\n"
+        "- **Kết luận**: ⚠️ **True Positive** HOẶC ✅ **False Positive** HOẶC ❓ **Cần điều tra thêm**\n"
         "- **Mức độ**: `Critical` / `High` / `Medium` / `Low` / `Informational`\n"
-        "- **Lý do**: <2-4 câu giải thích cụ thể DỰA TRÊN các field ở trên>\n\n"
-        "### 3. MITRE ATT&CK\n"
-        "- **Technique ID**: `<Txxxx.xxx>` — `<tên technique>`\n"
-        "- **Tactic**: `<tên tactic>`\n"
-        "- (nếu không match MITRE thì ghi: **MITRE ATT&CK**: `N/A`)\n\n"
-        "### 4. Khuyến nghị điều tra mở rộng\n"
-        "CHỈ đưa ra nếu Nhận định là `True Positive` hoặc `Cần điều tra thêm`.\n"
-        "Nếu `False Positive` → ghi: **Khuyến nghị**: `Không cần hành động — đây là hoạt động bình thường.`\n\n"
-        "Nếu cần điều tra, liệt kê cụ thể:\n"
-        "- **Log cần kiểm tra thêm**: <Event ID cụ thể, ví dụ: 4624, 4672, 4697>\n"
-        "- **Truy vấn đề xuất**: `<KQL/SPL/câu lệnh cụ thể>`\n"
-        "- **IOCs cần tra**: <file hash, IP, domain, user, machine>\n\n"
+        "- **Lý do**: <2-3 câu giải thích dựa trên field ở section 1>\n\n"
+        "Hướng dẫn chọn nhãn:\n"
+        "  • ⚠️ **True Positive** → có dấu hiệu độc hại rõ ràng, CẦN điều tra mở rộng (ví dụ: "
+        "PowerShell với `-ExecutionPolicy Bypass`, script từ `\\Downloads\\` hoặc `\\Temp\\`, hash lạ, "
+        "process ẩn danh, logon bất thường).\n"
+        "  • ✅ **False Positive** → tiến trình hệ thống hoặc user hợp lệ chạy bình thường, "
+        "KHÔNG cần hành động.\n"
+        "  • ❓ **Cần điều tra thêm** → chưa đủ context.\n\n"
+        "## 3. 🗺️ MITRE ATT&CK\n"
+        "Một dòng duy nhất:\n"
+        "`- **Technique**: \\`Txxxx.xxx\\` — <tên technique> | **Tactic**: <tên tactic>`\n\n"
+        "Nếu không match thì ghi: `- **MITRE**: N/A`\n\n"
+        "## 4. 🛡️ Khuyến nghị\n"
+        "- Nếu ✅ **False Positive** → chỉ ghi 1 dòng: "
+        "`Không cần hành động — hoạt động bình thường của hệ thống.` → DỪNG.\n"
+        "- Nếu ⚠️ **True Positive** / ❓ **Cần điều tra thêm** → liệt kê cụ thể:\n"
+        "  - **Log cần kiểm tra**: <Event ID, ví dụ 4624, 4672, 4697>\n"
+        "  - **Truy vấn gợi ý**: `<KQL hoặc SPL>`\n"
+        "  - **IOCs cần tra**: <hash, IP, domain, user, host>\n"
+        "═══════════════════════════════════════════════════════════\n\n"
         "## QUY TẮC CỨNG:\n"
-        "1. **LUÔN tiếng Việt.** Tên field giữ nguyên tiếng Anh (Event ID, Process Name...).\n"
-        "2. **KHÔNG thêm lời mở đầu/kết thúc** kiểu \"Chào bạn, tôi sẽ...\". Đi thẳng vào phân tích.\n"
-        "3. **KHÔNG lặp lại nội dung log gốc**.\n"
-        "4. Chỉ ghi field có trong log. Nếu field không có trong log → bỏ hẳn dòng đó (không ghi `N/A`).\n"
-        "5. Giữ đúng 4 section: `### 1. Thông tin sự kiện` → `### 2. Nhận định` → `### 3. MITRE ATT&CK` → `### 4. Khuyến nghị điều tra mở rộng`.\n"
+        "1. **TIẾNG VIỆT** toàn bộ. Tên field giữ tiếng Anh (Event ID, Process Name, Command Line...).\n"
+        "2. **KHÔNG thêm intro/outro xã giao** (\"Chào bạn\", \"Tôi sẽ phân tích\", \"Hy vọng giúp ích\"). "
+        "Bắt đầu NGAY bằng `## 1. 📋 Thông tin sự kiện`.\n"
+        "3. **KHÔNG dùng `---` (horizontal rule) giữa các section** — các heading `## N.` đã đủ tách.\n"
+        "4. **KHÔNG đổi tên section** sang \"Phân tích sự kiện\", \"Chi tiết kỹ thuật\", etc. "
+        "Dùng CHÍNH XÁC 4 heading: `## 1. 📋 Thông tin sự kiện`, `## 2. 🎯 Nhận định`, "
+        "`## 3. 🗺️ MITRE ATT&CK`, `## 4. 🛡️ Khuyến nghị`.\n"
+        "5. **Section 2 (Nhận định) là QUAN TRỌNG NHẤT** — phải có nhãn ⚠️/✅/❓ rõ ràng.\n"
+        "6. **KHÔNG dùng bảng (table)** cho section 1 — dùng bullet list để tránh tràn UI.\n"
+        "7. Output NGẮN GỌN — bỏ field rỗng, không giải thích dài dòng.\n"
     )
+
+    @staticmethod
+    def _safe_prompt(key: str, fallback: str) -> str:
+        """Read from prompt registry; fall back to literal if registry fails."""
+        try:
+            return get_prompt(key)
+        except Exception as exc:  # pragma: no cover — defensive
+            logger.warning("prompt registry lookup failed for %s: %s", key, exc)
+            return fallback
 
     @staticmethod
     def _build_messages(message: str, routing: dict, context: str = "",
@@ -192,16 +214,18 @@ class ChatService:
 
         # Detect log analysis requests — use specialized structured prompt
         is_log = ChatService._is_log_analysis(message)
+        log_prompt = ChatService._safe_prompt(
+            "chat.log_analysis", ChatService._LOG_ANALYSIS_PROMPT_FALLBACK,
+        )
 
         # Short system prompt for local CPU models — no RAG context, minimal tokens
         if is_local:
             if is_log:
-                system_prompt = ChatService._LOG_ANALYSIS_PROMPT
+                system_prompt = log_prompt
             else:
-                system_prompt = (
-                    "Bạn là trợ lý AI chuyên gia về an ninh mạng và bảo mật thông tin.\n"
-                    "Trả lời bằng tiếng Việt, rõ ràng, đầy đủ nội dung.\n"
-                    "Dùng Markdown: heading, bullet list, bold cho thuật ngữ quan trọng."
+                system_prompt = ChatService._safe_prompt(
+                    "chat.local_default",
+                    "Bạn là trợ lý AI chuyên gia về an ninh mạng và bảo mật thông tin.",
                 )
             user_content = message
             messages = [{"role": "system", "content": system_prompt}]
@@ -212,66 +236,19 @@ class ChatService:
 
         # Log analysis takes priority — use structured prompt regardless of RAG/search
         if is_log:
-            system_prompt = ChatService._LOG_ANALYSIS_PROMPT
+            system_prompt = log_prompt
             user_content = message
         # Cloud model with RAG context from knowledge base
         elif use_rag and context:
-            system_prompt = (
-                "Bạn là trợ lý AI chuyên gia về an ninh mạng, bảo mật thông tin, "
-                "ISO 27001, TCVN và các tiêu chuẩn an toàn thông tin.\n\n"
-                "## Quy tắc\n"
-                "1. **LUÔN trả lời bằng tiếng Việt.**\n"
-                "2. Ưu tiên thông tin từ tài liệu tham chiếu. "
-                "Có thể bổ sung kiến thức chuyên môn nếu tài liệu chưa đủ.\n"
-                "3. Trích dẫn nguồn khi dùng tài liệu (ví dụ: *Annex A.8.1*).\n"
-                "4. Nếu tài liệu không liên quan, trả lời từ kiến thức chuyên môn "
-                "và ghi chú \"(từ kiến thức chuyên môn)\".\n\n"
-                "## Định dạng (Markdown)\n"
-                "- `## tiêu đề` cho phần chính\n"
-                "- **Bullet list** / **numbered list** cho danh sách\n"
-                "- **Bold** cho thuật ngữ quan trọng\n"
-                "- Bảng khi so sánh nhiều mục\n"
-                "- `code block` cho lệnh/cấu hình kỹ thuật\n"
-                "- Trả lời ĐẦY ĐỦ, không cắt xén nội dung."
-            )
+            system_prompt = ChatService._safe_prompt("chat.rag", "")
             user_content = f"Tài liệu tham chiếu:\n{context}\n\nCâu hỏi: {message}"
         # Cloud model with web search results
         elif use_search and search_context:
-            system_prompt = (
-                "Bạn là trợ lý AI chuyên phân tích và tổng hợp thông tin.\n\n"
-                "## Quy tắc\n"
-                "1. **LUÔN trả lời bằng tiếng Việt.**\n"
-                "2. Tổng hợp từ kết quả tìm kiếm, bổ sung kiến thức nếu cần.\n"
-                "3. Trích dẫn nguồn: [tiêu đề](url) sau mỗi thông tin quan trọng.\n"
-                "4. Nếu kết quả tìm kiếm không đủ, nói rõ.\n\n"
-                "## Định dạng (Markdown)\n"
-                "- `## tiêu đề` cho phần chính\n"
-                "- **Bullet list** / **numbered list** cho danh sách\n"
-                "- **Bold** cho thuật ngữ quan trọng\n"
-                "- Bảng khi so sánh nhiều mục\n"
-                "- Cuối: **## Nguồn tham khảo** liệt kê tất cả URL\n"
-                "- Trả lời ĐẦY ĐỦ, không cắt xén nội dung."
-            )
+            system_prompt = ChatService._safe_prompt("chat.web_search", "")
             user_content = f"Kết quả tìm kiếm:\n{search_context}\n\nCâu hỏi: {message}"
         # Cloud model — general knowledge, no RAG/search
         else:
-            system_prompt = (
-                "Bạn là trợ lý AI chuyên gia về an ninh mạng, bảo mật thông tin, "
-                "ISO 27001, NIST, TCVN và công nghệ thông tin.\n\n"
-                "## Quy tắc\n"
-                "1. **LUÔN trả lời bằng tiếng Việt.**\n"
-                "2. Trả lời chính xác, đầy đủ từ kiến thức chuyên môn.\n"
-                "3. Không bịa đặt. Nếu không chắc, nói rõ.\n"
-                "4. Ghi rõ tên/phiên bản tiêu chuẩn khi đề cập "
-                "(ví dụ: *ISO 27001:2022*, *NIST CSF 2.0*).\n\n"
-                "## Định dạng (Markdown)\n"
-                "- `## tiêu đề` cho phần chính\n"
-                "- **Bullet list** / **numbered list** cho danh sách\n"
-                "- **Bold** cho thuật ngữ quan trọng\n"
-                "- Bảng khi so sánh nhiều mục\n"
-                "- `code block` cho lệnh/cấu hình kỹ thuật\n"
-                "- Trả lời ĐẦY ĐỦ, chi tiết, không cắt xén nội dung."
-            )
+            system_prompt = ChatService._safe_prompt("chat.general", "")
             user_content = message
 
         messages = [{"role": "system", "content": system_prompt}]
@@ -374,15 +351,14 @@ class ChatService:
             yield guard_error
             return
         try:
-            yield {"step": "routing", "message": "Đang phân tích câu hỏi..."}
+            yield {"step": "routing", "i18n_key": "stream.routing",
+                   "message": "Analyzing question..."}
 
             routing = route_model(message)
             model_name = model_override or routing["model"]
             use_rag = routing["use_rag"]
             use_search = routing.get("use_search", False)
 
-            # Disable RAG for ALL local CPU models (Ollama + LocalAI GGUF)
-            # Web search is kept active as a useful chatbot feature
             is_local = ChatService._is_local_model(model_name)
             if is_local:
                 use_rag = False
@@ -391,7 +367,8 @@ class ChatService:
             sources, web_sources = [], []
 
             if use_rag:
-                yield {"step": "rag", "message": "📚 Đang tra cứu tài liệu nội bộ..."}
+                yield {"step": "rag", "i18n_key": "stream.rag",
+                       "message": "📚 Searching internal documents..."}
                 vs = ChatService.get_vector_store()
                 results = vs.search(message, top_k=2)
                 if results:
@@ -399,32 +376,69 @@ class ChatService:
                     sources = [r.get("source", "") for r in results]
 
             if use_search:
-                yield {"step": "searching", "message": "🔍 Đang tìm kiếm trên internet..."}
+                yield {"step": "searching", "i18n_key": "stream.searching",
+                       "message": "🔍 Searching the web..."}
                 search_results = WebSearch.search(message, max_results=5)
                 if search_results:
                     search_context = WebSearch.format_context(search_results)
                     web_sources = [{"title": r["title"], "url": r["url"]} for r in search_results]
-                    yield {"step": "search_done", "message": f"✅ Tìm thấy {len(search_results)} kết quả, đang phân tích..."}
+                    yield {"step": "search_done", "i18n_key": "stream.searchDone",
+                           "i18n_params": {"count": len(search_results)},
+                           "message": f"✅ Found {len(search_results)} results, analyzing..."}
 
             display_model = model_name if model_name else settings.CLOUD_MODEL_NAME
-            yield {"step": "thinking", "message": f"🤖 Đang tạo câu trả lời ({display_model})..."}
+            yield {"step": "thinking", "i18n_key": "stream.thinking",
+                   "i18n_params": {"model": display_model},
+                   "message": f"🤖 Generating response ({display_model})..."}
 
             ss = ChatService.get_session_store()
             max_hist = 2 if is_local else 10
             history = ss.get_context_messages(session_id, max_messages=max_hist)
             messages = ChatService._build_messages(message, routing, context, search_context, history, is_local=is_local)
 
-            # Pass cloud_model ONLY when prefer_cloud=True (cloud model selected).
-            # When prefer_cloud=False the model_override is a LocalAI model ID — do NOT
-            # pass it as cloud_model or force_local computation breaks.
-            result = CloudLLMService.chat_completion(
-                messages=messages,
-                temperature=0.7,
-                local_model=model_name,
-                prefer_cloud=prefer_cloud,
-                cloud_model=model_override if prefer_cloud else None,
-            )
-            response_text = ChatService.clean_response(result["content"]) if result.get("content") else ""
+            # Decide streaming path: only Ollama models support live token streaming here.
+            response_text = ""
+            result_meta = {"model": model_name, "provider": "unknown", "usage": {}}
+            ollama_streamed = False
+
+            if not prefer_cloud and is_local and ChatService._is_ollama_model(model_name):
+                try:
+                    yield {"step": "stream_start", "i18n_key": "stream.streamStart",
+                           "message": "💭 Model is thinking — streaming live..."}
+                    chunks = []
+                    for ev in CloudLLMService.call_ollama_stream(
+                        model=model_name, messages=messages, temperature=0.7
+                    ):
+                        if ev.get("type") == "token":
+                            chunks.append(ev["content"])
+                            yield {"step": "token", "token": ev["content"]}
+                        elif ev.get("type") == "done":
+                            response_text = ChatService.clean_response(ev.get("content", "") or "".join(chunks))
+                            result_meta = {
+                                "model": ev.get("model", model_name),
+                                "provider": ev.get("provider", "ollama"),
+                                "usage": ev.get("usage", {}),
+                            }
+                    ollama_streamed = True
+                except Exception as stream_err:
+                    logger.warning(f"[Stream] Ollama stream failed → falling back to non-stream: {stream_err}")
+                    yield {"step": "stream_fallback", "i18n_key": "stream.fallback",
+                           "message": "⚠️ Stream failed, switching to standard mode..."}
+
+            if not ollama_streamed:
+                result = CloudLLMService.chat_completion(
+                    messages=messages,
+                    temperature=0.7,
+                    local_model=model_name,
+                    prefer_cloud=prefer_cloud,
+                    cloud_model=model_override if prefer_cloud else None,
+                )
+                response_text = ChatService.clean_response(result["content"]) if result.get("content") else ""
+                result_meta = {
+                    "model": result.get("model", model_name),
+                    "provider": result.get("provider", "unknown"),
+                    "usage": result.get("usage", {}),
+                }
 
             ss.add_message(session_id, "user", message)
             if response_text:
@@ -433,18 +447,19 @@ class ChatService:
             yield {
                 "step": "done",
                 "data": {
-                    "response": response_text or "Model không trả về response.",
-                    "model": result.get("model", model_name),
-                    "provider": result.get("provider", "unknown"),
+                    "response": response_text or "",
+                    "response_i18n_key": None if response_text else "stream.noResponse",
+                    "model": result_meta["model"],
+                    "provider": result_meta["provider"],
                     "route": routing["route"],
                     "session_id": session_id,
                     "rag_used": use_rag, "search_used": use_search,
                     "sources": list(set(sources)) if sources else [],
                     "web_sources": web_sources,
                     "tokens": {
-                        "prompt_tokens": result.get("usage", {}).get("prompt_tokens", 0),
-                        "completion_tokens": result.get("usage", {}).get("completion_tokens", 0),
-                        "total_tokens": result.get("usage", {}).get("total_tokens", 0),
+                        "prompt_tokens": result_meta["usage"].get("prompt_tokens", 0),
+                        "completion_tokens": result_meta["usage"].get("completion_tokens", 0),
+                        "total_tokens": result_meta["usage"].get("total_tokens", 0),
                     },
                 },
             }
@@ -452,8 +467,13 @@ class ChatService:
             logger.error(f"Stream chat error: {e}")
             yield {
                 "step": "error",
-                "data": {"response": f"Lỗi: {str(e)}", "model": _error_model,
-                         "session_id": session_id, "error": True},
+                "data": {
+                    "response": f"Error: {str(e)}",
+                    "response_i18n_key": "stream.errorPrefix",
+                    "response_i18n_params": {"message": str(e)},
+                    "model": _error_model,
+                    "session_id": session_id, "error": True,
+                },
             }
 
     @staticmethod
@@ -505,17 +525,28 @@ class ChatService:
         }
 
     @staticmethod
-    def assess_system(system_data: Dict[str, Any], model_mode: str = "hybrid",
+    def assess_system(system_data: Dict[str, Any], model_mode: str = None,
                       progress_callback=None) -> Dict[str, Any]:
         """progress_callback(message: str, percent: int) — optional, called per chunk."""
         from services.controls_catalog import get_categories, get_flat_controls, calc_compliance, build_weight_breakdown
         from services.assessment_helpers import (
             build_chunk_prompt, validate_chunk_output, gap_items_to_markdown,
             build_full_prompt, build_weight_breakdown_txt, compress_for_phase2,
-            build_sys_summary, infer_gap_from_control, normalize_severity_distribution
+            build_sys_summary, infer_gap_from_control, normalize_severity_distribution,
+            summarize_evidence,
         )
 
-        effective_mode = model_mode or system_data.get("model_mode", "hybrid")
+        # Step 3 — resolve effective mode with priority:
+        # explicit arg → system_data["model_mode"] (request override) → settings default.
+        effective_mode = (
+            model_mode
+            or system_data.get("model_mode")
+            or getattr(settings, "ASSESSMENT_MODE", "hybrid")
+            or "hybrid"
+        ).lower()
+        if effective_mode not in ("cloud", "local", "hybrid"):
+            logger.warning(f"[Assessment] unknown mode '{effective_mode}' — falling back to 'hybrid'")
+            effective_mode = "hybrid"
         vs = ChatService.get_vector_store()
         standard = system_data.get("assessment_standard", "iso27001")
 
@@ -651,6 +682,29 @@ class ChatService:
             p2_model = None  # OpenClaude for report
             logger.info(f"[Assessment] hybrid — P1={p1_model} (LocalAI), P2=OpenClaude")
 
+        # Step 3 — for hybrid/local, pre-compute a SecurityLM evidence summary
+        # so chunk drafting can cite it instead of re-reading raw evidence.
+        evidence_summary = ""
+        if effective_mode in ("hybrid", "local"):
+            evidence_text = (system_data.get("notes", "") or "").strip()
+            if evidence_text:
+                try:
+                    evidence_summary = summarize_evidence(
+                        evidence_text,
+                        max_tokens=getattr(settings, "EVIDENCE_SUMMARY_TOKENS", 256),
+                        logger=logger,
+                    )
+                    if evidence_summary:
+                        logger.info(
+                            f"[Assessment] evidence summary OK "
+                            f"({len(evidence_summary)} chars, mode={effective_mode})"
+                        )
+                    else:
+                        logger.info(f"[Assessment] evidence summary empty (mode={effective_mode})")
+                except Exception as se:
+                    logger.warning(f"[Assessment] summarize_evidence failed: {se}")
+                    evidence_summary = ""
+
         try:
             raw_analysis = ""
             result_p1 = None
@@ -689,7 +743,8 @@ class ChatService:
                     chunk_prompt = build_chunk_prompt(
                         cat_name, cat_controls, implemented,
                         percentage, score, max_score,
-                        sys_summary_short, std_name, cat_rag_ctx
+                        sys_summary_short, std_name, cat_rag_ctx,
+                        evidence_summary=evidence_summary or None,
                     )
                     chunk_messages = [{"role": "user", "content": chunk_prompt}]
 

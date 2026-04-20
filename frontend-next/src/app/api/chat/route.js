@@ -17,14 +17,17 @@ export async function POST(request) {
 
         let res
         try {
+            console.log('[api/chat] fwd →', BACKEND_URL, 'model=', body?.model, 'msg_len=', body?.message?.length, 'session=', body?.session_id)
             res = await fetch(`${BACKEND_URL}/api/chat/stream`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify(body),
                 signal: controller.signal
             })
+            console.log('[api/chat] backend status=', res.status)
         } catch (fetchErr) {
             clearTimeout(connectTimer)
+            console.error('[api/chat] fwd err:', fetchErr.name, fetchErr.message)
             if (fetchErr.name === 'AbortError') {
                 const errorPayload = `data: ${JSON.stringify({ step: 'error', data: { error: true, response: 'Request timed out after 10 minutes. If using LocalAI/Ollama, the model may still be warming up — please try again in a moment.' } })}\n\n`
                 return new Response(errorPayload, {
