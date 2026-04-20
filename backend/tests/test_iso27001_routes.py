@@ -1,18 +1,4 @@
-"""Unit tests for api.routes.iso27001 — path traversal protection.
-
-Tests cover the _validate_path_id() guard added in Phase 1, which blocks
-characters that enable:
-- Directory traversal  (../, ..\\)
-- Null-byte injection  (%00)
-- Shell metacharacters (< > ; & |)
-- URL-encoded variants of the above
-
-Uses FastAPI's synchronous TestClient so no running server is needed.
-The TestClient is created once per module for performance.
-
-NOTE: The backend/ directory must be on sys.path. When pytest is invoked
-via `cd backend && python -m pytest tests/` this happens automatically.
-"""
+"""Unit tests for api.routes.iso27001 — `_validate_path_id` path-traversal guard."""
 
 import os
 import sys
@@ -166,3 +152,33 @@ class TestEdgeCases:
         assert response.status_code == 400
         data = response.json()
         assert isinstance(data, dict)
+
+
+class TestAssessAcceptsImplementedWithoutEvidence:
+    """Step 7 regression: the mandatory-evidence gate is FRONTEND-ONLY (Step 5).
+
+    The backend ``/iso27001/assess`` endpoint must continue to accept an
+    ``implemented_controls`` list that has no matching ``evidence_map`` entry.
+    If a future change adds a server-side validator that rejects this payload,
+    this test will fail and the contract should be re-discussed.
+    """
+
+    def test_implemented_without_evidence_accepted(self):
+        payload = {
+            "assessment_standard": "iso27001",
+            "org_name": "Test Org",
+            "implemented_controls": ["A.5.1"],
+            "evidence_map": {},  # intentionally empty — no evidence uploaded
+            "model_mode": "local",
+        }
+        response = client.post("/api/v1/iso27001/assess", json=payload)
+        # We only care that it is NOT rejected as a validation error.
+        # 200/202 (accepted) is the happy case; 500 would also indicate
+        # acceptance up to the background-task layer (still "no frontend gate
+        # contract violation"). 4xx other than 422 is acceptable for unrelated
+        # reasons (rate limit, etc.).
+        assert response.status_code != 422, (
+            f"Backend rejected implemented-without-evidence payload "
+            f"(status={response.status_code}, body={response.text[:200]}). "
+            "The mandatory-evidence gate must remain frontend-only."
+        )

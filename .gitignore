@@ -1,19 +1,44 @@
 # ================================================================
 # CyberAI Assessment Platform — .gitignore
 # ================================================================
-# Policy: push 100% of repo (including AI assistant configs and skills)
-# so new dev machines can clone and immediately continue working.
-# Only exclude: secrets, user-data runtime artifacts, build outputs, large models.
+# Push everything except: secrets, runtime artifacts, build outputs, large models, logs.
 # ================================================================
 
-# ====== Secrets (NEVER commit) ======
+# ====== Secrets — NEVER commit ======
 .env
+.env.*
+!.env.example
+frontend-next/.env
 frontend-next/.env.local
+frontend-next/.env.*.local
+backend/.env
 *.key
 *.pem
 *.cert
+*.crt
 *.p12
+*.pfx
 *.secret
+secrets/
+credentials.json
+service-account*.json
+*-credentials.json
+gcp-key*.json
+
+# ====== Logs ======
+*.log
+logs/
+backend.log
+ollama.log
+_bk.log
+_fe.log
+backend/*.log
+frontend-next/*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+lerna-debug.log*
 
 # ====== Python ======
 __pycache__/
@@ -24,20 +49,38 @@ __pycache__/
 venv/
 env/
 ENV/
+.venv/
 *.egg-info/
+.eggs/
 .pytest_cache/
 .mypy_cache/
 .ruff_cache/
+.coverage
+.coverage.*
+htmlcov/
+coverage.xml
+.tox/
+.nox/
+pip-log.txt
+pip-delete-this-directory.txt
 
 # ====== Node.js / Next.js build output ======
 node_modules/
 .next/
 frontend-next/.next/
 frontend-next/node_modules/
+frontend-next/out/
+frontend-next/build/
+frontend-next/.turbo/
 out/
 .turbo/
+.npm/
+.yarn/
+.pnp.*
+*.tsbuildinfo
+next-env.d.ts
 
-# ====== Large model weights (too big for git) ======
+# ====== Large model weights — too big for git ======
 models/
 *.gguf
 *.bin
@@ -45,8 +88,11 @@ models/
 *.onnx
 *.pt
 *.pth
+*.ckpt
+*.h5
+*.tflite
 
-# ====== Runtime user data (generated at runtime — each machine has its own) ======
+# ====== Runtime user data — generated per machine ======
 data/sessions/*
 !data/sessions/.gitkeep
 data/uploads/*
@@ -65,20 +111,55 @@ data/translations/*.json
 data/standards/*
 !data/standards/.gitkeep
 
-# ====== Vector store runtime (rebuilt on startup via reindex) ======
+# ====== Vector store runtime — rebuilt on startup ======
 data/vector_store/*.faiss
 data/vector_store/chroma.sqlite3
 data/vector_store/*/
 
-# ====== IDE / OS / Misc ======
-.vscode/
-.idea/
-.vs/
+# ====== Backups / dumps / archives ======
+*.bak
+*.backup
+*.old
+*.orig
+*.tmp
 *.swp
 *.swo
+*.dump
+*.sql.gz
+*.tar
+*.tar.gz
+*.tgz
+*.zip
+*.7z
+*.rar
+backup/
+backups/
+
+# ====== IDE / OS ======
+.vscode/
+!.vscode/settings.shared.json
+.idea/
+.vs/
+*.sublime-project
+*.sublime-workspace
 .DS_Store
 Thumbs.db
-hash.txt
+desktop.ini
+ehthumbs.db
+$RECYCLE.BIN/
 
-# ====== Docker ======
-.dockerignore
+# ====== Misc / scratch ======
+hash.txt
+/context.md
+TODO.local.md
+NOTES.local.md
+scratch/
+tmp/
+temp/
+.cache/
+
+# ====== Local tool caches ======
+.claude/
+
+# ====== Runtime data (writable per-machine) ======
+backend/data/
