@@ -126,19 +126,6 @@ const MessageBubble = memo(function MessageBubble({ m, msgKey, isLastStreaming, 
                     )
                 ) : content}
 
-                {isBot && !isStreaming && (
-                    <button
-                        className={`${styles.copyBtn} ${isCopied ? styles.copyBtnVisible : ''}`}
-                        onClick={() => onCopy(msgKey, content)}
-                        title="Copy message"
-                        aria-label="Copy message to clipboard"
-                    >
-                        {isCopied
-                            ? <><Check size={11} /> Copied!</>
-                            : <><Copy size={11} /> Copy</>}
-                    </button>
-                )}
-
                 {isStreaming && charCount > 0 && (
                     <div className={styles.streamMeta}>
                         <span className={styles.streamDot} />
@@ -148,6 +135,19 @@ const MessageBubble = memo(function MessageBubble({ m, msgKey, isLastStreaming, 
 
                 {!isStreaming && (
                     <div className={styles.msgMeta}>
+                        {isBot && (
+                            <button
+                                type="button"
+                                className={`${styles.copyBtn} ${isCopied ? styles.copyBtnVisible : ''}`}
+                                onClick={() => onCopy(msgKey, content)}
+                                title="Copy message"
+                                aria-label="Copy message to clipboard"
+                            >
+                                {isCopied
+                                    ? <><Check size={11} /> Copied</>
+                                    : <><Copy size={11} /> Copy</>}
+                            </button>
+                        )}
                         {typeof m.elapsedSec === 'number' && m.elapsedSec >= 0 && (
                             <span className={styles.elapsedBadge} title="Thời gian model xử lý / Generation time">
                                 ⏱ {m.elapsedSec}s

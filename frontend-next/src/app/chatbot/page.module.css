@@ -652,15 +652,24 @@
     font-style: italic;
 }
 
-/* ── Message meta (badges + time) ───────────────────────────────────────────── */
+/* Hide stray horizontal rules that some local models (Gemma) inject before
+   summary blocks despite the "no ---" rule in the system prompt. The 4 section
+   headings already provide visual separation. */
+.md hr {
+    display: none;
+}
+
+/* ── Message meta (badges + time) ─────────────────────────────────────────────
+   All chips share the SAME box dimensions so the row is visually aligned:
+   height = 22px (line-height 16px + padding 3px·2 + border 1px·2)             */
 
 .msgMeta {
     display: flex;
     align-items: center;
-    gap: 5px;
+    gap: 6px;
     flex-wrap: wrap;
-    margin-top: 6px;
-    padding-top: 6px;
+    margin-top: 8px;
+    padding-top: 8px;
     border-top: 1px solid rgba(255, 255, 255, 0.04);
 }
 
@@ -668,60 +677,66 @@
     border-top-color: rgba(255, 255, 255, 0.1);
 }
 
+/* Shared chip baseline — every meta-row item inherits these dims so the
+   pills (elapsed · model · RAG · WEB SEARCH) sit on the SAME baseline. */
+.msgMeta > .badge,
+.msgMeta > .modelBadge,
+.msgMeta > .elapsedBadge,
+.msgMeta > .copyBtn {
+    height: 22px;
+    line-height: 1;
+    padding: 0 10px;
+    border-radius: 999px;
+    font-size: 0.66rem;
+    font-weight: 600;
+    letter-spacing: 0.4px;
+    box-sizing: border-box;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 4px;
+    margin: 0;
+    white-space: nowrap;
+    vertical-align: middle;
+    font-variant-numeric: tabular-nums;
+    font-feature-settings: "tnum" 1, "lnum" 1;
+}
+
 .time {
-    display: inline-block;
+    display: inline-flex;
+    align-items: center;
+    height: 22px;
     font-size: 0.66rem;
     font-weight: 500;
     color: #94a3b8;
-    opacity: 1;
     letter-spacing: 0.2px;
     font-variant-numeric: tabular-nums;
+    margin-left: auto; /* push time to the right edge of the meta row */
 }
 
 .badge {
-    display: inline-block;
-    font-size: 0.62rem;
-    font-weight: 600;
-    padding: 2px 8px;
-    border-radius: 5px;
     background: rgba(148, 163, 184, 0.14);
     color: #cbd5e1;
     border: 1px solid rgba(148, 163, 184, 0.28);
-    margin-right: 4px;
-    letter-spacing: 0.3px;
     text-transform: uppercase;
 }
 
 /* ── Vibrant model badge (provider-tinted) ─────────────────────────────────── */
 .modelBadge {
-    display: inline-flex;
-    align-items: center;
-    gap: 4px;
-    font-size: 0.66rem;
-    font-weight: 700;
-    padding: 2px 9px;
-    border-radius: 5px;
     background: color-mix(in srgb, var(--badge-accent, #7dd3fc) 16%, transparent);
     color: color-mix(in srgb, var(--badge-accent, #7dd3fc) 88%, white 12%);
     border: 1px solid color-mix(in srgb, var(--badge-accent, #7dd3fc) 45%, transparent);
-    letter-spacing: 0.4px;
+    font-weight: 700;
     text-transform: uppercase;
     box-shadow: 0 0 0 1px color-mix(in srgb, var(--badge-accent, #7dd3fc) 14%, transparent) inset;
     text-shadow: 0 0 6px color-mix(in srgb, var(--badge-accent, #7dd3fc) 22%, transparent);
 }
 
 .elapsedBadge {
-    display: inline-flex;
-    align-items: center;
-    gap: 3px;
-    font-size: 0.7rem;
-    font-weight: 700;
-    padding: 3px 10px;
-    border-radius: 6px;
     background: linear-gradient(135deg, rgba(56, 189, 248, 0.20), rgba(94, 234, 212, 0.14));
     color: #7dd3fc;
     border: 1px solid rgba(125, 211, 252, 0.45);
-    letter-spacing: 0.3px;
+    font-weight: 700;
     font-variant-numeric: tabular-nums;
     box-shadow: 0 0 8px rgba(125, 211, 252, 0.18);
     text-shadow: 0 0 6px rgba(125, 211, 252, 0.30);
@@ -810,24 +825,16 @@
     background: var(--chip-hover-bg);
 }
 
-/* ── Copy button — hidden by default, shown on hover ────────────────────────── */
+/* ── Copy button — sits inside .msgMeta row, hidden until bubble hover ──────── */
 
 .copyBtn {
-    display: inline-flex;
-    align-items: center;
-    gap: 4px;
-    margin-top: 6px;
-    padding: 3px 9px;
-    border-radius: 5px;
     border: 1px solid var(--border);
     background: var(--bg-muted);
     color: var(--text-dim);
-    font-size: 0.68rem;
-    font-weight: 500;
     cursor: pointer;
     transition: background 0.15s ease, color 0.15s ease, border-color 0.15s ease, opacity 0.15s ease;
     font-family: inherit;
-    letter-spacing: 0.1px;
+    text-transform: uppercase;
     opacity: 0;
 }
 
